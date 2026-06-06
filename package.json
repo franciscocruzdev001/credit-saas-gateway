@@ -1,0 +1,12 @@
+{
+  "name": "credit-saas-gateway",
+  "description": "Express Gateway Instance Bootstraped from Command Line",
+  "repository": {},
+  "license": "UNLICENSED",
+  "version": "1.0.0",
+  "main": "server.js",
+  "dependencies": {
+    "express": "^5.2.1",
+    "express-gateway": "^1.16.11"
+  }
+}

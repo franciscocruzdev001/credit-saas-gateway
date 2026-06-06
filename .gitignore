@@ -1,0 +1,189 @@
+# ==========================================
+# Dependencies
+# ==========================================
+node_modules/
+jspm_packages/
+web_modules/
+
+# Dependencies authorizer service
+services/authorizer/node_modules/
+services/authorizer/jspm_packages/
+services/authorizer/web_modules/
+
+# Dependencies credits service
+services/credits/node_modules/
+services/credits/jspm_packages/
+services/credits/web_modules/
+
+# Dependencies payments service
+services/payments/node_modules/
+services/payments/jspm_packages/
+services/payments/web_modules/
+
+# Dependencies transactions service
+services/transactions/node_modules/
+services/transactions/jspm_packages/
+services/transactions/web_modules/
+
+# ==========================================
+# TypeScript & Build Outputs
+# ==========================================
+# Ignore the JavaScript compilation directory (set via outDir in tsconfig.json)
+dist/
+build/
+lib/
+out/
+# Ignore the JavaScript compilation directory (set via outDir in tsconfig.json) authorizer service
+services/authorizer/dist/
+services/authorizer/build/
+services/authorizer/lib/
+services/authorizer/out/
+# Ignore the JavaScript compilation directory (set via outDir in tsconfig.json) credits service
+services/credits/dist/
+services/credits/build/
+services/credits/lib/
+services/credits/out/
+# Ignore the JavaScript compilation directory (set via outDir in tsconfig.json) payments service
+services/payments/dist/
+services/payments/build/
+services/payments/lib/
+services/payments/out/
+# Ignore the JavaScript compilation directory (set via outDir in tsconfig.json) transactions service
+services/transactions/dist/
+services/transactions/build/
+services/transactions/lib/
+services/transactions/out/
+
+# TypeScript build info cache (speed up incremental compilation)
+*.tsbuildinfo
+# TypeScript build info cache (speed up incremental compilation) authorizer service
+services/authorizer/*.tsbuildinfo
+services/credits/*.tsbuildinfo
+services/payments/*.tsbuildinfo
+services/transactions/*.tsbuildinfo
+
+
+# Prevent accidentally tracking raw JS files if compiled in-place
+# (Uncomment the line below if you compile JS files directly next to TS files)
+# src/**/*.js
+
+# ==========================================
+# Logs and Runtime Data
+# ==========================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pids/
+*.pid
+*.seed
+*.pid.lock
+# Logs and Runtime Data authorizer service
+services/authorizer/logs/
+services/authorizer/*.log
+services/authorizer/npm-debug.log*
+services/authorizer/yarn-debug.log*
+services/authorizer/yarn-error.log*
+services/authorizer/pids/
+services/authorizer/*.pid
+services/authorizer/*.seed
+services/authorizer/*.pid.lock
+# Logs and Runtime Data credits service
+services/credits/logs/
+services/credits/*.log
+services/credits/npm-debug.log*
+services/credits/yarn-debug.log*
+services/credits/yarn-error.log*
+services/credits/pids/
+services/credits/*.pid
+services/credits/*.seed
+services/credits/*.pid.lock
+# Logs and Runtime Data payments service
+services/payments/logs/
+services/payments/*.log
+services/payments/npm-debug.log*
+services/payments/yarn-debug.log*
+services/payments/yarn-error.log*
+services/payments/pids/
+services/payments/*.pid
+services/payments/*.seed
+services/payments/*.pid.lock
+# Logs and Runtime Data transacionts service
+services/transactions/logs/
+services/transactions/*.log
+services/transactions/npm-debug.log*
+services/transactions/yarn-debug.log*
+services/transactions/yarn-error.log*
+services/transactions/pids/
+services/transactions/*.pid
+services/transactions/*.seed
+services/transactions/*.pid.lock
+
+# ==========================================
+# Environment Variables & Secrets
+# ==========================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+
+# ==========================================
+# Testing & Code Coverage
+# ==========================================
+coverage/
+.nyc_output/
+.jest/
+
+# ==========================================
+# IDEs, Editors & System Files
+# ==========================================
+.vscode/
+# Keep shared tasks/launch settings if your team uses them, but ignore personal settings:
+!.vscode/extensions.json
+!.vscode/launch.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# ==========================================
+# Diagnostic / Cache Directories
+# ==========================================
+.eslintcache
+.prettiercache
+.npm/
+.cache/
+.parcel-cache/
+# Diagnostic / Cache Directories authorizer service
+services/authorizer/.eslintcache
+services/authorizer/.prettiercache
+services/authorizer/.npm/
+services/authorizer/.cache/
+services/authorizer/.parcel-cache/
+# Diagnostic / Cache Directories credits service
+services/credits/.eslintcache
+services/credits/.prettiercache
+services/credits/.npm/
+services/credits/.cache/
+services/credits/.parcel-cache/
+# Diagnostic / Cache Directories payments service
+services/payments/.eslintcache
+services/payments/.prettiercache
+services/payments/.npm/
+services/payments/.cache/
+services/payments/.parcel-cache/
+# Diagnostic / Cache Directories transactions service
+services/transactions/.eslintcache
+services/transactions/.prettiercache
+services/transactions/.npm/
+services/transactions/.cache/
+services/transactions/.parcel-cache/
