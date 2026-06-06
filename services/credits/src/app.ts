@@ -12,12 +12,10 @@ app.use(express.json());
 // Mount the router at your chosen base path prefix
 app.use('/credits', creditRouter);
 
-//authorizer fetched.
 // Root fallback path
 app.get("/", (_:any, res:any) => {
     res.json("Main Server Home Page");
 });
-
 
 
 app.listen(PORT, () => {

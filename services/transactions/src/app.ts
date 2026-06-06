@@ -1,5 +1,6 @@
 
 import express, { Application }  from "express";
+import { transactionRouter } from "./routes/transactionRoutes";
 
 const app: Application = express();
 const PORT = process.env.PORT || 4003;
@@ -9,9 +10,8 @@ const PORT = process.env.PORT || 4003;
 app.use(express.json());
 
 // Mount the router at your chosen base path prefix
-//app.use('/transactions', authRouter);
+app.use('/transactions', transactionRouter);
 
-//authorizer fetched.
 // Root fallback path
 app.get("/", (_:any, res:any) => {
     res.json("Main Server Home Page");

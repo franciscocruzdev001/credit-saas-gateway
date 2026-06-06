@@ -1,5 +1,6 @@
 
 import express, { Application }  from "express";
+import { paymentRouter } from "./routes/paymentRoutes";
 
 const app: Application = express();
 const PORT = process.env.PORT || 4002;
@@ -9,9 +10,8 @@ const PORT = process.env.PORT || 4002;
 app.use(express.json());
 
 // Mount the router at your chosen base path prefix
-//app.use('/payments', authRouter);
+app.use('/payments', paymentRouter);
 
-//authorizer fetched.
 // Root fallback path
 app.get("/", (_:any, res:any) => {
     res.json("Main Server Home Page");
