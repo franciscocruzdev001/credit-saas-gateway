@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://SearchCustomersRequest",
+  "title": "SearchCustomersRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "status": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "createdByEmployeeId": {
+      "type": "string"
+    },
+    "pagination": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "pageNumber": {
+          "type": "number"
+        },
+        "limit": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "pageNumber",
+        "limit"
+      ]
+    }
+  },
+  "required": [
+    "status",
+    "createdByEmployeeId",
+    "pagination"
+  ]
+}

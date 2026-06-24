@@ -1,10 +1,14 @@
 
 import express, { Application }  from "express";
 import { creditRouter } from "./routes/creditRoutes";
+import cors from "cors";
 
 const app: Application = express();
 const PORT = process.env.PORT || 4001;
 
+
+//habilita el cors 
+app.use(cors());
 
 // Built-in middleware to parse JSON bodies
 app.use(express.json());
