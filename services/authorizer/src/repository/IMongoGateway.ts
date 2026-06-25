@@ -22,7 +22,15 @@ export interface IMongoGateway {
     options?: FindOptions
   ): Observable<Document[]>;
   /**
-  * find multiple documents from collection based on a filter
+  * find firs document from collection based on a filter
+  */
+  findFistDocument(
+    dbName: string,
+    collectionName: string,
+    queryfilter: Filter<Document>
+  ): Observable<Document | null>;
+  /**
+  * find document from collection based on a OptionId
   */
   findByIdDocument(
     dbName: string,

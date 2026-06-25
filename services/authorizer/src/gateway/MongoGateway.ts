@@ -1,6 +1,6 @@
 import { from, map, mergeMap, Observable, of, switchMap } from "rxjs";
 import { IMongoGateway } from "../repository/IMongoGateway";
-import { 
+import {
     Filter,
     FindOptions,
     InsertOneResult,
@@ -74,6 +74,22 @@ export class MongoGateway implements IMongoGateway {
                         find(queryfilter, options).
                         toArray()
                 )
+            )
+        );
+    }
+
+    public findFistDocument(
+        dbName: string,
+        collectionName: string,
+        queryfilter: Filter<Document>
+    ): Observable<Document | null> {
+        return of(true).pipe(
+            mergeMap(() => this._getClient()),
+            mergeMap((mongoClient: MongoClient) =>
+                mongoClient.
+                    db(dbName).
+                    collection<Document>(collectionName).
+                    findOne(queryfilter)
             )
         );
     }

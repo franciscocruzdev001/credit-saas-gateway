@@ -3,7 +3,7 @@ import { IAuthorizerService } from "../repository/IAuthorizerService";
 import { inject, injectable } from "inversify";
 import { IMongoGateway } from "../repository/IMongoGateway";
 import { TYPES } from "../constant/types";
-import { Document } from 'mongodb';
+import { Document, Filter } from 'mongodb';
 
 @injectable()
 export class AuthorizerService implements IAuthorizerService {
@@ -17,8 +17,22 @@ export class AuthorizerService implements IAuthorizerService {
 
 
     public authorization(): Observable<boolean> {
+        const dbName: string = "admin";
+        const collectionName: string = "prueba";
         return of(1).pipe(
-            map(() => true)
+            mergeMap(() =>
+                this._mongodb.findFistDocument(
+                    dbName,
+                    collectionName,
+                    {
+                        userName: "",
+                        password: ""
+                    } as unknown as Filter<Document>
+                )
+            ),
+            map((user: Document | null) => {
+                return user !== null ? true : false;
+            })
         );
     }
 

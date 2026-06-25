@@ -18,7 +18,8 @@ export class CreditService implements ICreditService {
     public searchCredits(): Observable<Object> {
         const dbName: string = "admin";
         const collectionName: string = "prueba";
-        return of(1).pipe(
+
+        return of(true).pipe(
             mergeMap(() =>
                 this._mongodb.findAllDocuments(dbName, collectionName)
             ),
