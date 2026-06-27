@@ -5,8 +5,10 @@ import { TYPES } from "../constant/types";
 import { Document, Filter } from 'mongodb';
 import { ICreditService } from "../repository/ICreditService";
 import { CollectionNameEnum } from "../infrastructure/CollectionNameEnum";
-import { FiltersItems, SearchCustomersRequest } from "../types/SearchCustomersRequest";
-import { get, isEmpty, isNil, isObject, isUndefined, omit, omitBy } from "lodash"
+import { FiltersItems as FilterItemsCustomers, SearchCustomersRequest } from "../types/SearchCustomersRequest";
+import { filter, get, isEmpty, isNil, isObject, isUndefined, omit, omitBy } from "lodash"
+import { FiltersItems as FilterItemsEmployees, SearchEmployeesRequest  } from "../types/SearchEmployeesRequest";
+
 
 
 @injectable()
@@ -45,7 +47,7 @@ export class CreditService implements ICreditService {
         return of(1).pipe(
             mergeMap(() =>
                 this._mongodb.findDocuments(dbName, CollectionNameEnum.PRUEBA,
-                    this.buildSearchFiltersByCustomers(searchCustomerData.filtersItems),
+                    this._buildSearchFiltersByCustomers(searchCustomerData.filtersItems),
                     {
                         skip: salto,
                         limit: get(searchCustomerData, "pagination.limit", 0)
@@ -59,8 +61,35 @@ export class CreditService implements ICreditService {
         );
     }
 
+    public searchEmployees(
+        searchEmployeeData: SearchEmployeesRequest
+    ): Observable<Object> {
 
-    private buildSearchFiltersByCustomers(filters: FiltersItems): Filter<Document> {
+        const dbName: string = "admin";
+        const salto = (get(searchEmployeeData, "pagination.pageNumber", 1)) * get(searchEmployeeData, "pagination.limit", 0)
+
+        console.log("searchCustomer-searchEmployeeData: ", searchEmployeeData);
+        console.log("searchCustomer-salto: ", salto);
+        return of(1).pipe(
+            mergeMap(() =>
+                this._mongodb.findDocuments(dbName, CollectionNameEnum.EMPLOYEES_TEST,
+                    this._buildSearchFiltersByEmployees(searchEmployeeData.filtersItems),
+                    {
+                        skip: salto,
+                        limit: get(searchEmployeeData, "pagination.limit", 0)
+                    }
+                )
+            ),
+            map((dataResponse: { documents: Document[], totalDocuments: number }) => ({
+                total: dataResponse.totalDocuments,
+                records: dataResponse.documents
+            }))
+        );
+    }
+
+
+
+    private _buildSearchFiltersByCustomers(filters: FilterItemsCustomers): Filter<Document> {
         const queryFilter = {
             //status: get(searchCustomerData, "status", undefined),
             status: isEmpty(get(filters, "status", [])) ? undefined : {
@@ -74,10 +103,43 @@ export class CreditService implements ICreditService {
                 return isNil(value) || isUndefined(value) || (isObject(value) && isEmpty(value)) || value === "";
             }
         )
+
     }
+
+
+     private _buildSearchFiltersByEmployees(filters: FilterItemsEmployees): Filter<Document> {
+        console.log("buildSearchFiltersByEmployees-filters:", filters);
+        const queryFilter = {
+            //status: get(searchCustomerData, "status", undefined),
+            status: isEmpty(get(filters, "status", [])) ? undefined : {
+                $in: get(filters, "status", []),
+            },
+            creditorCompanyId: get(filters, "creditorCompanyId", undefined)
+        }
+        console.log("buildSearchFiltersByEmployees-queryFilter:", queryFilter);
+        return omitBy(queryFilter,
+            (value) => {
+                return isNil(value) || isUndefined(value) || (isObject(value) && isEmpty(value)) || value === "";
+            }
+        )
+
+    }
+
+
+
+
+
+
+
+
+
 
     /***
      * quicktype -s schema ./src/schema/search_customers_request.json --just-types --lang ts -o ./src/types/SearchCustomersRequest.ts
+     */
+
+    /***
+     * quicktype -s schema ./src/schema/search_employees_request.json --just-types --lang ts -o ./src/types/SearchEmployeesRequest.ts
      */
 
 }

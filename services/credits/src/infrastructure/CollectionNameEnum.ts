@@ -1,3 +1,4 @@
 export enum CollectionNameEnum{
-    PRUEBA = "prueba"
+    PRUEBA = "prueba",
+    EMPLOYEES_TEST = "employees_test",
 }
