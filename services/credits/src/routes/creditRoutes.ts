@@ -37,6 +37,8 @@ creditRouter.post("/searchCustomers", async ( req: Request <SearchCustomersReque
     
   try{
 
+    console.log("/searchCustomers-req.body: ", req.body);
+
     // 1. Llama al método que devuelve el Observable
     const result: Observable<Object> = creditService.searchCustomer(req.body);
 

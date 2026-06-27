@@ -1,11 +1,11 @@
-import { map, mergeMap, Observable, of } from "rxjs";
+import { map, mergeMap, Observable, of, throwError } from "rxjs";
 import { inject, injectable } from "inversify";
 import { IMongoGateway } from "../repository/IMongoGateway";
 import { TYPES } from "../constant/types";
 import { Document, Filter } from 'mongodb';
 import { ICreditService } from "../repository/ICreditService";
 import { CollectionNameEnum } from "../infrastructure/CollectionNameEnum";
-import { SearchCustomersRequest } from "../types/SearchCustomersRequest";
+import { FiltersItems, SearchCustomersRequest } from "../types/SearchCustomersRequest";
 import { get, isEmpty, isNil, isObject, isUndefined, omit, omitBy } from "lodash"
 
 
@@ -38,43 +38,46 @@ export class CreditService implements ICreditService {
     ): Observable<Object> {
 
         const dbName: string = "admin";
-        const salto = (get(searchCustomerData, "pagination.pageNumber", 1) -1) * get(searchCustomerData, "pagination.limit", 0)
+        const salto = (get(searchCustomerData, "pagination.pageNumber", 1)) * get(searchCustomerData, "pagination.limit", 0)
 
+        console.log("searchCustomer-searchCustomerData: ", searchCustomerData);
+        console.log("searchCustomer-salto: ", salto);
         return of(1).pipe(
             mergeMap(() =>
                 this._mongodb.findDocuments(dbName, CollectionNameEnum.PRUEBA,
-                    this.buildSearchFiltersByCustomers(searchCustomerData), 
+                    this.buildSearchFiltersByCustomers(searchCustomerData.filtersItems),
                     {
                         skip: salto,
                         limit: get(searchCustomerData, "pagination.limit", 0)
                     }
                 )
             ),
-            map((documents: Document[]) => ({
-                total: documents.length,
-                records: documents
+            map((dataResponse: { documents: Document[], totalDocuments: number }) => ({
+                total: dataResponse.totalDocuments,
+                records: dataResponse.documents
             }))
         );
     }
 
 
-    private buildSearchFiltersByCustomers(searchCustomerData: SearchCustomersRequest): Filter<Document> {
+    private buildSearchFiltersByCustomers(filters: FiltersItems): Filter<Document> {
         const queryFilter = {
             //status: get(searchCustomerData, "status", undefined),
-            status: { 
-                $in: get(searchCustomerData, "status",[]),
+            status: isEmpty(get(filters, "status", [])) ? undefined : {
+                $in: get(filters, "status", []),
             },
-            createdByEmployeeId: get(searchCustomerData, "createdByEmployeeId", undefined)
-
+            createdByEmployeeId: get(filters, "createdByEmployeeId", undefined)
         }
+        console.log("buildSearchFiltersByCustomers-queryFilter:", queryFilter);
         return omitBy(queryFilter,
             (value) => {
                 return isNil(value) || isUndefined(value) || (isObject(value) && isEmpty(value)) || value === "";
             }
         )
-
     }
 
+    /***
+     * quicktype -s schema ./src/schema/search_customers_request.json --just-types --lang ts -o ./src/types/SearchCustomersRequest.ts
+     */
 
-   
 }

@@ -5,14 +5,20 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "status": {
-      "type": "array",
-      "items": {
-        "type": "string"
+    "filtersItems": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "createdByEmployeeId": {
+          "type": "string"
+        }
       }
-    },
-    "createdByEmployeeId": {
-      "type": "string"
     },
     "pagination": {
       "type": "object",
@@ -32,8 +38,7 @@
     }
   },
   "required": [
-    "status",
-    "createdByEmployeeId",
+    "filtersItems",
     "pagination"
   ]
 }

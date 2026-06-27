@@ -1,7 +1,11 @@
 export interface SearchCustomersRequest {
-    createdByEmployeeId: string;
-    pagination:          Pagination;
-    status:              string[];
+    filtersItems: FiltersItems;
+    pagination:   Pagination;
+}
+
+export interface FiltersItems {
+    createdByEmployeeId?: string;
+    status?:              string[];
 }
 
 export interface Pagination {

@@ -20,7 +20,7 @@ export interface IMongoGateway {
     collectionName: string,
     queryfilter: Filter<Document>,
     options?: FindOptions
-  ): Observable<Document[]>;
+  ): Observable<{ documents: Document[], totalDocuments: number }>;
   /**
   * find multiple documents from collection based on a filter
   */
