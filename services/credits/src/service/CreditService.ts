@@ -7,7 +7,9 @@ import { ICreditService } from "../repository/ICreditService";
 import { CollectionNameEnum } from "../infrastructure/CollectionNameEnum";
 import { FiltersItems as FilterItemsCustomers, SearchCustomersRequest } from "../types/SearchCustomersRequest";
 import { filter, get, isEmpty, isNil, isObject, isUndefined, omit, omitBy } from "lodash"
-import { FiltersItems as FilterItemsEmployees, SearchEmployeesRequest  } from "../types/SearchEmployeesRequest";
+import { FiltersItems as FilterItemsEmployees, SearchEmployeesRequest } from "../types/SearchEmployeesRequest";
+import{FiltersItems as FilterItemsCredits, SearchCreditsRequest} from "../types/SearchCreditsRequest"
+
 
 
 
@@ -21,16 +23,28 @@ export class CreditService implements ICreditService {
         this._mongodb = mongodb;
     }
 
-    public searchCredits(): Observable<Object> {
-        const dbName: string = "admin";
+    public searchCredits(
+        searchCreditsData: SearchCreditsRequest
+    ): Observable<Object> {
 
+        const dbName: string = "admin";
+        const salto = (get(searchCreditsData, "pagination.pageNumber", 1)) * get(searchCreditsData, "pagination.limit", 0)
+
+        console.log("searchCredits-searchCreditsData: ", searchCreditsData);
+        console.log("searchCredits-salto: ", salto);
         return of(1).pipe(
             mergeMap(() =>
-                this._mongodb.findAllDocuments(dbName, CollectionNameEnum.PRUEBA)
+                this._mongodb.findDocuments(dbName, CollectionNameEnum.CREDITS_TEST,
+                    this._buildSearchFiltersByCredits(searchCreditsData.filtersItems),
+                    {
+                        skip: salto,
+                        limit: get(searchCreditsData, "pagination.limit", 0)
+                    }
+                )
             ),
-            map((documents: Document[]) => ({
-                total: documents.length,
-                records: documents
+            map((dataResponse: { documents: Document[], totalDocuments: number }) => ({
+                total: dataResponse.totalDocuments,
+                records: dataResponse.documents
             }))
         );
     }
@@ -107,7 +121,7 @@ export class CreditService implements ICreditService {
     }
 
 
-     private _buildSearchFiltersByEmployees(filters: FilterItemsEmployees): Filter<Document> {
+    private _buildSearchFiltersByEmployees(filters: FilterItemsEmployees): Filter<Document> {
         console.log("buildSearchFiltersByEmployees-filters:", filters);
         const queryFilter = {
             //status: get(searchCustomerData, "status", undefined),
@@ -126,10 +140,23 @@ export class CreditService implements ICreditService {
     }
 
 
+    private _buildSearchFiltersByCredits(filters: FilterItemsCredits): Filter<Document> {
+        console.log("buildSearchFiltersByCredits-filters:", filters);
+        const queryFilter = {
+            //status: get(searchCreditsData, "status", undefined),
+            status: isEmpty(get(filters, "status", [])) ? undefined : {
+                $in: get(filters, "status", []),
+            },
+            creditorCompanyId: get(filters, "creditorCompanyId", undefined)
+        }
+        console.log("buildSearchFiltersByEmployees-queryFilter:", queryFilter);
+        return omitBy(queryFilter,
+            (value) => {
+                return isNil(value) || isUndefined(value) || (isObject(value) && isEmpty(value)) || value === "";
+            }
+        )
 
-
-
-
+    }
 
 
 
@@ -140,6 +167,8 @@ export class CreditService implements ICreditService {
 
     /***
      * quicktype -s schema ./src/schema/search_employees_request.json --just-types --lang ts -o ./src/types/SearchEmployeesRequest.ts
+     * quicktype -s schema ./src/schema/search_transactions.request.json --just-types --lang ts -o ./src/types/SearchTransactionsRequest.ts
+     * quicktype -s schema ./src/schema/credit_table.json --just-types --lang ts -o ./src/types/CreditTable.ts
      */
 
 }

@@ -1,8 +1,11 @@
 import { Observable } from 'rxjs';
+import { SearchTransactionsRequest } from '../types/SearchTransactionsRequest';
 
 export interface ITransactionService {
-    /**
-      * test auth funtion
-      */
-    searchTransactions(): Observable<Object>
+  /**
+    * Search Transactions by fields filters  
+    */
+  searchTransactions(
+    searchTransactionData: SearchTransactionsRequest
+  ): Observable<Object>
 }

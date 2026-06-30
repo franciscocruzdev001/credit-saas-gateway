@@ -1,12 +1,15 @@
 import { Observable } from 'rxjs';
 import { SearchCustomersRequest } from '../types/SearchCustomersRequest';
 import { SearchEmployeesRequest } from '../types/SearchEmployeesRequest';
+import { SearchCreditsRequest } from '../types/SearchCreditsRequest';
 
 export interface ICreditService {
   /**
-    * test auth funtion
+    *  Search credits by fields filters 
     */
-  searchCredits(): Observable<Object>
+  searchCredits(
+    searchCreditsData: SearchCreditsRequest
+  ): Observable<Object>
   /**
     * Search customers by fields filters 
     */

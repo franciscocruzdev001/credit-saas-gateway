@@ -1,4 +1,4 @@
-import { from, map, mergeMap, Observable, of, switchMap } from "rxjs";
+import { forkJoin, from, map, mergeMap, Observable, of, switchMap } from "rxjs";
 import { IMongoGateway } from "../repository/IMongoGateway";
 import { 
     Filter,
@@ -9,7 +9,8 @@ import {
     Document,
     UpdateFilter,
     UpdateResult,
-    DeleteResult
+    DeleteResult,
+    Collection
 } from "mongodb";
 
 export class MongoGateway implements IMongoGateway {
@@ -63,18 +64,25 @@ export class MongoGateway implements IMongoGateway {
         collectionName: string,
         queryfilter: Filter<Document>,
         options?: FindOptions
-    ): Observable<Document[]> {
+    ): Observable<{ documents: Document[], totalDocuments: number }> {
         return of(true).pipe(
             mergeMap(() => this._getClient()),
-            switchMap((mongoClient: MongoClient) =>
-                from(
-                    mongoClient.
-                        db(dbName).
-                        collection<Document>(collectionName).
-                        find(queryfilter, options).
-                        toArray()
-                )
-            )
+            map((mongoClient: MongoClient) =>
+                mongoClient.
+                    db(dbName).
+                    collection<Document>(collectionName)
+            ),
+            switchMap((collection: Collection<Document>) => {
+
+                return forkJoin({
+                    documents: from(
+                        collection.
+                            find(queryfilter, options).
+                            toArray()
+                    ),
+                    totalDocuments: collection.countDocuments(queryfilter)
+                })
+            }),
         );
     }
 
