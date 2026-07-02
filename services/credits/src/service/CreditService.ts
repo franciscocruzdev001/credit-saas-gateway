@@ -169,6 +169,9 @@ export class CreditService implements ICreditService {
      * quicktype -s schema ./src/schema/search_employees_request.json --just-types --lang ts -o ./src/types/SearchEmployeesRequest.ts
      * quicktype -s schema ./src/schema/search_transactions.request.json --just-types --lang ts -o ./src/types/SearchTransactionsRequest.ts
      * quicktype -s schema ./src/schema/credit_table.json --just-types --lang ts -o ./src/types/CreditTable.ts
+     * 
+     * quicktype -s schema ./src/schema/search_credits_request.json --just-types --lang ts -o ./src/types/SearchCreditsRequest.ts
+     *  quicktype -s schema ./src/schema/search_transactions --just-types --lang ts -o ./src/types/SearchCreditsRequest.ts
      */
 
 }

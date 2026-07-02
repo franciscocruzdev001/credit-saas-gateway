@@ -1,10 +1,14 @@
 
 import express, { Application }  from "express";
 import { transactionRouter } from "./routes/transactionRoutes";
+import cors from "cors";
 
 const app: Application = express();
 const PORT = process.env.PORT || 4003;
 
+
+//habilita el cors 
+app.use(cors());
 
 // Built-in middleware to parse JSON bodies
 app.use(express.json());
