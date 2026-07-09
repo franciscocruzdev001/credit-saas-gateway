@@ -57,20 +57,12 @@ export class TransactionService implements ITransactionService {
         }
         console.log("buildSearchFiltersByTransactions-queryFilter:", queryFilter);
         return omitBy(queryFilter,
-            (value) => {
+            (value: any) => {
                 return isNil(value) || isUndefined(value) || (isObject(value) && isEmpty(value)) || value === "";
-
-
             }
         )
 
     }
-
-
-
-
-
-
 }
 
 

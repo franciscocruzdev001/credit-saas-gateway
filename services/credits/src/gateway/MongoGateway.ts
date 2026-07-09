@@ -73,7 +73,6 @@ export class MongoGateway implements IMongoGateway {
                     collection<Document>(collectionName)
             ),
             switchMap((collection: Collection<Document>) => {
-
                 return forkJoin({
                     documents: from(
                         collection.

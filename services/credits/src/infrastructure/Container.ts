@@ -14,4 +14,8 @@ containerApp.bind<ICreditService>(TYPES.CreditService).to(CreditService);
 //Gateway
 containerApp.bind<IMongoGateway>(TYPES.MongoGateway).to(MongoGateway);
 
+
+//Mongo Models
+
+
 export { containerApp }
