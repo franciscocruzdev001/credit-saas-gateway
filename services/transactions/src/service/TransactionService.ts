@@ -7,15 +7,20 @@ import { ITransactionService } from "../repository/ITransactionService";
 import { CollectionNameEnum } from "../infrastructure/CollectionNameEnum";
 import { get, isEmpty, isNil, isObject, isUndefined, omitBy } from "lodash";
 import{FiltersItems as FilterItemsTransactions, SearchTransactionsRequest} from "../types/SearchTransactionsRequest"
+import { TransactionMongoModel } from "../gateway/TransactionMongoModel";
 
 @injectable()
 export class TransactionService implements ITransactionService {
     private readonly _mongodb: IMongoGateway;
+    private readonly _transactionMongoModel: TransactionMongoModel;
 
     constructor(
-        @inject(TYPES.MongoGateway) mongodb: IMongoGateway
+        @inject(TYPES.MongoGateway) mongodb: IMongoGateway,
+        @inject(TYPES.TransactionMongoModel) transactionMongoModel:TransactionMongoModel,
+
     ) {
         this._mongodb = mongodb;
+        this._transactionMongoModel = transactionMongoModel;
     }
 
    public searchTransactions(

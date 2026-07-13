@@ -1,5 +1,5 @@
 import { InferSchemaType, model, Schema } from "mongoose";
-
+import { CollectionNameEnum } from "../../infrastructure/CollectionNameEnum";
 // 1. Define your Mongoose Schema
 const transactionsSchema = new Schema({
     transactionType: { type: String },
@@ -25,4 +25,4 @@ const transactionsSchema = new Schema({
 // 2. Automatically generate/infer the TypeScript interface/type
 export type ITransactions = InferSchemaType<typeof transactionsSchema>;
 
-export const TransactionsModel = model<ITransactions>('Transactions', transactionsSchema);
+export const TransactionsModel = model<ITransactions>(CollectionNameEnum.TRANSACTIONS,transactionsSchema);
