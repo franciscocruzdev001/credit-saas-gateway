@@ -34,7 +34,7 @@ export class TransactionService implements ITransactionService {
         console.log("searchCredits-salto: ", salto);
         return of(1).pipe(
             mergeMap(() =>
-                this._mongodb.findDocuments(dbName, CollectionNameEnum.TRANSACTION_TEST,
+                this._transactionMongoModel.findDocuments(
                     this._buildSearchFiltersByTransactions(searchTransactionData.filtersItems),
                     {
                         skip: salto,
