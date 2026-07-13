@@ -8,6 +8,7 @@ import { Document } from 'mongodb';
 @injectable()
 export class AuthorizerService implements IAuthorizerService {
     private readonly _mongodb: IMongoGateway;
+    
 
     constructor(
         @inject(TYPES.MongoGateway) mongodb: IMongoGateway

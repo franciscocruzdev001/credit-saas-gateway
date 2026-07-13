@@ -1,4 +1,5 @@
 import { InferSchemaType, model, Schema } from "mongoose";
+import { CollectionNameEnum } from "../../infrastructure/CollectionNameEnum";
 
 // 1. Define your Mongoose Schema
 const usersSchema = new Schema({
@@ -21,4 +22,4 @@ const usersSchema = new Schema({
 // 2. Automatically generate/infer the TypeScript interface/type
 export type IUsers = InferSchemaType<typeof usersSchema>;
 
-export const UsersModel = model<IUsers>('Users', usersSchema);
+export const UsersModel = model<IUsers>(CollectionNameEnum.USERS, usersSchema);
