@@ -5,6 +5,10 @@ import { SearchCreditsRequest } from '../types/SearchCreditsRequest';
 
 export interface ICreditService {
   /**
+   * Create credit 
+   */
+  
+  /**
     *  Search credits by fields filters 
     */
   searchCredits(

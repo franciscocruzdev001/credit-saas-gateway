@@ -1,4 +1,5 @@
 import { InferSchemaType, model, Schema } from "mongoose";
+import { CollectionNameEnum } from "../../infrastructure/CollectionNameEnum";
 
 // 1. Define your Mongoose Schema
 const creditsSchema = new Schema({
@@ -27,4 +28,4 @@ const creditsSchema = new Schema({
 export type ICredits = InferSchemaType<typeof creditsSchema>;
 
 
-export const CreditsModel = model<ICredits>('Credits', creditsSchema);
+export const CreditsModel = model<ICredits>(CollectionNameEnum.CREDITS, creditsSchema);

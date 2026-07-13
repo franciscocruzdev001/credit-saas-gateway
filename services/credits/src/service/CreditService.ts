@@ -8,7 +8,8 @@ import { CollectionNameEnum } from "../infrastructure/CollectionNameEnum";
 import { FiltersItems as FilterItemsCustomers, SearchCustomersRequest } from "../types/SearchCustomersRequest";
 import { filter, get, isEmpty, isNil, isObject, isUndefined, omit, omitBy } from "lodash"
 import { FiltersItems as FilterItemsEmployees, SearchEmployeesRequest } from "../types/SearchEmployeesRequest";
-import{FiltersItems as FilterItemsCredits, SearchCreditsRequest} from "../types/SearchCreditsRequest"
+import { FiltersItems as FilterItemsCredits, SearchCreditsRequest } from "../types/SearchCreditsRequest"
+import { CreditMongoModel } from "../gateway/CreditMongoModel";
 
 
 
@@ -16,11 +17,14 @@ import{FiltersItems as FilterItemsCredits, SearchCreditsRequest} from "../types/
 @injectable()
 export class CreditService implements ICreditService {
     private readonly _mongodb: IMongoGateway;
+    private readonly _creditMongoModel: CreditMongoModel;
 
     constructor(
-        @inject(TYPES.MongoGateway) mongodb: IMongoGateway
+        @inject(TYPES.MongoGateway) mongodb: IMongoGateway,
+        @inject(TYPES.CreditMongoModel) creditMongoModel: CreditMongoModel,
     ) {
         this._mongodb = mongodb;
+        this._creditMongoModel = creditMongoModel;
     }
 
     public searchCredits(
@@ -41,6 +45,13 @@ export class CreditService implements ICreditService {
                         limit: get(searchCreditsData, "pagination.limit", 0)
                     }
                 )
+                /*this._creditMongoModel.findDocuments(
+                    this._buildSearchFiltersByCredits(searchCreditsData.filtersItems),
+                    {
+                        skip: salto,
+                        limit: get(searchCreditsData, "pagination.limit", 0)
+                    }
+                )*/
             ),
             map((dataResponse: { documents: Document[], totalDocuments: number }) => ({
                 total: dataResponse.totalDocuments,
@@ -101,8 +112,6 @@ export class CreditService implements ICreditService {
         );
     }
 
-
-
     private _buildSearchFiltersByCustomers(filters: FilterItemsCustomers): Filter<Document> {
         const queryFilter = {
             //status: get(searchCustomerData, "status", undefined),
@@ -119,7 +128,6 @@ export class CreditService implements ICreditService {
         )
 
     }
-
 
     private _buildSearchFiltersByEmployees(filters: FilterItemsEmployees): Filter<Document> {
         console.log("buildSearchFiltersByEmployees-filters:", filters);
@@ -138,7 +146,6 @@ export class CreditService implements ICreditService {
         )
 
     }
-
 
     private _buildSearchFiltersByCredits(filters: FilterItemsCredits): Filter<Document> {
         console.log("buildSearchFiltersByCredits-filters:", filters);
