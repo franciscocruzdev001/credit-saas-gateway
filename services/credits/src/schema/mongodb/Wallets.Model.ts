@@ -1,4 +1,5 @@
 import { InferSchemaType, model, Schema } from "mongoose";
+import { CollectionNameEnum } from "../../infrastructure/CollectionNameEnum";
 
 // 1. Define your Mongoose Schema
 const walletsSchema = new Schema({
@@ -12,4 +13,4 @@ const walletsSchema = new Schema({
 // 2. Automatically generate/infer the TypeScript interface/type
 export type IWallets = InferSchemaType<typeof walletsSchema>;
 
-export const WalletsModel = model<IWallets>('Wallets', walletsSchema);
+export const WalletsModel = model<IWallets>(CollectionNameEnum.WALLETS, walletsSchema);

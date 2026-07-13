@@ -5,9 +5,9 @@ import { AuthorizerService } from "../service/AuthorizerService";
 import { Db } from "mongodb";
 import { IMongoGateway } from "../repository/IMongoGateway";
 import { MongoGateway } from "../gateway/MongoGateway";
-import { ChargeReportLogsModel } from "../schema/mongodb/ChargeReportLogsModel";
-import { CreditorCompaniesModel } from "../schema/mongodb/CreditorCompaniesModel";
-import { UsersModel } from "../schema/mongodb/UsersModel";
+import { UsersMongoModel } from "../gateway/UsersMongoModel";
+import { ChargeReportLogsMongoModel } from "../gateway/ChargeReportLogsMongoModel";
+import { CreditorCompaniesMongoModel } from "../gateway/CreditorCompaniesMongoModel";
 
 const containerApp: Container = new Container();
 
@@ -15,9 +15,9 @@ const containerApp: Container = new Container();
 containerApp.bind<IAuthorizerService>(TYPES.AuthorizerService).to(AuthorizerService);
 
 //MongoModels
-containerApp.bind(TYPES.ChargeReportLogsMongoModel).to(ChargeReportLogsModel);
-containerApp.bind(TYPES.CreditorCompaniesMongoModel).to(CreditorCompaniesModel);
-containerApp.bind(TYPES.UsersMongoModel).to(UsersModel);
+containerApp.bind(TYPES.ChargeReportLogsMongoModel).to(ChargeReportLogsMongoModel);
+containerApp.bind(TYPES.CreditorCompaniesMongoModel).to(CreditorCompaniesMongoModel);
+containerApp.bind(TYPES.UsersMongoModel).to(UsersMongoModel);
 
 //Gateway
 containerApp.bind<IMongoGateway>(TYPES.MongoGateway).to(MongoGateway);
