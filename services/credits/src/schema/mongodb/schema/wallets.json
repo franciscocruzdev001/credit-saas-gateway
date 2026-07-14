@@ -1,0 +1,27 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://Wallets",
+    "title": "Wallets",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "created": {
+            "type": "number"
+        },
+        "accountNumber": {
+            "type": "string"
+        },
+        "status": {
+            "type": "string"
+        },
+        "userId": {
+            "type": "string"
+        },
+        "totalAmount": {
+            "type": "number"
+        },
+        "customerId": {
+            "type": "string"
+        }
+    }
+}

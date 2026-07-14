@@ -1,0 +1,44 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://CreditorCompanies",
+    "title": "CreditorCompanies",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "created": {
+            "type": "number"
+        },
+        "companyName": {
+            "type": "string"
+        },
+        "socialReason": {
+            "type": "string"
+        },
+        "phoneNumber": {
+            "type": "string"
+        },
+        "email": {
+            "type": "string"
+        },
+        "chargeRules": {
+            "type": "array",
+            "items": {
+                "title": "object",
+                "properties": {
+                    "chargeFrequency": {
+                        "type": "string"
+                    },
+                    "chargePeriods": {
+                        "type": "string"
+                    },
+                    "renovationPeriod": {
+                        "type": "number"
+                    },
+                    "comissionRate": {
+                        "type": "number"
+                    }
+                }
+            }
+        }
+    }
+}

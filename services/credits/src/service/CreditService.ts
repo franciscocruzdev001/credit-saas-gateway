@@ -177,5 +177,12 @@ export class CreditService implements ICreditService {
      * quicktype -s schema ./src/schema/search_transactions --just-types --lang ts -o ./src/types/SearchCreditsRequest.ts
      * quicktype -s schema ./src/schema/credits.json --just-types --lang ts -o ./src/types/Credits.ts
      * quicktype -s schema ./src/schema/mongodb/schema/users.json --just-types --lang ts -o ./src/types/Users.ts
+     * quicktype -s schema ./src/schema/mongodb/schema/charge_report_logs_.json --just-types --lang ts -o ./src/types/ChargeReportLogsts.ts
+     * quicktype -s schema ./src/schema/mongodb/schema/creditor_companies.json --just-types --lang ts -o ./src/types/CreditorCompanies.ts
+     * quicktype -s schema ./src/schema/mongodb/schema/credits.json --just-types --lang ts -o ./src/types/Credits.ts
+     * quicktype -s schema ./src/schema/mongodb/schema/customers.json --just-types --lang ts -o ./src/types/Customers.ts
+     * quicktype -s schema ./src/schema/mongodb/schema/late_payment_feeLogs.json --just-types --lang ts -o ./src/types/LatePaymentFeelogs.ts
+     * quicktype -s schema ./src/schema/mongodb/schema/wallets.json --just-types --lang ts -o ./src/types/Wallets.ts
+     * quicktype -s schema ./src/schema/mongodb/schema/transactions.json --just-types --lang ts -o ./src/types/Transactions.ts
      */
 }

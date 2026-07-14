@@ -1,0 +1,34 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://ChargeReportLogs",
+    "title": "ChargeReportLogs",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "created": {
+            "type": "number"
+        },
+        "chargeFrequency": {
+            "type": "string"
+        },
+        "amountCharged": {
+            "type": "number"
+        },
+        "amountReceivable": {
+            "type": "number"
+        },
+        "approvedTrasactions": {
+            "type": "number"
+        },
+        "creditorCompanyId": {
+            "type": "string"
+        },
+        "userId": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "creditorCompanyId",
+        "userId"
+    ]
+}

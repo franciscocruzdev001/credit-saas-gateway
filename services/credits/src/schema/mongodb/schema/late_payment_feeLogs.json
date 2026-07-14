@@ -1,0 +1,21 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://LatePaymentFeeLogs",
+    "title": "LatePaymentFeeLogs",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "crated": {
+            "type": "string"
+        },
+        "chargeReportLogsDate": {
+            "type": "number"
+        },
+        "creditId": {
+            "type": "number"
+        }
+    },
+    "required": [
+        "creditId"
+    ]
+}

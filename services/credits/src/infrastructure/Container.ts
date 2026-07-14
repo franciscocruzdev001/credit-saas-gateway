@@ -10,7 +10,7 @@ import { ICredits } from "../schema/mongodb/models/CreditsModel";
 import { CreditMongoModel } from "../gateway/CreditMongoModel";
 import { ICustomers } from "../schema/mongodb/models/Customers.Model";
 import { CustomersMongoModel } from "../gateway/CutomersMongoModel";
-import { ILatePaymentFeeLogs } from "../schema/mongodb/models/latePaymentFeeLogs.Model";
+import { ILatePaymentFeeLogs } from "../schema/mongodb/models/LatePaymentFeeLogs.Model";
 import { LatePaymentFeeLogsMongoModel } from "../gateway/LatePaymentFeeLogsMongoModel";
 import { IPayments } from "../schema/mongodb/models/Payments.Model";
 import { PaymentsMongoModel } from "../gateway/PaymentsMongoModel";
