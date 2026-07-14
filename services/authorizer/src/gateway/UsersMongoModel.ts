@@ -1,5 +1,5 @@
 import { injectable } from "inversify";
-import { UsersModel, IUsers } from "../schema/mongodb/UsersModel"
+import { UsersModel, IUsers } from "../schema/mongodb/models/UsersModel"
 import { BaseMongoModel } from "./BaseMongoModel";
 
 @injectable()

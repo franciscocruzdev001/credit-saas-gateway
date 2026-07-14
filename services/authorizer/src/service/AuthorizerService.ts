@@ -36,4 +36,10 @@ export class AuthorizerService implements IAuthorizerService {
             }))
         );
     }
+
+    public createUser(): Observable<boolean> {
+        return of(1).pipe(
+            map(() => true)
+        );
+    }
 }

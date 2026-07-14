@@ -1,5 +1,5 @@
 import { injectable } from "inversify";
-import { LatePaymentFeeLogsModel, ILatePaymentFeeLogs } from "../schema/mongodb/LatePaymentFeeLogs.Model";
+import { LatePaymentFeeLogsModel, ILatePaymentFeeLogs } from "../schema/mongodb/models/latePaymentFeeLogs.Model";
 import { BaseMongoModel } from "./BaseMongoModel";
 
 @injectable()

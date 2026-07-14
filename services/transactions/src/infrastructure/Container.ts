@@ -5,7 +5,7 @@ import { MongoGateway } from "../gateway/MongoGateway";
 import { ITransactionService } from "../repository/ITransactionService";
 import { TransactionService } from "../service/TransactionService";
 import { IBaseMongoModel } from "../repository/IBaseMongoModel";
-import { ITransactions } from "../schema/mongodb/TransactionsModel"
+import { ITransactions } from "../schema/mongodb/models/TransactionsModel"
 import { TransactionMongoModel } from "../gateway/TransactionMongoModel";
 
 const containerApp: Container = new Container();

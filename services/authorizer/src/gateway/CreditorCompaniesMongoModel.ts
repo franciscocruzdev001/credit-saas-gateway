@@ -1,5 +1,5 @@
 import { injectable } from "inversify";
-import { CreditorCompaniesModel, ICreditorCompanies } from "../schema/mongodb/CreditorCompaniesModel"
+import { CreditorCompaniesModel, ICreditorCompanies } from "../schema/mongodb/models/CreditorCompaniesModel"
 import { BaseMongoModel } from "./BaseMongoModel";
 
 @injectable()

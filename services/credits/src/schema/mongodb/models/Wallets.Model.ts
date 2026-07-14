@@ -1,5 +1,5 @@
 import { InferSchemaType, model, Schema } from "mongoose";
-import { CollectionNameEnum } from "../../infrastructure/CollectionNameEnum";
+import { CollectionNameEnum } from "../../../infrastructure/CollectionNameEnum";
 
 // 1. Define your Mongoose Schema
 const walletsSchema = new Schema({
