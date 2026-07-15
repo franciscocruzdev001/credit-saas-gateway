@@ -50,6 +50,10 @@
         }
     },
     "required": [
+        "userName",
+        "email",
+        "password",
+        "roles",
         "creditorCompanyId"
     ]
 }

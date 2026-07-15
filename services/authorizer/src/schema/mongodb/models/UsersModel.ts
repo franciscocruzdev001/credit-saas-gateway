@@ -1,13 +1,14 @@
 import { InferSchemaType, model, Schema } from "mongoose";
 import { CollectionNameEnum } from "../../../infrastructure/CollectionNameEnum";
+import { UserStatusEnum } from "../../../infrastructure/UserStatusEnum";
 
 // 1. Define your Mongoose Schema
 const usersSchema = new Schema({
-    userName: { type: String },
-    email: { type: String },
-    password: { type: String },
+    userName: { type: String, required: true },
+    email: { type: String, required: true },
+    password: { type: String, required: true },
     roles: [{ type: String }],
-    status: { type: String, enum: ["CHARGE-PROCESS", "SLOW-PAY", "PAID", "RESTRUCTURED"], default: "CHARGE-PROCESS" },
+    status: { type: String, enum: [UserStatusEnum.ACTIVE, UserStatusEnum.INACTIVE], default: UserStatusEnum.ACTIVE },
     contact: {
         type: new Schema({
             name: { type: String },

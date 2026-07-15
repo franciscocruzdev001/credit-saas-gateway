@@ -2,7 +2,6 @@ import { injectable, unmanaged } from 'inversify';
 import { Model, UpdateQuery, AnyObject, QueryOptions, QueryFilter, HydratedDocument } from 'mongoose';
 import { IBaseMongoModel } from '../repository/IBaseMongoModel';
 import { forkJoin, from, map, mergeMap, Observable, of, switchMap } from 'rxjs';
-import { merge } from 'lodash';
 
 @injectable()
 export abstract class BaseMongoModel<T> implements IBaseMongoModel<T> {

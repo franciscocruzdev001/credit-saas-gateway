@@ -2,11 +2,11 @@ export interface Users {
     contact?:          Contact;
     created?:          number;
     creditorCompanyId: string;
-    email?:            string;
-    password?:         string;
-    roles?:            string[];
+    email:             string;
+    password:          string;
+    roles:             string[];
     status?:           string;
-    userName?:         string;
+    userName:          string;
 }
 
 export interface Contact {

@@ -1,4 +1,5 @@
 import { Observable } from 'rxjs';
+import { Users } from '../types/Users';
 
 export interface IAuthorizerService {
   /**
@@ -12,5 +13,5 @@ export interface IAuthorizerService {
   /**
     * Create user with rol and contact information
     */
-  createUser(): Observable<boolean>
+  createUser(userData: Users): Observable<boolean>
 }

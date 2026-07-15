@@ -1,6 +1,6 @@
 import { injectable } from "inversify";
-import { ChargeReportLogsModel, IChargeReportLogs } from "../schema/mongodb/ChargeReportLogsModel"
 import { BaseMongoModel } from "./BaseMongoModel";
+import { ChargeReportLogsModel, IChargeReportLogs } from "../schema/mongodb/models/ChargeReportLogsModel";
 
 @injectable()
 export class ChargeReportLogsMongoModel extends BaseMongoModel<IChargeReportLogs> {
