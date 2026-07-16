@@ -65,7 +65,7 @@ export class AuthorizerService implements IAuthorizerService {
             updatedAt: new Date(),
             userName: get(userData, "userName", ""),
             email: get(userData, "email", ""),
-            password: get(userData, "email", ""),
+            password: get(userData, "password", ""),
             roles: get(userData, "roles", []),
             status: get(userData, "status", UserStatusEnum.ACTIVE) as UserStatusEnum,
             creditorCompanyId: new Types.ObjectId(get(userData, "creditorCompanyId", ""))

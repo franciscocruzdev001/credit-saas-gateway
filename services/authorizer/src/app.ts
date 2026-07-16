@@ -11,6 +11,7 @@ app.use(express.json());
 // Mount the router at your chosen base path prefix
 app.use('/authorizer', authRouter);
 
+
 //authorizer fetched.
 // Root fallback path
 app.get("/", (_:any, res:any) => {
