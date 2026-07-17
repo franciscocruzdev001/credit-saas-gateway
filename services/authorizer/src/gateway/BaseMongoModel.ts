@@ -1,15 +1,39 @@
 import { injectable, unmanaged } from 'inversify';
-import { Model, UpdateQuery, AnyObject, QueryOptions, QueryFilter, HydratedDocument } from 'mongoose';
+import mongoose, { Model, UpdateQuery, QueryOptions, QueryFilter, HydratedDocument, connection, connect } from 'mongoose';
 import { IBaseMongoModel } from '../repository/IBaseMongoModel';
-import { forkJoin, from, map, mergeMap, Observable, of, switchMap } from 'rxjs';
+import { catchError, forkJoin, from, map, mergeMap, Observable, of, switchMap } from 'rxjs';
 
 @injectable()
 export abstract class BaseMongoModel<T> implements IBaseMongoModel<T> {
     protected model: Model<T>;
+    private _uri = "mongodb://localhost:27017/admin";
+    private _instanceMongoose: typeof mongoose | null = null;
 
     // Utilizamos @unmanaged() si el modelo lo provee la subclase constructora
     constructor(@unmanaged() model: Model<T>) {
         this.model = model;
+        if (this._instanceMongoose === null) {
+            this._connect().subscribe();
+        }
+    }
+
+    private _connect(): Observable<boolean> {
+        // Monitor connection states
+        connection.on("connected", () => console.log("🌱 MongoDB Connected Successfully"));
+        connection.on("error", (err) => console.error("❌ MongoDB Error:", err));
+        console.log("BaseMongoModel _connect...");
+        return of(true).pipe(
+            mergeMap(() =>
+                connect(this._uri)
+            ),
+            catchError((err, caught) => caught),
+            map((instance: typeof mongoose) => {
+                //console.log("BaseMongoModel instance: ", instance);
+                this._instanceMongoose = instance;
+
+                return instance !== null ? true : false
+            })
+        );
     }
 
     public findAllDocuments(): Observable<{
