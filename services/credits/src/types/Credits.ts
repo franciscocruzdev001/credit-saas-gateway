@@ -1,6 +1,6 @@
 export interface Credits {
     admissionDate?:            number;
-    chargeRules?:              Object;
+    chargeRules?:              ChargeRules;
     created?:                  number;
     creditAmount?:             number;
     creditAmountWithMoratory?: number;
@@ -17,10 +17,9 @@ export interface Credits {
     userId:                 string;
 }
 
-export interface Object {
+export interface ChargeRules {
     chargeFrequency?:  string;
     chargePeriods?:    number;
     comissionRate?:    number;
     renovationPeriod?: number;
-    [property: string]: any;
 }

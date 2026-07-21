@@ -16,7 +16,8 @@
         },
         "contact": {
             "type": "object",
-            "title": "object",
+            "title": "Contact",
+            "additionalProperties": false,
             "properties": {
                 "name": {
                     "type": "string"
@@ -41,6 +42,8 @@
     },
     "required": [
         "creditorCompanyId",
-        "userId"
+        "userId",
+        "threeWordsUbication",
+        "contact"
     ]
 }

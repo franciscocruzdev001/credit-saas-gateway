@@ -32,7 +32,8 @@
         },
         "chargeRules": {
             "type": "object",
-            "title": "object",
+            "title": "ChargeRules",
+            "additionalProperties": false,
             "properties": {
                 "chargeFrequency": {
                     "type": "string"

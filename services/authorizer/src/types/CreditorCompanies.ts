@@ -1,5 +1,5 @@
 export interface CreditorCompanies {
-    chargeRules?:  Array<any[] | boolean | number | number | null | ObjectObject | string>;
+    chargeRules?:  ChargeRules[];
     companyName?:  string;
     created?:      number;
     email?:        string;
@@ -7,10 +7,9 @@ export interface CreditorCompanies {
     socialReason?: string;
 }
 
-export interface ObjectObject {
+export interface ChargeRules {
     chargeFrequency?:  string;
     chargePeriods?:    string;
     comissionRate?:    number;
     renovationPeriod?: number;
-    [property: string]: any;
 }
