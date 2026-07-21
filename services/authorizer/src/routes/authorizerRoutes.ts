@@ -49,7 +49,7 @@ authRouter.post("/createUser", async (req: Request<Users>, res: Response) => {
     // 2. Convierte el Observable a Promesa y espera el primer valor emitido
     const datos = await firstValueFrom(
       result.pipe(
-        map((respuesta) => ({ mensaje: 'Datos obtenidos', data: respuesta }))
+        map((respuesta) => ({ mensaje: 'create user', data: respuesta }))
       )
     );
 
