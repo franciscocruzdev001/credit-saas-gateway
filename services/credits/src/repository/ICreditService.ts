@@ -24,9 +24,6 @@ export interface ICreditService {
   /**
     * Search Employees by fields filters 
     */
-  searchEmployees(
-    searchEmployeeData: SearchEmployeesRequest
-  ): Observable<Object>
 
 
 }

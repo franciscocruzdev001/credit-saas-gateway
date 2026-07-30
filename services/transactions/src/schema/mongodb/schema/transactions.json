@@ -28,7 +28,8 @@
         },
         "sourceAccount": {
             "type": "object",
-            "title": "object",
+            "title": "SourceAccount",
+            "additionalProperties": false,
             "required": [
                 "walletId"
             ],
@@ -43,7 +44,8 @@
         },
         "destinationAccount": {
             "type": "object",
-            "title": "object",
+            "title": "DestinationAccount",
+            "additionalProperties": false,
             "required": [
                 "walletId"
             ],

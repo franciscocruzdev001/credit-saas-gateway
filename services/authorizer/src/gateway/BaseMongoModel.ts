@@ -65,7 +65,7 @@ export abstract class BaseMongoModel<T> implements IBaseMongoModel<T> {
                 return forkJoin({
                     documents: from(
                         this.model.
-                            find(queryfilter, options).
+                            find(queryfilter,undefined, options).
                             exec()
                     ),
                     totalDocuments: this.model.countDocuments(queryfilter)

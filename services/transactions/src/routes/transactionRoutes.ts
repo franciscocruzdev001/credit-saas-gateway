@@ -9,11 +9,11 @@ export const transactionRouter: Router = Router();
 const transactionService = containerApp.get<ITransactionService>(TYPES.TransactionService);
 
 // POST endpoint with explicit types for parameters
-transactionRouter.post("/SearchTransactions", async (req: Request<SearchTransactionsRequest>, res: Response) => {
+transactionRouter.post("/searchTransactions", async (req: Request<SearchTransactionsRequest>, res: Response) => {
 
   if (req.body === undefined || req.body == null) res.status(500).json({ error: 'La solicitud no cuenta con los parametros solicitados' });
   try {
-    console.log("/searchCredits-req.body: ", req.body);
+    console.log("/searchTransactions-req.body: ", req.body);
 
     // 1. Llama al método que devuelve el Observable
     const result: Observable<Object> = transactionService.searchTransactions(req.body);

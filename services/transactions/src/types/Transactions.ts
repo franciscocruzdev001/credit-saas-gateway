@@ -3,21 +3,19 @@ export interface Transactions {
     creditIdSource?:     string;
     currency?:           string;
     description?:        string;
-    destinationAccount?: DestinationAccountObject;
-    sourceAccount?:      SourceAccountObject;
+    destinationAccount?: DestinationAccount;
+    sourceAccount?:      SourceAccount;
     status?:             string;
     total?:              number;
     transactionType?:    string;
 }
 
-export interface DestinationAccountObject {
+export interface DestinationAccount {
     accountNumber?: string;
     walletId:       string;
-    [property: string]: any;
 }
 
-export interface SourceAccountObject {
+export interface SourceAccount {
     accountNumber?: string;
     walletId:       string;
-    [property: string]: any;
 }

@@ -6,6 +6,7 @@ import { firstValueFrom, map, Observable } from "rxjs";
 import { Users } from "../types/Users";
 import { ChargeReportLogs } from "../types/ChargeReportLogs";
 import { CreditorCompanies } from "../types/CreditorCompanies";
+import { SearchEmployeesRequest } from "../types/SearchEmployeesRequest";
 
 export const authRouter: Router = Router();
 
@@ -119,6 +120,36 @@ authRouter.post("/createCreditorCompanies", async (req: Request<CreditorCompanie
     res.status(500).json({ error: 'Ocurrió un error al procesar la solicitud' });
   }
 });
+
+
+
+// POST endpoint with explicit types for parameters
+authRouter.post("/searchEmployees", async (req: Request<SearchEmployeesRequest>, res: Response) => {
+
+  if (req.body === undefined || req.body == null) res.status(500).json({ error: 'La solicitud no cuenta con los parametros solicitados' });
+
+  try {
+
+    console.log("/searchEmployees-req.body: ", req.body);
+
+    // 1. Llama al método que devuelve el Observable
+    const result: Observable<Object> = authorizerService.searchEmployees(req.body);
+
+    // 2. Convierte el Observable a Promesa y espera el primer valor emitido
+    const datos = await firstValueFrom(
+      result.pipe(
+        map((respuesta) => ({ mensaje: 'Datos obtenidos', data: respuesta }))
+      )
+    );
+
+    // 3. Envía la respuesta al cliente
+    res.status(200).json(datos);
+  } catch (error) {
+    // 4. Manejo de errores si el Observable falla o está vacío
+    res.status(500).json({ error: 'Ocurrió un error al procesar la solicitud' });
+  }
+});
+
 
 
 //authRouter.get("/auth", authorizerService.authorization);

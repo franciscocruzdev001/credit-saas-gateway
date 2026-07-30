@@ -1,7 +1,7 @@
 import { injectable, unmanaged } from 'inversify';
 import mongoose, { Model, UpdateQuery, connection, QueryOptions, QueryFilter, HydratedDocument, connect } from 'mongoose';
 import { IBaseMongoModel } from '../repository/IBaseMongoModel';
-import { forkJoin, from, map, mergeMap, Observable, of, switchMap } from 'rxjs';
+import { catchError, forkJoin, from, map, mergeMap, Observable, of, switchMap } from 'rxjs';
 
 @injectable()
 export abstract class BaseMongoModel<T> implements IBaseMongoModel<T> {
@@ -62,12 +62,19 @@ export abstract class BaseMongoModel<T> implements IBaseMongoModel<T> {
                 return forkJoin({
                     documents: from(
                         this.model.
-                            find(queryfilter, options).
+                            find(queryfilter,undefined,  options).
                             exec()
                     ),
                     totalDocuments: this.model.countDocuments(queryfilter)
                 })
             }),
+            catchError(err => {
+                console.error('Error:', err);
+                return of({
+                    documents: [],
+                    totalDocuments: 0
+                }); // fallback value
+            })
         );
     }
 

@@ -6,8 +6,9 @@ import { TYPES } from "../constant/types";
 import { ITransactionService } from "../repository/ITransactionService";
 import { CollectionNameEnum } from "../infrastructure/CollectionNameEnum";
 import { get, isEmpty, isNil, isObject, isUndefined, omitBy } from "lodash";
-import{FiltersItems as FilterItemsTransactions, SearchTransactionsRequest} from "../types/SearchTransactionsRequest"
+import { FiltersItems as FilterItemsTransactions, SearchTransactionsRequest } from "../types/SearchTransactionsRequest"
 import { TransactionMongoModel } from "../gateway/TransactionMongoModel";
+import { Types } from "mongoose";
 
 @injectable()
 export class TransactionService implements ITransactionService {
@@ -16,14 +17,14 @@ export class TransactionService implements ITransactionService {
 
     constructor(
         @inject(TYPES.MongoGateway) mongodb: IMongoGateway,
-        @inject(TYPES.TransactionMongoModel) transactionMongoModel:TransactionMongoModel,
+        @inject(TYPES.TransactionMongoModel) transactionMongoModel: TransactionMongoModel,
 
     ) {
         this._mongodb = mongodb;
         this._transactionMongoModel = transactionMongoModel;
     }
 
-   public searchTransactions(
+    public searchTransactions(
         searchTransactionData: SearchTransactionsRequest
     ): Observable<Object> {
 
@@ -54,16 +55,16 @@ export class TransactionService implements ITransactionService {
     private _buildSearchFiltersByTransactions(filters: FilterItemsTransactions): Filter<Document> {
         console.log("buildSearchFiltersByTransactions-filters:", filters);
         const queryFilter = {
-            //status: get(searchCreditsData, "status", undefined),
-            status: isEmpty(get(filters, "status", [])) ? undefined : {
-                $in: get(filters, "status", []),
-            },
-            creditorCompanyId: get(filters, "creditorCompanyId", undefined)
-        }
+            status: isEmpty(get(filters, "status", []))
+                ? undefined
+                : {
+                    $in: get(filters, "status", [])
+                }
+        };
         console.log("buildSearchFiltersByTransactions-queryFilter:", queryFilter);
         return omitBy(queryFilter,
             (value: any) => {
-                return isNil(value) || isUndefined(value) || (isObject(value) && isEmpty(value)) || value === "";
+                return isNil(value) || isUndefined(value) || (isObject(value) && isEmpty(value));
             }
         )
 
