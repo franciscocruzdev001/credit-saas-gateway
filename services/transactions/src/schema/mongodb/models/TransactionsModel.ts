@@ -19,7 +19,8 @@ const transactionsSchema = new Schema({
             accountNumber: { type: String },
             walletId: { type: Schema.Types.ObjectId, required: true },
         }, { _id: false })
-    }
+    },
+    creditorCompanyId: { type: Schema.Types.ObjectId, ref: "CreditorCompanies", required: true },
 }, { timestamps: true });
 
 // 2. Automatically generate/infer the TypeScript interface/type

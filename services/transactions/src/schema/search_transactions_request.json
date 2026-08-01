@@ -18,7 +18,11 @@
        "creditorCompanyId": {
           "type": "string"
         }
-      }
+      },
+      "required": [
+        "creditorCompanyId",
+        "status"
+      ]
     },
     "pagination": {
       "type": "object",

@@ -1,11 +1,12 @@
-export interface SearchTransactionsRequest {
+export interface SearchTransactionsByUserRequest {
     filtersItems: FiltersItems;
     pagination:   Pagination;
 }
 
 export interface FiltersItems {
+    accountNumber:     string;
     creditorCompanyId: string;
-    status:            string[];
+    walletId:          string;
 }
 
 export interface Pagination {

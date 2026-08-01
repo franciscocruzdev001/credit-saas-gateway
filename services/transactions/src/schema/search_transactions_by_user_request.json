@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://SearchTransactionsByUserRequest",
+  "title": "SearchTransactionsByUserRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "filtersItems": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+       "creditorCompanyId": {
+          "type": "string"
+        },
+        "walletId": {
+          "type": "string"
+        },
+        "accountNumber": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "creditorCompanyId",
+        "walletId",
+        "accountNumber"
+      ]
+    },
+    "pagination": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "pageNumber": {
+          "type": "number"
+        },
+        "limit": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "pageNumber",
+        "limit"
+      ]
+    }
+  },
+  "required": [
+    "filtersItems",
+    "pagination"
+  ]
+}
