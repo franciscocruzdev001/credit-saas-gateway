@@ -6,12 +6,13 @@ import { ICreditService } from "../repository/ICreditService";
 import { SearchCustomersRequest } from "../types/SearchCustomersRequest";
 import { SearchEmployeesRequest } from "../types/SearchEmployeesRequest";
 import { SearchCreditsRequest } from "../types/SearchCreditsRequest";
+import { SearchCreditsByEmployeeRequest } from "../types/SearchCreditsByEmployeeRequest";
 
 export const creditRouter: Router = Router();
 const creditService = containerApp.get<ICreditService>(TYPES.CreditService);
 
 
-// POST endpoint with explicit types for parameters
+// POST endpoint search credits by filter fields
 creditRouter.post("/searchCredits", async (req: Request<SearchCreditsRequest>, res: Response) => {
 
   if (req.body === undefined || req.body == null) res.status(500).json({ error: 'La solicitud no cuenta con los parametros solicitados' });
@@ -37,7 +38,33 @@ creditRouter.post("/searchCredits", async (req: Request<SearchCreditsRequest>, r
   }
 });
 
-// POST endpoint with explicit types for parameters
+// POST endpoint search credits by filter fields to employee
+creditRouter.post("/searchCreditsByEmployee", async (req: Request<SearchCreditsByEmployeeRequest>, res: Response) => {
+
+  if (req.body === undefined || req.body == null) res.status(500).json({ error: 'La solicitud no cuenta con los parametros solicitados' });
+
+  try {
+
+     console.log("/searchCredits-req.body: ", req.body);
+    // 1. Llama al método que devuelve el Observable
+    const result: Observable<Object> = creditService.searchCreditsByEmployee(req.body);
+
+    // 2. Convierte el Observable a Promesa y espera el primer valor emitido
+    const datos = await firstValueFrom(
+      result.pipe(
+        map((respuesta) => ({ mensaje: 'Datos obtenidos', data: respuesta }))
+      )
+    );
+
+    // 3. Envía la respuesta al cliente
+    res.status(200).json(datos);
+  } catch (error) {
+    // 4. Manejo de errores si el Observable falla o está vacío
+    res.status(500).json({ error: 'Ocurrió un error al procesar la solicitud' });
+  }
+});
+
+// POST endpoint search customer by filter fields
 creditRouter.post("/searchCustomers", async (req: Request<SearchCustomersRequest>, res: Response) => {
 
   if (req.body === undefined || req.body == null) res.status(500).json({ error: 'La solicitud no cuenta con los parametros solicitados' });

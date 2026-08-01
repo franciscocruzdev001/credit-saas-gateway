@@ -6,13 +6,17 @@ import { Document, Filter } from 'mongodb';
 import { ICreditService } from "../repository/ICreditService";
 import { CollectionNameEnum } from "../infrastructure/CollectionNameEnum";
 import { FiltersItems as FilterItemsCustomers, SearchCustomersRequest } from "../types/SearchCustomersRequest";
-import { filter, get, isEmpty, isNil, isObject, isUndefined, omit, omitBy } from "lodash"
+import { defaultTo, filter, get, isEmpty, isNil, isObject, isUndefined, omit, omitBy } from "lodash"
 
 import { FiltersItems as FilterItemsCredits, SearchCreditsRequest } from "../types/SearchCreditsRequest"
 import { CreditMongoModel } from "../gateway/CreditMongoModel";
-import { Types } from "mongoose";
+import { QueryOptions, Types } from "mongoose";
 import { ICredits } from "../schema/mongodb/models/CreditsModel";
 import { CustomersMongoModel } from "../gateway/CutomersMongoModel";
+import { QueryFilter } from "mongoose";
+import { UserRoleEnum } from "../infrastructure/UserRoleEnum";
+import { UserRoleEmployeeCatalog } from "../infrastructure/catalogs/UserRoleCatalogs";
+import { SearchCreditsByEmployeeRequest } from "../types/SearchCreditsByEmployeeRequest";
 
 
 @injectable()
@@ -34,29 +38,40 @@ export class CreditService implements ICreditService {
     public searchCredits(
         searchCreditsData: SearchCreditsRequest
     ): Observable<Object> {
-
-        const dbName: string = "admin";
         const salto = (get(searchCreditsData, "pagination.pageNumber", 1)) * get(searchCreditsData, "pagination.limit", 0)
 
         console.log("searchCredits-searchCreditsData: ", searchCreditsData);
         console.log("searchCredits-salto: ", salto);
         return of(1).pipe(
             mergeMap(() =>
-                this._creditMongoModel.findDocuments(
-                    this._buildSearchFiltersByCredits(searchCreditsData.filtersItems),
+                this._searchCredits(
+                    this._buildSearchFiltersByCredits(searchCreditsData.filtersItems,),
                     {
                         skip: salto,
                         limit: get(searchCreditsData, "pagination.limit", 0)
                     }
                 )
             ),
-            map((dataResponse: { documents: ICredits[], totalDocuments: number }) => {
-                console.log("this._creditMongoModel.findDocuments-dataResponse", dataResponse);
-                return {
-                    total: dataResponse.totalDocuments,
-                    records: dataResponse.documents
-                }
-            })
+        );
+    }
+
+    public searchCreditsByEmployee(
+        searchCreditsData: SearchCreditsByEmployeeRequest
+    ): Observable<Object> {
+        const salto = (get(searchCreditsData, "pagination.pageNumber", 1)) * get(searchCreditsData, "pagination.limit", 0)
+
+        console.log("searchCreditsByEmployee-searchCreditsData: ", searchCreditsData);
+        console.log("searchCreditsByEmployee-salto: ", salto);
+        return of(1).pipe(
+            mergeMap(() =>
+                this._searchCredits(
+                    defaultTo(UserRoleEmployeeCatalog[UserRoleEnum.MANAGER], {}),
+                    {
+                        skip: salto,
+                        limit: get(searchCreditsData, "pagination.limit", 0)
+                    }
+                )
+            ),
         );
     }
 
@@ -86,6 +101,21 @@ export class CreditService implements ICreditService {
         );
     }
 
+    private _searchCredits(queryFilter: QueryFilter<ICredits>, options?: QueryOptions): Observable<Object> {
+        //Validar filtros vacios si no trae ningun filtro rechazar
+        return of(1).pipe(
+            mergeMap(() =>
+                this._creditMongoModel.findDocuments(queryFilter, options)
+            ),
+            map((dataResponse: { documents: ICredits[], totalDocuments: number }) => {
+                console.log("this._creditMongoModel.findDocuments-dataResponse", dataResponse);
+                return {
+                    total: dataResponse.totalDocuments,
+                    records: dataResponse.documents
+                }
+            })
+        );
+    }
 
     private _buildSearchFiltersByCustomers(filters: FilterItemsCustomers): Filter<Document> {
         const queryFilter = {
@@ -101,11 +131,9 @@ export class CreditService implements ICreditService {
                 return isNil(value) || isUndefined(value) || (isObject(value) && isEmpty(value));
             }
         )
-
     }
 
-
-    private _buildSearchFiltersByCredits(filters: FilterItemsCredits): Filter<ICredits> {
+    private _buildSearchFiltersByCredits(filters: FilterItemsCredits): QueryFilter<ICredits> {
         console.log("buildSearchFiltersByCredits-filters:", filters);
         const queryFilter = {
             //status: get(searchCreditsData, "status", undefined),
@@ -120,7 +148,6 @@ export class CreditService implements ICreditService {
                 return isNil(value) || isUndefined(value) || (isObject(value) && isEmpty(value));
             }
         )
-
     }
 
 
