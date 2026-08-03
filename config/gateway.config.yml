@@ -7,16 +7,16 @@ apiEndpoints:
   api:
     paths: '/ip'
   authorizer:
-    methods: "GET,POST,PUT"
+    methods: "GET,POST,PUT,OPTIONS"
     paths: "/authorizer*"
   credits:
-    methods: "GET,POST,PUT"
+    methods: "GET,POST,PUT,OPTIONS"
     paths: "/credits*"
   payments:
-    methods: "GET,POST,PUT"
+    methods: "GET,POST,PUT,OPTIONS"
     paths: "/payments*"
   transactions:
-    methods: "GET,POST,PUT"
+    methods: "GET,POST,PUT,OPTIONS"
     paths: "/transactions*"
 serviceEndpoints:
   httpbin:
