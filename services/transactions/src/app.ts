@@ -1,4 +1,4 @@
-
+import "reflect-metadata";
 import express, { Application }  from "express";
 import { transactionRouter } from "./routes/transactionRoutes";
 import cors from "cors";
