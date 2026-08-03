@@ -65,7 +65,7 @@ export class CreditService implements ICreditService {
         return of(1).pipe(
             mergeMap(() =>
                 this._searchCredits(
-                    defaultTo(UserRoleEmployeeCatalog[UserRoleEnum.MANAGER], {}),
+                    UserRoleEmployeeCatalog[UserRoleEnum.MANAGER]!(searchCreditsData.filtersItems),
                     {
                         skip: salto,
                         limit: get(searchCreditsData, "pagination.limit", 0)

@@ -4,7 +4,7 @@ import { creditRouter } from "./routes/creditRoutes";
 import cors from "cors";
 
 const app: Application = express();
-const PORT = process.env.PORT || 4001;
+const PORT = Number (process.env.PORT) || 4001;
 
 
 //habilita el cors 
@@ -22,6 +22,6 @@ app.get("/", (_:any, res:any) => {
 });
 
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`Credits service is running at PORT ${PORT}.`);
 });

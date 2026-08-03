@@ -26,6 +26,9 @@
         "creditIdSource": {
             "type": "string"
         },
+        "creditorCompanyId": {
+            "type": "string"
+        },
         "sourceAccount": {
             "type": "object",
             "title": "SourceAccount",

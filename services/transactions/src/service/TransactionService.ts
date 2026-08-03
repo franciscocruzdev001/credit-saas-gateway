@@ -98,20 +98,16 @@ export class TransactionService implements ITransactionService {
 
     private _buildSearchFiltersByTransactionsToUser(filters: FilterItemsTransactionsByUser): QueryFilter<ITransactions> {
         console.log("_buildSearchFiltersByTransactionsToUser-filters:", filters);
+
+        const walletId = new Types.ObjectId(get(filters, "walletId", ""));
+        const accountNumber = get(filters, "accountNumber", "");
+
         return {
             creditorCompanyId: new Types.ObjectId(get(filters, "creditorCompanyId", "")),
-            sourceAccount: {
-                walletId: new Types.ObjectId(get(filters, "walletId", "")),
-                accountNumber: get(filters, "accountNumber", "")
-            },
-            destinationAcount: {
-                walletId: new Types.ObjectId(get(filters, "walletId", "")),
-                accountNumber: get(filters, "accountNumber", "")
-            },
-            ...omitBy({},
-                (value: any) => {
-                    return isNil(value) || isUndefined(value) || (isObject(value) && isEmpty(value));
-                })
+            $or: [
+                { "sourceAccount.walletId": walletId, "sourceAccount.accountNumber": accountNumber },
+                { "destinationAccount.walletId": walletId, "destinationAccount.accountNumber": accountNumber },
+            ],
         }
     }
 }

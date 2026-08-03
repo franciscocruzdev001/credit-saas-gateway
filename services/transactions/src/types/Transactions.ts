@@ -1,6 +1,7 @@
 export interface Transactions {
     created?:            number;
     creditIdSource?:     string;
+    creditorCompanyId?:  string;
     currency?:           string;
     description?:        string;
     destinationAccount?: DestinationAccount;

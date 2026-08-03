@@ -2,7 +2,7 @@ import express, { Application }  from "express";
 import { authRouter } from "./routes/authorizerRoutes";
 
 const app: Application = express();
-const PORT = process.env.PORT || 4000;
+const PORT = Number(process.env.PORT) || 4000;
 
 
 // Built-in middleware to parse JSON bodies
@@ -20,6 +20,6 @@ app.get("/", (_:any, res:any) => {
 
 
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`Authorizer service is running at PORT ${PORT}.`);
 });
