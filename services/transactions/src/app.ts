@@ -4,7 +4,7 @@ import { transactionRouter } from "./routes/transactionRoutes";
 import cors from "cors";
 
 const app: Application = express();
-const PORT = Number (process.env.PORT) || 4003;
+const PORT = Number(process.env.TRANSACTIONS_PORT) || 4003;
 
 
 //habilita el cors 

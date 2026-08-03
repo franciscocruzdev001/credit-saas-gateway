@@ -2,7 +2,7 @@ import express, { Application }  from "express";
 import { authRouter } from "./routes/authorizerRoutes";
 
 const app: Application = express();
-const PORT = Number(process.env.PORT) || 4000;
+const PORT = Number(process.env.AUTHORIZER_PORT) || 4000;
 
 
 // Built-in middleware to parse JSON bodies

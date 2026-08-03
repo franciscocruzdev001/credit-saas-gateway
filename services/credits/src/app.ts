@@ -4,7 +4,7 @@ import { creditRouter } from "./routes/creditRoutes";
 import cors from "cors";
 
 const app: Application = express();
-const PORT = Number (process.env.PORT) || 4001;
+const PORT = Number(process.env.CREDITS_PORT) || 4001;
 
 
 //habilita el cors 
