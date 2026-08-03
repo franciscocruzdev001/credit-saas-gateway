@@ -1,26 +1,21 @@
 http:
-  port: 8080
+   port: ${PORT}
 admin:
   port: 9876
   host: localhost
 apiEndpoints:
   api:
-    host: localhost
     paths: '/ip'
   authorizer:
-    host: localhost
     methods: "GET,POST,PUT"
     paths: "/authorizer*"
   credits:
-    host: localhost
     methods: "GET,POST,PUT"
     paths: "/credits*"
   payments:
-    host: localhost
     methods: "GET,POST,PUT"
     paths: "/payments*"
   transactions:
-    host: localhost
     methods: "GET,POST,PUT"
     paths: "/transactions*"
 serviceEndpoints:
