@@ -1,6 +1,6 @@
 import { from, map, mergeMap, Observable, of, switchMap } from "rxjs";
 import { IMongoGateway } from "../repository/IMongoGateway";
-import { 
+import {
     Filter,
     FindOptions,
     InsertOneResult,
@@ -22,9 +22,10 @@ export class MongoGateway implements IMongoGateway {
             return of(1).pipe(map(() => <MongoClient>this._mongoClient));
         }
 
-        console.log("_getClient-mongoURL: mongodb://localhost:27017");
+        const mongoUri = process.env.MONGO_URI || "mongodb://localhost:27017";
+        console.log("_getClient-mongoURL: ", mongoUri);
 
-        this._mongoClient = new MongoClient("mongodb://localhost:27017");
+        this._mongoClient = new MongoClient(mongoUri);
         return of(this._mongoClient).pipe(
             mergeMap((mongoClient: MongoClient) => mongoClient.connect()),
             map((mongoClient: MongoClient) => mongoClient)

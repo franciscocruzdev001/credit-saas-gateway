@@ -7,7 +7,7 @@ import { merge } from 'lodash';
 @injectable()
 export abstract class BaseMongoModel<T> implements IBaseMongoModel<T> {
     protected model: Model<T>;
-    private _uri = "mongodb://localhost:27017/admin";
+    private _uri = process.env.MONGO_URI || "mongodb://localhost:27017/admin";
     private _instanceMongoose: typeof mongoose | null = null;
 
     // Utilizamos @unmanaged() si el modelo lo provee la subclase constructora

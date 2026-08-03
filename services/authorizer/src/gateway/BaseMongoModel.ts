@@ -6,7 +6,7 @@ import { catchError, forkJoin, from, map, mergeMap, Observable, of, switchMap } 
 @injectable()
 export abstract class BaseMongoModel<T> implements IBaseMongoModel<T> {
     protected model: Model<T>;
-    private _uri = "mongodb://localhost:27017/admin";
+    private _uri = process.env.MONGO_URI || "mongodb://localhost:27017/admin";
     private _instanceMongoose: typeof mongoose | null = null;
 
     // Utilizamos @unmanaged() si el modelo lo provee la subclase constructora
@@ -65,7 +65,7 @@ export abstract class BaseMongoModel<T> implements IBaseMongoModel<T> {
                 return forkJoin({
                     documents: from(
                         this.model.
-                            find(queryfilter,undefined, options).
+                            find(queryfilter, undefined, options).
                             exec()
                     ),
                     totalDocuments: this.model.countDocuments(queryfilter)
