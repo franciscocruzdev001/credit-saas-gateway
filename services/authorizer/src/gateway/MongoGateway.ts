@@ -15,7 +15,6 @@ import {
 export class MongoGateway implements IMongoGateway {
     //constructor(@inject)
     private _mongoClient: MongoClient | null = null;
-
     private _getClient(): Observable<MongoClient> {
         console.log("_getClient");
         if (this._mongoClient) {
