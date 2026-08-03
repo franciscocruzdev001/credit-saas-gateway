@@ -53,8 +53,9 @@ pipelines:
     apiEndpoints:
       - authorizer
     policies:
-    # Uncomment `key-auth:` when instructed to in the Getting Started guide.
-    # - key-auth:
+      - cors:
+          - action:
+              origin: "*"
       - proxy:
           - action:
               serviceEndpoint: authorizerService 
@@ -63,8 +64,9 @@ pipelines:
     apiEndpoints:
       - credits
     policies:
-    # Uncomment `key-auth:` when instructed to in the Getting Started guide.
-    # - key-auth:
+      - cors:
+          - action:
+              origin: "*"
       - proxy:
           - action:
               serviceEndpoint: creditsService
@@ -73,8 +75,9 @@ pipelines:
     apiEndpoints:
       - payments
     policies:
-    # Uncomment `key-auth:` when instructed to in the Getting Started guide.
-    # - key-auth:
+      - cors:
+          - action:
+              origin: "*"
       - proxy:
           - action:
               serviceEndpoint: paymentsService 
@@ -83,8 +86,9 @@ pipelines:
     apiEndpoints:
       - transactions
     policies:
-    # Uncomment `key-auth:` when instructed to in the Getting Started guide.
-    # - key-auth:
+      - cors:
+          - action:
+              origin: "*"
       - proxy:
           - action:
               serviceEndpoint: transactionsService
