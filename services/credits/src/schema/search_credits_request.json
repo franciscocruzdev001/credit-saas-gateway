@@ -15,10 +15,13 @@
             "type": "string"
           }
         },
-       "creditorCompanyId": {
+        "creditorCompanyId": {
           "type": "string"
         }
-      }
+      },
+      "required": [
+        "creditorCompanyId"
+      ]
     },
     "pagination": {
       "type": "object",

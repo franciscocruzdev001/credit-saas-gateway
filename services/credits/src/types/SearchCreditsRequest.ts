@@ -4,8 +4,8 @@ export interface SearchCreditsRequest {
 }
 
 export interface FiltersItems {
-    creditorCompanyId?: string;
-    status?:            string[];
+    creditorCompanyId: string;
+    status?:           string[];
 }
 
 export interface Pagination {

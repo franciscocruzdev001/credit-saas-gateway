@@ -73,7 +73,7 @@ export class TransactionService implements ITransactionService {
                     options
                 )
             ),
-            map((dataResponse: { documents: Document[], totalDocuments: number }) => ({
+            map((dataResponse: { documents: ITransactions[], totalDocuments: number }) => ({
                 total: dataResponse.totalDocuments,
                 records: dataResponse.documents
             }))
@@ -82,6 +82,8 @@ export class TransactionService implements ITransactionService {
 
     private _buildSearchFiltersByTransactions(filters: FilterItemsTransactions): QueryFilter<ITransactions> {
         console.log("buildSearchFiltersByTransactions-filters:", filters);
+        const startDateCreated: string = get(filters, "createdRangeDate.startDate", "");
+        const endDateCreated: string = get(filters, "createdRangeDate.endDate", "");
         return {
             creditorCompanyId: new Types.ObjectId(get(filters, "creditorCompanyId", "")),
             ...omitBy({
@@ -89,7 +91,11 @@ export class TransactionService implements ITransactionService {
                     ? undefined
                     : {
                         $in: get(filters, "status", [])
-                    }
+                    },
+                createdAt: (!isEmpty(startDateCreated) || !isEmpty(endDateCreated)) ? {
+                    $gte: !isEmpty(startDateCreated) ? new Date(startDateCreated) : undefined,
+                    $lte: !isEmpty(endDateCreated) ? new Date(endDateCreated) : undefined,
+                } : {}
             }, (value: any) => {
                 return isNil(value) || isUndefined(value) || (isObject(value) && isEmpty(value));
             })
@@ -98,9 +104,10 @@ export class TransactionService implements ITransactionService {
 
     private _buildSearchFiltersByTransactionsToUser(filters: FilterItemsTransactionsByUser): QueryFilter<ITransactions> {
         console.log("_buildSearchFiltersByTransactionsToUser-filters:", filters);
-
         const walletId = new Types.ObjectId(get(filters, "walletId", ""));
         const accountNumber = get(filters, "accountNumber", "");
+        const startDateCreated: string = get(filters, "createdRangeDate.startDate", "");
+        const endDateCreated: string = get(filters, "createdRangeDate.endDate", "");
 
         return {
             creditorCompanyId: new Types.ObjectId(get(filters, "creditorCompanyId", "")),
@@ -108,8 +115,14 @@ export class TransactionService implements ITransactionService {
                 { "sourceAccount.walletId": walletId, "sourceAccount.accountNumber": accountNumber },
                 { "destinationAccount.walletId": walletId, "destinationAccount.accountNumber": accountNumber },
             ],
+            ...omitBy({
+                createdAt: (!isEmpty(startDateCreated) || !isEmpty(endDateCreated)) ? {
+                    $gte: !isEmpty(startDateCreated) ? new Date(startDateCreated) : undefined,
+                    $lte: !isEmpty(endDateCreated) ? new Date(endDateCreated) : undefined,
+                } : {}
+            }, (value: any) => {
+                return isNil(value) || isUndefined(value) || (isObject(value) && isEmpty(value));
+            })
         }
     }
 }
-
-

@@ -9,7 +9,7 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-       "creditorCompanyId": {
+        "creditorCompanyId": {
           "type": "string"
         },
         "walletId": {
@@ -17,6 +17,18 @@
         },
         "accountNumber": {
           "type": "string"
+        },
+        "createdRangeDate": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "startDate": {
+              "type": "string"
+            },
+            "endDate": {
+              "type": "string"
+            }
+          }
         }
       },
       "required": [

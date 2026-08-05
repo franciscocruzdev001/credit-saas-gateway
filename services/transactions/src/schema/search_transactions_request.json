@@ -9,14 +9,26 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "creditorCompanyId": {
+          "type": "string"
+        },
         "status": {
           "type": "array",
           "items": {
             "type": "string"
           }
         },
-       "creditorCompanyId": {
-          "type": "string"
+        "createdRangeDate": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "startDate": {
+              "type": "string"
+            },
+            "endDate": {
+              "type": "string"
+            }
+          }
         }
       },
       "required": [

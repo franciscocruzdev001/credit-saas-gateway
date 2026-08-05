@@ -1,9 +1,8 @@
 import { QueryFilter, Types } from "mongoose";
 import { UserRoleEnum } from "../UserRoleEnum";
 import { ICredits } from "../../schema/mongodb/models/CreditsModel";
-import { FiltersItems } from "../../types/SearchCreditsRequest";
 import { get, isEmpty, isNil, isObject, isUndefined, omitBy } from "lodash";
-
+import { FiltersItems } from "../../types/SearchCreditsByEmployeeRequest";
 
 
 export const UserRoleEmployeeCatalog: Record<string, (filters: FiltersItems) => QueryFilter<ICredits>> = {

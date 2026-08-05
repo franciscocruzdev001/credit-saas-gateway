@@ -5,8 +5,14 @@ export interface SearchTransactionsByUserRequest {
 
 export interface FiltersItems {
     accountNumber:     string;
+    createdRangeDate?: CreatedRangeDate;
     creditorCompanyId: string;
     walletId:          string;
+}
+
+export interface CreatedRangeDate {
+    endDate?:   string;
+    startDate?: string;
 }
 
 export interface Pagination {
