@@ -12,11 +12,30 @@
         "creditorCompanyId": {
           "type": "string"
         },
-        "walletId": {
+        "transactionType": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "generalSearch": {
           "type": "string"
         },
-        "accountNumber": {
-          "type": "string"
+        "accountInformacion": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "walletId": {
+              "type": "string"
+            },
+            "accountNumber": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "walletId",
+            "accountNumber"
+          ]
         },
         "createdRangeDate": {
           "type": "object",
@@ -33,8 +52,7 @@
       },
       "required": [
         "creditorCompanyId",
-        "walletId",
-        "accountNumber"
+        "accountInformacion"
       ]
     },
     "pagination": {

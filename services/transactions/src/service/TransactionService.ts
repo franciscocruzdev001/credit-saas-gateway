@@ -12,6 +12,7 @@ import { TransactionMongoModel } from "../gateway/TransactionMongoModel";
 import { QueryOptions, Types } from "mongoose";
 import { ITransactions } from "../schema/mongodb/models/TransactionsModel";
 import { QueryFilter } from "mongoose";
+import { TransactionStatusEnum } from "../infrastructure/TransactionStatusEnum";
 
 @injectable()
 export class TransactionService implements ITransactionService {
@@ -82,8 +83,11 @@ export class TransactionService implements ITransactionService {
 
     private _buildSearchFiltersByTransactions(filters: FilterItemsTransactions): QueryFilter<ITransactions> {
         console.log("buildSearchFiltersByTransactions-filters:", filters);
+        const walletId = new Types.ObjectId(get(filters, "accountInformacion.walletId", ""));
+        const accountNumber = get(filters, "accountInformacion.accountNumber", "");
         const startDateCreated: string = get(filters, "createdRangeDate.startDate", "");
         const endDateCreated: string = get(filters, "createdRangeDate.endDate", "");
+        const generalSearch: string = get(filters, "generalSearch", "");
         return {
             creditorCompanyId: new Types.ObjectId(get(filters, "creditorCompanyId", "")),
             ...omitBy({
@@ -92,10 +96,27 @@ export class TransactionService implements ITransactionService {
                     : {
                         $in: get(filters, "status", [])
                     },
+                transactionType: isEmpty(get(filters, "transactionType", []))
+                    ? undefined
+                    : {
+                        $in: get(filters, "transactionType", [])
+                    },
                 createdAt: (!isEmpty(startDateCreated) || !isEmpty(endDateCreated)) ? {
                     $gte: !isEmpty(startDateCreated) ? new Date(startDateCreated) : undefined,
                     $lte: !isEmpty(endDateCreated) ? new Date(endDateCreated) : undefined,
-                } : {}
+                } : {},
+                description: !isEmpty(generalSearch) ? { $regex: new RegExp(generalSearch, 'i') } : undefined,
+                $or: [
+                    { "sourceAccount.walletId": walletId, "sourceAccount.accountNumber": accountNumber },
+                    { "destinationAccount.walletId": walletId, "destinationAccount.accountNumber": accountNumber },
+                ],
+                /*$and: [
+                    {
+                        $or: [
+                            { }
+                        ]                    
+                    }
+                ]*/
             }, (value: any) => {
                 return isNil(value) || isUndefined(value) || (isObject(value) && isEmpty(value));
             })
@@ -104,18 +125,26 @@ export class TransactionService implements ITransactionService {
 
     private _buildSearchFiltersByTransactionsToUser(filters: FilterItemsTransactionsByUser): QueryFilter<ITransactions> {
         console.log("_buildSearchFiltersByTransactionsToUser-filters:", filters);
-        const walletId = new Types.ObjectId(get(filters, "walletId", ""));
-        const accountNumber = get(filters, "accountNumber", "");
+        const walletId = new Types.ObjectId(get(filters, "accountInformacion.walletId", ""));
+        const accountNumber = get(filters, "accountInformacion.accountNumber", "");
         const startDateCreated: string = get(filters, "createdRangeDate.startDate", "");
         const endDateCreated: string = get(filters, "createdRangeDate.endDate", "");
+        const generalSearch: string = get(filters, "generalSearch", "");
 
         return {
             creditorCompanyId: new Types.ObjectId(get(filters, "creditorCompanyId", "")),
+            status: TransactionStatusEnum.APPROVED,
             $or: [
                 { "sourceAccount.walletId": walletId, "sourceAccount.accountNumber": accountNumber },
                 { "destinationAccount.walletId": walletId, "destinationAccount.accountNumber": accountNumber },
             ],
             ...omitBy({
+                description: !isEmpty(generalSearch) ? { $regex: new RegExp(generalSearch, 'i') } : undefined,
+                transactionType: isEmpty(get(filters, "transactionType", []))
+                    ? undefined
+                    : {
+                        $in: get(filters, "transactionType", [])
+                    },
                 createdAt: (!isEmpty(startDateCreated) || !isEmpty(endDateCreated)) ? {
                     $gte: !isEmpty(startDateCreated) ? new Date(startDateCreated) : undefined,
                     $lte: !isEmpty(endDateCreated) ? new Date(endDateCreated) : undefined,

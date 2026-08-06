@@ -18,6 +18,31 @@
             "type": "string"
           }
         },
+        "transactionType": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "generalSearch": {
+          "type": "string"
+        },
+        "accountInformacion": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "walletId": {
+              "type": "string"
+            },
+            "accountNumber": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "walletId",
+            "accountNumber"
+          ]
+        },
         "createdRangeDate": {
           "type": "object",
           "additionalProperties": false,
@@ -32,8 +57,7 @@
         }
       },
       "required": [
-        "creditorCompanyId",
-        "status"
+        "creditorCompanyId"
       ]
     },
     "pagination": {

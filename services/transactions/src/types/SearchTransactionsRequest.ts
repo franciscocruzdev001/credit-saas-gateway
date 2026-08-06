@@ -4,9 +4,17 @@ export interface SearchTransactionsRequest {
 }
 
 export interface FiltersItems {
-    createdRangeDate?: CreatedRangeDate;
-    creditorCompanyId: string;
-    status:            string[];
+    accountInformacion?: AccountInformacion;
+    createdRangeDate?:   CreatedRangeDate;
+    creditorCompanyId:   string;
+    generalSearch?:      string;
+    status?:             string[];
+    transactionType?:    string[];
+}
+
+export interface AccountInformacion {
+    accountNumber: string;
+    walletId:      string;
 }
 
 export interface CreatedRangeDate {

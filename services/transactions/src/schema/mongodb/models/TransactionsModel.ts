@@ -1,13 +1,26 @@
 import { InferSchemaType, model, Schema } from "mongoose";
 import { CollectionNameEnum } from "../../../infrastructure/CollectionNameEnum";
+import { TransactionStatusEnum } from "../../../infrastructure/TransactionStatusEnum";
+import { TransactionTypeEnum } from "../../../infrastructure/TransactionTypeEnum";
 // 1. Define your Mongoose Schema
 const transactionsSchema = new Schema({
-    transactionType: { type: String },
+    transactionType: {
+        type: String, enum: [
+            TransactionTypeEnum.CREDIT,
+            TransactionTypeEnum.PAYMENT,
+            TransactionTypeEnum.TRANSFER
+        ], default: TransactionTypeEnum.DEPOSIT
+    },
+    status: {
+        type: String, enum: [
+            TransactionStatusEnum.PENDING,
+            TransactionStatusEnum.APPROVED,
+            TransactionStatusEnum.CANCELLED
+        ], default: TransactionStatusEnum.PENDING
+    },
     total: { type: Number },
-    status: { type: String, enum: ["CHARGE-PROCESS", "SLOW-PAY", "PAID", "RESTRUCTURED"], default: "CHARGE-PROCESS" },
     description: { type: String },
     currency: { type: String },
-    creditIdSource: { type: Schema.Types.ObjectId, ref: "Credits" },
     sourceAccount: {
         type: new Schema({
             accountNumber: { type: String },
@@ -20,10 +33,11 @@ const transactionsSchema = new Schema({
             walletId: { type: Schema.Types.ObjectId, required: true },
         }, { _id: false })
     },
+    creditIdSource: { type: Schema.Types.ObjectId, ref: "Credits" },
     creditorCompanyId: { type: Schema.Types.ObjectId, ref: "CreditorCompanies", required: true },
 }, { timestamps: true });
 
 // 2. Automatically generate/infer the TypeScript interface/type
 export type ITransactions = InferSchemaType<typeof transactionsSchema>;
 
-export const TransactionsModel = model<ITransactions>(CollectionNameEnum.TRANSACTIONS,transactionsSchema);
+export const TransactionsModel = model<ITransactions>(CollectionNameEnum.TRANSACTIONS, transactionsSchema);
