@@ -1,5 +1,7 @@
 import { InferSchemaType, model, Schema } from "mongoose";
 import { CollectionNameEnum } from "../../../infrastructure/CollectionNameEnum";
+import { CreditStatusEnum } from "../../../infrastructure/CreditStatusEnum";
+import { TransactionStatusEnum } from "../../../infrastructure/TransactionStatusEnum";
 
 // 1. Define your Mongoose Schema
 const creditsSchema = new Schema({
@@ -9,7 +11,21 @@ const creditsSchema = new Schema({
     creditAmount: { type: Number, required: true },
     creditAmountWithMoratory: { type: Number, required: true },
     fixedCharge: { type: Number, required: true },
-    status: { type: String, enum: ["CHARGE-PROCESS", "SLOW-PAY", "PAID", "RESTRUCTURED"], default: "CHARGE-PROCESS" },
+    status: {
+        type: String, enum: [
+            CreditStatusEnum.CHARGE_PROCESS,
+            CreditStatusEnum.SLOW_PAY,
+            CreditStatusEnum.PAID,
+            CreditStatusEnum.RESTRUCTURED
+        ], default: CreditStatusEnum.CHARGE_PROCESS
+    },
+    transactionStatus: {
+        type: String, enum: [
+            TransactionStatusEnum.PENDING,
+            TransactionStatusEnum.APPROVED,
+            TransactionStatusEnum.CANCELLED
+        ], default: TransactionStatusEnum.PENDING
+    },
     chargeRules: {
         type: new Schema({
             chargeFrequency: { type: String, required: true },

@@ -135,19 +135,25 @@ export class CreditService implements ICreditService {
 
     private _buildSearchFiltersByCredits(filters: FilterItemsCredits): QueryFilter<ICredits> {
         console.log("buildSearchFiltersByCredits-filters:", filters);
-        const queryFilter = {
-            //status: get(searchCreditsData, "status", undefined),
-            status: isEmpty(get(filters, "status", [])) ? undefined : {
-                $in: get(filters, "status", []),
+        const userId: string = get(filters, "userId", "");
+        const customerId: string = get(filters, "customerId", "");
+        return {
+            creditorCompanyId: new Types.ObjectId(get(filters, "creditorCompanyId", "000000000000000000000000")),
+            ...omitBy({
+                userId: !isEmpty(userId) ? new Types.ObjectId(userId) : undefined,
+                customerId: !isEmpty(customerId) ? new Types.ObjectId(customerId) : undefined,
+                status: isEmpty(get(filters, "status", [])) ? undefined : {
+                    $in: get(filters, "status", []),
+                },
+                transactionStatus: isEmpty(get(filters, "transactionStatus", [])) ? undefined : {
+                    $in: get(filters, "transactionStatus", []),
+                }
             },
-            creditorCompanyId: new Types.ObjectId(get(filters, "creditorCompanyId", ""))
+                (value) => {
+                    return isNil(value) || isUndefined(value) || (isObject(value) && isEmpty(value));
+                }
+            )
         }
-        console.log("buildSearchFiltersByEmployees-queryFilter:", queryFilter);
-        return omitBy(queryFilter,
-            (value) => {
-                return isNil(value) || isUndefined(value) || (isObject(value) && isEmpty(value));
-            }
-        )
     }
 
 
