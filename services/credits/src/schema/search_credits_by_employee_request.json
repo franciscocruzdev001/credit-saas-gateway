@@ -14,6 +14,9 @@
                 },
                 "userId": {
                     "type": "string"
+                },
+                "generalSearch": {
+                    "type": "string"
                 }
             },
             "required": [

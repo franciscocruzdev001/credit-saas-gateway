@@ -2,6 +2,7 @@ import { InferSchemaType, model, Schema } from "mongoose";
 import { CollectionNameEnum } from "../../../infrastructure/CollectionNameEnum";
 import { CreditStatusEnum } from "../../../infrastructure/CreditStatusEnum";
 import { TransactionStatusEnum } from "../../../infrastructure/TransactionStatusEnum";
+import { ICustomers } from "./Customers.Model";
 
 // 1. Define your Mongoose Schema
 const creditsSchema = new Schema({
@@ -41,7 +42,13 @@ const creditsSchema = new Schema({
 });
 
 // 2. Automatically generate/infer the TypeScript interface/type
-export type ICredits = InferSchemaType<typeof creditsSchema>;
+export type ICredits = InferSchemaType<typeof creditsSchema> & { _id?: Schema.Types.ObjectId };
+
+// 3. Create TypeScript interface/type to credit with customerBasicInformation
+export type ICreditsWithCustomerBasicInformation = ICredits & {
+    customerInfo: ICustomers[]
+}
+
 
 
 export const CreditsModel = model<ICredits>(CollectionNameEnum.CREDITS, creditsSchema);

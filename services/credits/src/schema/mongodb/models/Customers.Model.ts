@@ -9,7 +9,7 @@ const customersSchema = new Schema({
         type: new Schema({
             name: { type: String },
             lastName: { type: String },
-            adress: { type: String },
+            address: { type: String },
             phoneNumber: { type: String },
         }, { _id: false })
     },
@@ -18,6 +18,6 @@ const customersSchema = new Schema({
 }, { timestamps: true });
 
 // 2. Automatically generate/infer the TypeScript interface/type
-export type ICustomers = InferSchemaType<typeof customersSchema>;
+export type ICustomers = InferSchemaType<typeof customersSchema> & { _id?: Schema.Types.ObjectId };
 
 export const CustomersModel = model<ICustomers>(CollectionNameEnum.CUSTOMERS, customersSchema);

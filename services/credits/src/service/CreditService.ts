@@ -17,6 +17,7 @@ import { QueryFilter } from "mongoose";
 import { UserRoleEnum } from "../infrastructure/UserRoleEnum";
 import { UserRoleEmployeeCatalog } from "../infrastructure/catalogs/UserRoleCatalogs";
 import { SearchCreditsByEmployeeRequest } from "../types/SearchCreditsByEmployeeRequest";
+import { ICustomers } from "../schema/mongodb/models/Customers.Model";
 
 
 @injectable()
@@ -58,14 +59,20 @@ export class CreditService implements ICreditService {
     public searchCreditsByEmployee(
         searchCreditsData: SearchCreditsByEmployeeRequest
     ): Observable<Object> {
-        const salto = (get(searchCreditsData, "pagination.pageNumber", 1)) * get(searchCreditsData, "pagination.limit", 0)
+        const salto = (get(searchCreditsData, "pagination.pageNumber", 1)) * get(searchCreditsData, "pagination.limit", 0);
+        const filtersByRole: {
+            creditsFilters: QueryFilter<ICredits>,
+            customerFilters: QueryFilter<ICustomers>
+        } = UserRoleEmployeeCatalog[UserRoleEnum.MANAGER]!(searchCreditsData.filtersItems);
 
         console.log("searchCreditsByEmployee-searchCreditsData: ", searchCreditsData);
         console.log("searchCreditsByEmployee-salto: ", salto);
+        console.log("searchCreditsByEmployee-filtersByRole: ", filtersByRole);
         return of(1).pipe(
             mergeMap(() =>
-                this._searchCredits(
-                    UserRoleEmployeeCatalog[UserRoleEnum.MANAGER]!(searchCreditsData.filtersItems),
+                this._creditMongoModel.findCreditsJoinCustomer(
+                    filtersByRole.creditsFilters,
+                    filtersByRole.customerFilters,
                     {
                         skip: salto,
                         limit: get(searchCreditsData, "pagination.limit", 0)
@@ -117,7 +124,7 @@ export class CreditService implements ICreditService {
         );
     }
 
-    private _buildSearchFiltersByCustomers(filters: FilterItemsCustomers): Filter<Document> {
+    private _buildSearchFiltersByCustomers(filters: FilterItemsCustomers): QueryFilter<ICustomers> {
         const queryFilter = {
             //status: get(searchCustomerData, "status", undefined),
             status: isEmpty(get(filters, "status", [])) ? undefined : {

@@ -3,24 +3,67 @@ import { UserRoleEnum } from "../UserRoleEnum";
 import { ICredits } from "../../schema/mongodb/models/CreditsModel";
 import { get, isEmpty, isNil, isObject, isUndefined, omitBy } from "lodash";
 import { FiltersItems } from "../../types/SearchCreditsByEmployeeRequest";
+import { ICustomers } from "../../schema/mongodb/models/Customers.Model";
+import { CreditStatusEnum } from "../CreditStatusEnum";
+import { TransactionStatusEnum } from "../TransactionStatusEnum";
 
 
-export const UserRoleEmployeeCatalog: Record<string, (filters: FiltersItems) => QueryFilter<ICredits>> = {
+export const UserRoleEmployeeCatalog: Record<string, (filters: FiltersItems) => {
+    creditsFilters: QueryFilter<ICredits>,
+    customerFilters: QueryFilter<ICustomers>
+}> = {
     [UserRoleEnum.MANAGER]: (filters: FiltersItems) => {
+        const generalSearch: string = get(filters, "generalSearch", "");
+        const userId: string = get(filters, "userId", "");
         return {
-            creditorCompanyId: new Types.ObjectId(get(filters, "creditorCompanyId", "")),
-            ...omitBy({
-                //status: get(searchCreditsData, "status", undefined),
-                userId: new Types.ObjectId(get(filters, "userId", ""))
-            }, (value) => {
-                return isNil(value) || isUndefined(value) || (isObject(value) && isEmpty(value));
-            }) as QueryFilter<ICredits>
+            creditsFilters: {
+                creditorCompanyId: new Types.ObjectId(get(filters, "creditorCompanyId", "000000000000000000000000")),
+                status: CreditStatusEnum.CHARGE_PROCESS,
+                transactionStatus: TransactionStatusEnum.APPROVED,
+                ...omitBy({
+                    //status: get(searchCreditsData, "status", undefined),
+                    userId: !isEmpty(userId) ? new Types.ObjectId(get(filters, "userId", "")) : undefined 
+                }, (value) => {
+                    return isNil(value) || isUndefined(value) || (isObject(value) && isEmpty(value));
+                }) as QueryFilter<ICredits>
+            },
+            customerFilters: {
+                ...omitBy({
+                    //userId: new Types.ObjectId(get(filters, "userId", ""))
+                    $or: !isEmpty(generalSearch) ? [
+                        { "contact.name": { $regex: new RegExp(generalSearch, 'i') } },
+                        { "contact.lastName": { $regex: new RegExp(generalSearch, 'i') } },
+                        { "contact.address": { $regex: new RegExp(generalSearch, 'i') } },
+                        { "contact.phoneNumber": { $regex: new RegExp(generalSearch, 'i') } },
+                    ] : undefined
+                }, (value) => {
+                    return isNil(value) || isUndefined(value) || (isObject(value) && isEmpty(value));
+                }) as QueryFilter<ICustomers>
+            }
         }
     },
     [UserRoleEnum.CREDIT_COLLECTOR]: (filters: FiltersItems) => {
+        const generalSearch: string = get(filters, "generalSearch", "");
         return {
-            creditorCompanyId: new Types.ObjectId(get(filters, "creditorCompanyId", "")),
-            userId: new Types.ObjectId(get(filters, "userId", ""))
+            creditsFilters: {
+                creditorCompanyId: new Types.ObjectId(get(filters, "creditorCompanyId", "000000000000000000000000")),
+                userId: new Types.ObjectId(get(filters, "userId", "000000000000000000000000")),
+                status: CreditStatusEnum.CHARGE_PROCESS,
+                transactionStatus: TransactionStatusEnum.APPROVED,
+            },
+            customerFilters: {
+                ...omitBy({
+                    //userId: new Types.ObjectId(get(filters, "userId", ""))
+                    $or: !isEmpty(generalSearch) ? [
+                        { "contact.name": { $regex: new RegExp(generalSearch, 'i') } },
+                        { "contact.lastName": { $regex: new RegExp(generalSearch, 'i') } },
+                        { "contact.address": { $regex: new RegExp(generalSearch, 'i') } },
+                        { "contact.phoneNumber": { $regex: new RegExp(generalSearch, 'i') } },
+                    ] : undefined
+                }, (value) => {
+                    return isNil(value) || isUndefined(value) || (isObject(value) && isEmpty(value));
+                }) as QueryFilter<ICustomers>
+            }
         }
     }
 }

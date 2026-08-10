@@ -5,6 +5,7 @@ export interface SearchCreditsByEmployeeRequest {
 
 export interface FiltersItems {
     creditorCompanyId: string;
+    generalSearch?:    string;
     userId:            string;
 }
 
