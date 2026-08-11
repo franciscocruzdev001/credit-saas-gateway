@@ -1,4 +1,4 @@
-import { InferSchemaType, model, Schema } from "mongoose";
+import { InferSchemaType, model, Schema, Types } from "mongoose";
 import { CollectionNameEnum } from "../../../infrastructure/CollectionNameEnum";
 import { UserStatusEnum } from "../../../infrastructure/UserStatusEnum";
 
@@ -7,7 +7,7 @@ const usersSchema = new Schema({
     userName: { type: String, required: true },
     email: { type: String, required: true },
     password: { type: String, required: true },
-    roles: [{ type: String }],
+    roles: [{ type: Schema.Types.ObjectId, ref: CollectionNameEnum.ROLES, required: true }],
     status: { type: String, enum: [UserStatusEnum.ACTIVE, UserStatusEnum.INACTIVE], default: UserStatusEnum.ACTIVE },
     contact: {
         type: new Schema({
@@ -21,6 +21,6 @@ const usersSchema = new Schema({
 }, { timestamps: true });
 
 // 2. Automatically generate/infer the TypeScript interface/type
-export type IUsers = InferSchemaType<typeof usersSchema>;
+export type IUsers = InferSchemaType<typeof usersSchema> & { _id?: Types.ObjectId };
 
 export const UsersModel = model<IUsers>(CollectionNameEnum.USERS, usersSchema);

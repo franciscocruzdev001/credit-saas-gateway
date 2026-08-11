@@ -1,4 +1,4 @@
-import { map, mergeMap, Observable, of } from "rxjs";
+import { from, map, mergeMap, Observable, of, throwError } from "rxjs";
 import { IAuthorizerService } from "../repository/IAuthorizerService";
 import { inject, injectable } from "inversify";
 import { IMongoGateway } from "../repository/IMongoGateway";
@@ -7,7 +7,7 @@ import { Document, Filter } from 'mongodb';
 import { Users } from "../types/Users";
 import { UsersMongoModel } from "../gateway/UsersMongoModel";
 import { IUsers } from "../schema/mongodb/models/UsersModel";
-import { Types } from "mongoose";
+import { QueryFilter, Types } from "mongoose";
 import { get, isEmpty, isNil, isObject, isUndefined, omitBy } from "lodash";
 import { UserStatusEnum } from "../infrastructure/UserStatusEnum";
 import { ChargeReportLogs } from "../types/ChargeReportLogs";
@@ -17,6 +17,15 @@ import { CreditorCompaniesMongoModel } from "../gateway/CreditorCompaniesMongoMo
 import { ICreditorCompanies } from "../schema/mongodb/models/CreditorCompaniesModel";
 import { CreditorCompanies } from "../types/CreditorCompanies";
 import { FiltersItems as FilterItemsEmployees, SearchEmployeesRequest } from "../types/SearchEmployeesRequest";
+import * as bcrypt from "bcrypt";
+import * as jwt from "jsonwebtoken";
+import { LoginResponse } from "../types/LoginResponse";
+import { LoginRequest } from "../types/LoginRequest";
+import { RolesMongoModel } from "../gateway/RolesMongoModel";
+import { IRoles } from "../schema/mongodb/models/RolesModel";
+
+
+const SALT_ROUNDS = 10;
 
 @injectable()
 export class AuthorizerService implements IAuthorizerService {
@@ -24,7 +33,8 @@ export class AuthorizerService implements IAuthorizerService {
     private readonly _usersMongoModel: UsersMongoModel;
     private readonly _chargereportlogsMongoModel: ChargeReportLogsMongoModel;
     private readonly _creditorcompaniesMongoModel: CreditorCompaniesMongoModel;
- 
+    private readonly _rolesMongoModel: RolesMongoModel;
+
 
 
 
@@ -33,13 +43,15 @@ export class AuthorizerService implements IAuthorizerService {
         @inject(TYPES.UsersMongoModel) usersMongoModel: UsersMongoModel,
         @inject(TYPES.ChargeReportLogsMongoModel) ChargeReportLogsMongoModel: ChargeReportLogsMongoModel,
         @inject(TYPES.CreditorCompaniesMongoModel) CreditorCompaniesMongoModel: CreditorCompaniesMongoModel,
-       
+        @inject(TYPES.RolesMongoModel) rolesMongoModel: RolesMongoModel,
+
 
     ) {
         this._mongodb = mongodb;
         this._usersMongoModel = usersMongoModel;
         this._chargereportlogsMongoModel = ChargeReportLogsMongoModel;
         this._creditorcompaniesMongoModel = CreditorCompaniesMongoModel;
+        this._rolesMongoModel = rolesMongoModel;
     }
 
 
@@ -64,21 +76,25 @@ export class AuthorizerService implements IAuthorizerService {
     }
 
     public createUser(userData: Users): Observable<boolean> {
-        const userModelInfo: IUsers = {
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            userName: get(userData, "userName", ""),
-            email: get(userData, "email", ""),
-            password: get(userData, "password", ""),
-            roles: get(userData, "roles", []),
-            status: get(userData, "status", UserStatusEnum.ACTIVE) as UserStatusEnum,
-            creditorCompanyId: new Types.ObjectId(get(userData, "creditorCompanyId", ""))
-        }
-
         return of(1).pipe(
-            mergeMap(() =>
-                this._usersMongoModel.create(userModelInfo)
-            )
+            // Hashea la contraseña en texto plano ANTES de armar el documento a
+            // insertar — nunca guardamos el password original en la BD.
+            mergeMap(() => from(bcrypt.hash(get(userData, "password", ""), SALT_ROUNDS))),
+            mergeMap((hashedPassword: string) => {
+                const roleIds: string[] = get(userData, "roles", []) as string[];
+                const userModelInfo: IUsers = {
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    userName: get(userData, "userName", ""),
+                    email: get(userData, "email", ""),
+                    password: hashedPassword,
+                    roles: roleIds.map((id) => new Types.ObjectId(id)),
+                    status: get(userData, "status", UserStatusEnum.ACTIVE) as UserStatusEnum,
+                    creditorCompanyId: new Types.ObjectId(get(userData, "creditorCompanyId", ""))
+                }
+
+                return this._usersMongoModel.create(userModelInfo);
+            })
         );
     }
     public createChargeReportLogs(chargeReportLogsData: ChargeReportLogs): Observable<boolean> {
@@ -146,6 +162,102 @@ export class AuthorizerService implements IAuthorizerService {
                 records: dataResponse.documents
             }))
         );
+    }
+
+    public authorizer(loginData: LoginRequest): Observable<LoginResponse> {
+        const email = get(loginData, "email", "");
+        const plainPassword = get(loginData, "password", "");
+
+        return of(1).pipe(
+            // 1. Busca al usuario por email — findDocuments regresa {documents, totalDocuments}
+            mergeMap(() =>
+                this._usersMongoModel.findDocuments(
+                    { email } as QueryFilter<IUsers>,
+                    { skip: 0, limit: 1 }
+                )
+            ),
+            mergeMap((dataResponse: { documents: IUsers[], totalDocuments: number }) => {
+                const userDoc = get(dataResponse, "documents.0", null) as (IUsers & { _id: Types.ObjectId }) | null;
+
+                if (!userDoc) {
+                    return throwError(() => new Error('Credenciales inválidas'));
+                }
+                if (userDoc.status !== UserStatusEnum.ACTIVE) {
+                    return throwError(() => new Error('El usuario no está activo'));
+                }
+
+                // 2. Compara el password en texto plano contra el hash guardado
+                return from(bcrypt.compare(plainPassword, userDoc.password)).pipe(
+                    map((isValid: boolean) => ({ isValid, userDoc }))
+                );
+            }),
+            mergeMap(({ isValid, userDoc }: { isValid: boolean, userDoc: IUsers & { _id: Types.ObjectId } }) => {
+                if (!isValid) {
+                    return throwError(() => new Error('Credenciales inválidas'));
+                }
+
+                // 3. Resuelve los permisos combinados de todos los roles del usuario
+                // OJO: userDoc.roles ahora es Types.ObjectId[]
+                const userRoleIds: Types.ObjectId[] = get(userDoc, "roles", []) as Types.ObjectId[];
+
+                if (isEmpty(userRoleIds)) {
+                    return of({ userDoc, permissions: [] as string[], roleNames: [] as string[] });
+                }
+
+                return this._rolesMongoModel.findDocuments(
+                    { _id: { $in: userRoleIds } } as unknown as QueryFilter<IRoles>,
+                    { skip: 0, limit: userRoleIds.length }
+                ).pipe(
+                    map((rolesResponse: { documents: IRoles[], totalDocuments: number }) => {
+                        const permissions: string[] = Array.from(
+                            new Set(
+                                get(rolesResponse, "documents", [])
+                                    .flatMap((role) => get(role, "permissions", []))
+                            )
+                        ) as string[];
+
+                        const roleNames: string[] = get(rolesResponse, "documents", [])
+                            .map((role) => get(role, "name", "")) as string[];
+
+                        return { userDoc, permissions, roleNames };
+                    })
+                );
+            }),
+            map(({ userDoc, permissions, roleNames }: { userDoc: IUsers & { _id: Types.ObjectId }, permissions: string[], roleNames: string[] }) => {
+
+                // 4. Firma el JWT con la info mínima necesaria (nunca el password)
+                const jwtSecret = get(process.env, "JWT_SECRET", "");
+                const jwtExpiresIn = get(process.env, "JWT_EXPIRES_IN", "8h");
+
+                const token = jwt.sign(
+                    {
+                        userId: userDoc._id.toString(),
+                        email: userDoc.email,
+                        roles: roleNames, // <-- nombres legibles, no ObjectIds
+                        permissions,
+                        creditorCompanyId: userDoc.creditorCompanyId?.toString(),
+
+                    },
+                    jwtSecret,
+                    { expiresIn: jwtExpiresIn } as jwt.SignOptions
+                );
+
+                const loginResponse: LoginResponse = {
+                    token,
+                    user: {
+                        _id: userDoc._id.toString(),
+                        userName: userDoc.userName,
+                        email: userDoc.email,
+                        roles: roleNames,
+                        permissions,
+                        creditorCompanyId: userDoc.creditorCompanyId?.toString() ?? '',
+                    },
+                };
+
+                return loginResponse;
+            })
+        );
+    
     }
 
     private _buildSearchFiltersByEmployees(filters: FilterItemsEmployees): Filter<Document> {

@@ -7,6 +7,11 @@ import { Users } from "../types/Users";
 import { ChargeReportLogs } from "../types/ChargeReportLogs";
 import { CreditorCompanies } from "../types/CreditorCompanies";
 import { SearchEmployeesRequest } from "../types/SearchEmployeesRequest";
+import { LoginRequest } from "../types/LoginRequest";
+import { LoginResponse } from "../types/LoginResponse";
+import { authMiddleware, type AuthenticatedRequest } from "../infrastructure/AuthMiddleware";
+import { requirePermission } from "../infrastructure/RequirePermission";
+import { PermissionsEnum } from "../constant/PermissionsEnum";
 
 export const authRouter: Router = Router();
 
@@ -124,7 +129,7 @@ authRouter.post("/createCreditorCompanies", async (req: Request<CreditorCompanie
 
 
 // POST endpoint with explicit types for parameters
-authRouter.post("/searchEmployees", async (req: Request<SearchEmployeesRequest>, res: Response) => {
+authRouter.post("/searchEmployees", authMiddleware , requirePermission(PermissionsEnum.USERS_READ), async (req: AuthenticatedRequest, res: Response) => {
 
   if (req.body === undefined || req.body == null) res.status(500).json({ error: 'La solicitud no cuenta con los parametros solicitados' });
 
@@ -150,6 +155,35 @@ authRouter.post("/searchEmployees", async (req: Request<SearchEmployeesRequest>,
   }
 });
 
+// POST endpoint: valida credenciales y regresa un JWT + datos básicos del usuario
+authRouter.post("/login", async (req: Request<LoginRequest>, res: Response) => {
+
+  if (req.body === undefined || req.body == null) {
+    res.status(400).json({ error: 'La solicitud no cuenta con los parametros solicitados' });
+    return;
+  }
+
+  try {
+    console.log("/login-req.body: ", { email: req.body.email }); // nunca loguear el password
+
+    // 1. Llama al método que devuelve el Observable
+    const result: Observable<LoginResponse> = authorizerService.authorizer(req.body);
+
+    // 2. Convierte el Observable a Promesa y espera el primer valor emitido
+    const datos = await firstValueFrom(
+      result.pipe(
+        map((respuesta) => ({ mensaje: 'Login exitoso', data: respuesta }))
+      )
+    );
+
+    // 3. Envía la respuesta al cliente
+    res.status(200).json(datos);
+  } catch (error) {
+    console.error("Error en /login:", error);
+    // Credenciales inválidas o usuario inactivo -> 401, no 500
+    res.status(401).json({ error: (error as Error).message || 'Credenciales inválidas' });
+  }
+});
 
 
 //authRouter.get("/auth", authorizerService.authorization);

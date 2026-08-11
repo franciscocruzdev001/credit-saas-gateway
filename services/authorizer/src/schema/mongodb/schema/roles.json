@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Roles",
+  "type": "object",
+  "required": ["name", "permissions"],
+  "properties": {
+    "name": { "type": "string" },
+    "permissions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" }
+  }
+}

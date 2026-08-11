@@ -12,6 +12,8 @@ import { IBaseMongoModel } from "../repository/IBaseMongoModel";
 import { IUsers } from "../schema/mongodb/models/UsersModel";
 import { ICreditorCompanies } from "../schema/mongodb/models/CreditorCompaniesModel";
 import { IChargeReportLogs } from "../schema/mongodb/models/ChargeReportLogsModel";
+import { IRoles } from "../schema/mongodb/models/RolesModel";
+import { RolesMongoModel } from "../gateway/RolesMongoModel";
 
 const containerApp: Container = new Container();
 
@@ -22,6 +24,8 @@ containerApp.bind<IAuthorizerService>(TYPES.AuthorizerService).to(AuthorizerServ
 containerApp.bind<IBaseMongoModel<IChargeReportLogs>>(TYPES.ChargeReportLogsMongoModel).to(ChargeReportLogsMongoModel);
 containerApp.bind<IBaseMongoModel<ICreditorCompanies>>(TYPES.CreditorCompaniesMongoModel).to(CreditorCompaniesMongoModel);
 containerApp.bind<IBaseMongoModel<IUsers>>(TYPES.UsersMongoModel).to(UsersMongoModel);
+containerApp.bind<IBaseMongoModel<IRoles>>(TYPES.RolesMongoModel).to(RolesMongoModel);
+
 
 //Gateway
 containerApp.bind<IMongoGateway>(TYPES.MongoGateway).to(MongoGateway);

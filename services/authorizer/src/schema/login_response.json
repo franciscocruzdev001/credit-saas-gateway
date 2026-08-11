@@ -1,0 +1,55 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://LoginResponse",
+    "title": "LoginResponse",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "token": {
+            "type": "string"
+        },
+        "user": {
+            "type": "object",
+            "title": "user",
+            "additionalProperties": false,
+            "properties": {
+                "_id": {
+                    "type": "string"
+                },
+                "userName": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "permissions": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "creditorCompanyId": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "_id",
+                "userName",
+                "email",
+                "roles",
+                "permissions",
+                "creditorCompanyId"
+            ]
+        }
+    },
+    "required": [
+        "token",
+        "user"
+    ]
+}

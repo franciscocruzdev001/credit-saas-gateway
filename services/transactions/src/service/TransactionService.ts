@@ -83,7 +83,7 @@ export class TransactionService implements ITransactionService {
 
     private _buildSearchFiltersByTransactions(filters: FilterItemsTransactions): QueryFilter<ITransactions> {
         console.log("buildSearchFiltersByTransactions-filters:", filters);
-        const walletId = new Types.ObjectId(get(filters, "accountInformacion.walletId", ""));
+        const walletId = get(filters, "accountInformacion.walletId", "");
         const accountNumber = get(filters, "accountInformacion.accountNumber", "");
         const startDateCreated: string = get(filters, "createdRangeDate.startDate", "");
         const endDateCreated: string = get(filters, "createdRangeDate.endDate", "");
@@ -106,10 +106,12 @@ export class TransactionService implements ITransactionService {
                     $lte: !isEmpty(endDateCreated) ? new Date(endDateCreated) : undefined,
                 } : {},
                 description: !isEmpty(generalSearch) ? { $regex: new RegExp(generalSearch, 'i') } : undefined,
-                $or: [
-                    { "sourceAccount.walletId": walletId, "sourceAccount.accountNumber": accountNumber },
-                    { "destinationAccount.walletId": walletId, "destinationAccount.accountNumber": accountNumber },
-                ],
+                $or: (!isEmpty(walletId))
+                    ? [
+                        { "sourceAccount.walletId": new Types.ObjectId(walletId), "sourceAccount.accountNumber": accountNumber },
+                        { "destinationAccount.walletId": new Types.ObjectId(walletId), "destinationAccount.accountNumber": accountNumber },
+                    ]
+                    : undefined,
                 /*$and: [
                     {
                         $or: [

@@ -48,9 +48,7 @@ export class CreditMongoModel extends BaseMongoModel<ICredits> {
       {
         $lookup: {
           from: CollectionNameEnum.CUSTOMERS,
-          let: { creditCustomerId: "$userId" },
-          localField: "customerId",
-          foreignField: "_id",
+          let: { creditCustomerId: "$customerId" },
           pipeline: [
             // Filter 1: Primary Join Condition (User._id === Order.userId)
             {
@@ -75,9 +73,11 @@ export class CreditMongoModel extends BaseMongoModel<ICredits> {
           as: "customerInfo",
         },
       },
-      // Stage 3: Sort results consistently for pagination
+      // Stage 3 — NUEVO: descarta créditos cuyo customer no matcheó el filtro
+      { $match: { customerInfo: { $ne: [] } } },
+      // Stage 4: Sort results consistently for pagination
       { $sort: { createdAt: -1 } },
-      // Stage 4: Facet stage to split into data slice and total count
+
       {
         $facet: {
           data: [{ $skip: defaultTo(pagination.skip, 1) }, { $limit: defaultTo(pagination.limit, 1) }],
