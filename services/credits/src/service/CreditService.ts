@@ -18,6 +18,12 @@ import { UserRoleEnum } from "../infrastructure/UserRoleEnum";
 import { UserRoleEmployeeCatalog } from "../infrastructure/catalogs/UserRoleCatalogs";
 import { SearchCreditsByEmployeeRequest } from "../types/SearchCreditsByEmployeeRequest";
 import { ICustomers } from "../schema/mongodb/models/Customers.Model";
+import { PaymentsMongoModel } from "../gateway/PaymentsMongoModel";
+import { IPayments } from "../schema/mongodb/models/Payments.Model";
+import { GetPaymentRequest } from "../types/GetPaymentRequest";
+import { WalletsMongoModel } from "../gateway/WalletsMongoModel";
+import { IWallets } from "../schema/mongodb/models/Wallets.Model";
+import { GetWalletRequest } from "../types/GetWalletRequest";
 
 
 @injectable()
@@ -25,15 +31,21 @@ export class CreditService implements ICreditService {
     private readonly _mongodb: IMongoGateway;
     private readonly _creditMongoModel: CreditMongoModel;
     private readonly _customerMongoModel: CustomersMongoModel;
+    private readonly _paymentsMongoModel: PaymentsMongoModel;
+    private readonly _walletsMongoModel: WalletsMongoModel;
 
     constructor(
         @inject(TYPES.MongoGateway) mongodb: IMongoGateway,
         @inject(TYPES.CreditMongoModel) creditMongoModel: CreditMongoModel,
         @inject(TYPES.CustomersMongoModel) customersMongoModel: CustomersMongoModel,
+        @inject(TYPES.PaymentsMongoModel) paymentsMongoModel: PaymentsMongoModel,
+        @inject(TYPES.WalletsMongoModel) walletsMongoModel: WalletsMongoModel,
     ) {
         this._mongodb = mongodb;
         this._creditMongoModel = creditMongoModel;
-        this._customerMongoModel = customersMongoModel
+        this._customerMongoModel = customersMongoModel;
+        this._paymentsMongoModel = paymentsMongoModel;
+         this._walletsMongoModel = walletsMongoModel
     }
 
     public searchCredits(
@@ -108,6 +120,56 @@ export class CreditService implements ICreditService {
         );
     }
 
+    
+    //busca todos los documentos de payments cuyo campo creditId apunte a este crédito
+    public getPaymentByCredit(
+        request: GetPaymentRequest
+    ): Observable<Object> {
+        const creditId: string = get(request, "creditId", "");
+
+        console.log("getPaymentHistoryByCredit-request: ", request);
+
+        if (isEmpty(creditId)) {
+            return throwError(() => new Error('creditId es requerido'));
+        }
+
+        return of(1).pipe(
+            mergeMap(() =>
+                this._paymentsMongoModel.findDocuments(
+                    { creditId: new Types.ObjectId(creditId) } as unknown as QueryFilter<IPayments>
+                )
+            ),
+            map((dataResponse: { documents: IPayments[], totalDocuments: number }) => ({
+                total: dataResponse.totalDocuments,
+                records: dataResponse.documents
+            }))
+        );
+    }
+   //busca el documento de wallets con su  propio _id .
+     public getWalletInfo(
+        request: GetWalletRequest
+    ): Observable<Object> {
+        const walletId: string = get(request, "walletId", "");
+
+        console.log("getWalletInfo-request: ", request);
+
+        if (isEmpty(walletId)) {
+            return throwError(() => new Error('walletId es requerido'));
+        }
+
+        return of(1).pipe(
+            mergeMap(() =>
+                this._walletsMongoModel.findDocuments(
+                    { _id: new Types.ObjectId(walletId) } as unknown as QueryFilter<IWallets>
+                )
+            ),
+            map((dataResponse: { documents: IWallets[], totalDocuments: number }) => ({
+                total: dataResponse.totalDocuments,
+                records: dataResponse.documents
+            }))
+        );
+    }
+
     private _searchCredits(queryFilter: QueryFilter<ICredits>, options?: QueryOptions): Observable<Object> {
         //Validar filtros vacios si no trae ningun filtro rechazar
         return of(1).pipe(
@@ -173,6 +235,7 @@ export class CreditService implements ICreditService {
      * quicktype -s schema ./src/schema/search_transactions.request.json --just-types --lang ts -o ./src/types/SearchTransactionsRequest.ts
      * quicktype -s schema ./src/schema/credit_table.json --just-types --lang ts -o ./src/types/CreditTable.ts
      * quicktype -s schema ./src/schema/credit_table.json --just-types --lang ts -o ./src/types/CreditTable.ts
+     * quicktype -s schema ./src/schema/get_payment_request.json --just-types --lang ts -o ./src/types/GetPayment.ts
      * 
      * 
      * quicktype -s schema ./src/schema/search_credits_request.json --just-types --lang ts -o ./src/types/SearchCreditsRequest.ts

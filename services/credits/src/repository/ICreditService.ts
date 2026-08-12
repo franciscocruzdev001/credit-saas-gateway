@@ -3,12 +3,14 @@ import { SearchCustomersRequest } from '../types/SearchCustomersRequest';
 import { SearchEmployeesRequest } from '../types/SearchEmployeesRequest';
 import { SearchCreditsRequest } from '../types/SearchCreditsRequest';
 import { SearchCreditsByEmployeeRequest } from '../types/SearchCreditsByEmployeeRequest';
+import { GetPaymentRequest } from '../types/GetPaymentRequest';
+import { GetWalletRequest } from '../types/GetWalletRequest';
 
 export interface ICreditService {
   /**
    * Create credit 
    */
-  
+
   /**
     *  Search credits by fields filters 
     */
@@ -27,4 +29,8 @@ export interface ICreditService {
   searchCustomer(
     searchCustomerData: SearchCustomersRequest
   ): Observable<Object>
+
+  getPaymentByCredit(request: GetPaymentRequest): Observable<Object>;
+
+  getWalletInfo(request: GetWalletRequest): Observable<Object>;
 }

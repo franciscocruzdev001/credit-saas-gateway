@@ -16,6 +16,9 @@
         },
         "transactionId": {
             "type": "string"
+        },
+        "transactionStatus" :{
+            "type" : "string"
         }
     },
     "required": [

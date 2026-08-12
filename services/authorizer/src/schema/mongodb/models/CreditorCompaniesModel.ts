@@ -1,4 +1,4 @@
-import { InferSchemaType, model, Schema } from "mongoose";
+import { InferSchemaType, model, Schema, Types } from "mongoose";
 import { CollectionNameEnum } from "../../../infrastructure/CollectionNameEnum";
 
 // 1. Define your Mongoose Schema
@@ -18,6 +18,6 @@ const creditorCompaniesSchema = new Schema({
 }, { timestamps: true });
 
 // 2. Automatically generate/infer the TypeScript interface/type
-export type ICreditorCompanies = InferSchemaType<typeof creditorCompaniesSchema>;
+export type ICreditorCompanies = InferSchemaType<typeof creditorCompaniesSchema> & { _id?: Types.ObjectId };
 
 export const CreditorCompaniesModel = model<ICreditorCompanies>(CollectionNameEnum.CREDITOR_COMPANIES, creditorCompaniesSchema);

@@ -1,4 +1,4 @@
-import { from, map, mergeMap, Observable, of, throwError } from "rxjs";
+import { forkJoin, from, map, mergeMap, Observable, of, throwError } from "rxjs";
 import { IAuthorizerService } from "../repository/IAuthorizerService";
 import { inject, injectable } from "inversify";
 import { IMongoGateway } from "../repository/IMongoGateway";
@@ -23,6 +23,8 @@ import { LoginResponse } from "../types/LoginResponse";
 import { LoginRequest } from "../types/LoginRequest";
 import { RolesMongoModel } from "../gateway/RolesMongoModel";
 import { IRoles } from "../schema/mongodb/models/RolesModel";
+import { WalletsMongoModel } from "../gateway/WalletsMongoModel";
+import { IWallets } from "../schema/mongodb//models/Wallets.Model";
 
 
 const SALT_ROUNDS = 10;
@@ -34,6 +36,7 @@ export class AuthorizerService implements IAuthorizerService {
     private readonly _chargereportlogsMongoModel: ChargeReportLogsMongoModel;
     private readonly _creditorcompaniesMongoModel: CreditorCompaniesMongoModel;
     private readonly _rolesMongoModel: RolesMongoModel;
+    private readonly _walletsMongoModel: WalletsMongoModel;
 
 
 
@@ -44,6 +47,7 @@ export class AuthorizerService implements IAuthorizerService {
         @inject(TYPES.ChargeReportLogsMongoModel) ChargeReportLogsMongoModel: ChargeReportLogsMongoModel,
         @inject(TYPES.CreditorCompaniesMongoModel) CreditorCompaniesMongoModel: CreditorCompaniesMongoModel,
         @inject(TYPES.RolesMongoModel) rolesMongoModel: RolesMongoModel,
+        @inject(TYPES.WalletsMongoModel) walletsMongoModel: WalletsMongoModel,
 
 
     ) {
@@ -52,6 +56,7 @@ export class AuthorizerService implements IAuthorizerService {
         this._chargereportlogsMongoModel = ChargeReportLogsMongoModel;
         this._creditorcompaniesMongoModel = CreditorCompaniesMongoModel;
         this._rolesMongoModel = rolesMongoModel;
+        this._walletsMongoModel = walletsMongoModel;
     }
 
 
@@ -196,38 +201,78 @@ export class AuthorizerService implements IAuthorizerService {
                     return throwError(() => new Error('Credenciales inválidas'));
                 }
 
-                // 3. Resuelve los permisos combinados de todos los roles del usuario
-                // OJO: userDoc.roles ahora es Types.ObjectId[]
+                // 3. Resuelve en paralelo: permisos (por roles), wallet (por userId)
+                // e información completa de la empresa acreedora (por creditorCompanyId)
                 const userRoleIds: Types.ObjectId[] = get(userDoc, "roles", []) as Types.ObjectId[];
+                const creditorCompanyId = get(userDoc, "creditorCompanyId") as Types.ObjectId | undefined;
 
-                if (isEmpty(userRoleIds)) {
-                    return of({ userDoc, permissions: [] as string[], roleNames: [] as string[] });
-                }
+                const roles$ = isEmpty(userRoleIds)
+                    ? of({ permissions: [] as string[], roleNames: [] as string[] })
+                    : this._rolesMongoModel.findDocuments(
+                        { _id: { $in: userRoleIds } } as unknown as QueryFilter<IRoles>,
+                        { skip: 0, limit: userRoleIds.length }
+                    ).pipe(
+                        map((rolesResponse: { documents: IRoles[], totalDocuments: number }) => {
+                            const permissions: string[] = Array.from(
+                                new Set(
+                                    get(rolesResponse, "documents", [])
+                                        .flatMap((role) => get(role, "permissions", []))
+                                )
+                            ) as string[];
 
-                return this._rolesMongoModel.findDocuments(
-                    { _id: { $in: userRoleIds } } as unknown as QueryFilter<IRoles>,
-                    { skip: 0, limit: userRoleIds.length }
+                            const roleNames: string[] = get(rolesResponse, "documents", [])
+                                .map((role) => get(role, "name", "")) as string[];
+
+                            return { permissions, roleNames };
+                        })
+                    );
+
+                const wallet$ = this._walletsMongoModel.findDocuments(
+                    { userId: userDoc._id } as unknown as QueryFilter<IWallets>,
+                    { skip: 0, limit: 1 }
                 ).pipe(
-                    map((rolesResponse: { documents: IRoles[], totalDocuments: number }) => {
-                        const permissions: string[] = Array.from(
-                            new Set(
-                                get(rolesResponse, "documents", [])
-                                    .flatMap((role) => get(role, "permissions", []))
-                            )
-                        ) as string[];
+                    map((walletResponse: { documents: IWallets[], totalDocuments: number }) =>
+                        get(walletResponse, "documents.0", null)
+                    )
+                );
+                const creditorCompany$ = creditorCompanyId
+                    ? this._creditorcompaniesMongoModel.findDocuments(
+                        { _id: creditorCompanyId } as unknown as QueryFilter<ICreditorCompanies>,
+                        { skip: 0, limit: 1 }
+                    ).pipe(
+                        map((companyResponse: { documents: ICreditorCompanies[], totalDocuments: number }) =>
+                            get(companyResponse, "documents.0", null)
+                        )
+                    )
+                    : of(null);
 
-                        const roleNames: string[] = get(rolesResponse, "documents", [])
-                            .map((role) => get(role, "name", "")) as string[];
-
-                        return { userDoc, permissions, roleNames };
-                    })
+                return forkJoin({
+                    roles: roles$,
+                    wallet: wallet$,
+                    creditorCompany: creditorCompany$,
+                }).pipe(
+                    map(({ roles, wallet, creditorCompany }) => ({
+                        userDoc,
+                        permissions: roles.permissions,
+                        roleNames: roles.roleNames,
+                        wallet,
+                        creditorCompany,
+                    }))
                 );
             }),
-            map(({ userDoc, permissions, roleNames }: { userDoc: IUsers & { _id: Types.ObjectId }, permissions: string[], roleNames: string[] }) => {
-
+            map(({ userDoc, permissions, roleNames, wallet, creditorCompany }: {
+                userDoc: IUsers & { _id: Types.ObjectId },
+                permissions: string[],
+                roleNames: string[],
+                wallet: IWallets | null,
+                creditorCompany: ICreditorCompanies | null,
+            }) => {
                 // 4. Firma el JWT con la info mínima necesaria (nunca el password)
                 const jwtSecret = get(process.env, "JWT_SECRET", "");
                 const jwtExpiresIn = get(process.env, "JWT_EXPIRES_IN", "8h");
+                const accountNumber = wallet?.accountNumber ?? undefined; 
+
+                const walletId = wallet?._id?.toString();
 
                 const token = jwt.sign(
                     {
@@ -236,6 +281,8 @@ export class AuthorizerService implements IAuthorizerService {
                         roles: roleNames, // <-- nombres legibles, no ObjectIds
                         permissions,
                         creditorCompanyId: userDoc.creditorCompanyId?.toString(),
+                        walletId,
+                        accountNumber,
 
                     },
                     jwtSecret,
@@ -251,13 +298,24 @@ export class AuthorizerService implements IAuthorizerService {
                         roles: roleNames,
                         permissions,
                         creditorCompanyId: userDoc.creditorCompanyId?.toString() ?? '',
+                        ...(walletId ? { walletId } : {}),
+                        ...(accountNumber ? { accountNumber } : {}),
+                        ...(creditorCompany ? {
+                            creditorCompanyInfo: {
+                                _id: creditorCompany._id?.toString() ?? '',
+                                companyName: creditorCompany.companyName ?? "",
+                                socialReason: creditorCompany.socialReason ?? "",
+                                phoneNumber: creditorCompany.phoneNumber ?? "",
+                                email: creditorCompany.email ?? "",
+                            }
+                        } : {}),
                     },
                 };
 
                 return loginResponse;
             })
         );
-    
+
     }
 
     private _buildSearchFiltersByEmployees(filters: FilterItemsEmployees): Filter<Document> {

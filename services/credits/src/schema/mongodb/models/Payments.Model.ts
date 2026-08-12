@@ -1,15 +1,22 @@
-import { InferSchemaType, model, Schema } from "mongoose";
+// PaymentsModel.ts
+import { InferSchemaType, model, Schema, Types } from "mongoose";
 import { CollectionNameEnum } from "../../../infrastructure/CollectionNameEnum";
+import { TransactionStatusEnum } from "../../../infrastructure/TransactionStatusEnum";
 
-// 1. Define your Mongoose Schema
 const paymentsSchema = new Schema({
     total: { type: Number },
     paymentMethod: { type: String },
+    transactionStatus: {
+        type: String, enum: [
+            TransactionStatusEnum.PENDING,
+            TransactionStatusEnum.APPROVED,
+            TransactionStatusEnum.CANCELLED
+        ], default: TransactionStatusEnum.PENDING
+    },
     creditId: { type: Schema.Types.ObjectId, ref: "Credits", required: true },
     transactionId: { type: Schema.Types.ObjectId, ref: "Transactions", required: true }
-});
+}, { timestamps: true });
 
-// 2. Automatically generate/infer the TypeScript interface/type
-export type IPayments = InferSchemaType<typeof paymentsSchema>;
+export type IPayments = InferSchemaType<typeof paymentsSchema> & { _id?: Types.ObjectId };
 
 export const PaymentsModel = model<IPayments>(CollectionNameEnum.PAYMENTS, paymentsSchema);

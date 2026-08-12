@@ -4,6 +4,37 @@
     "title": "LoginResponse",
     "type": "object",
     "additionalProperties": false,
+    "definitions": {
+        "creditorCompanyInfo": {
+            "type": "object",
+            "title": "creditorCompanyInfo",
+            "additionalProperties": false,
+            "properties": {
+                "_id": {
+                    "type": "string"
+                },
+                "companyName": {
+                    "type": "string"
+                },
+                "socialReason": {
+                    "type": "string"
+                },
+                "phoneNumber": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "_id",
+                "companyName",
+                "socialReason",
+                "phoneNumber",
+                "email"
+            ]
+        }
+    },
     "properties": {
         "token": {
             "type": "string"
@@ -36,6 +67,12 @@
                 },
                 "creditorCompanyId": {
                     "type": "string"
+                },
+                "walletId": {
+                    "type": "string"
+                },
+                "creditorCompanyInfo": {
+                    "$ref": "#/definitions/creditorCompanyInfo"
                 }
             },
             "required": [

@@ -14,6 +14,8 @@ import { ICreditorCompanies } from "../schema/mongodb/models/CreditorCompaniesMo
 import { IChargeReportLogs } from "../schema/mongodb/models/ChargeReportLogsModel";
 import { IRoles } from "../schema/mongodb/models/RolesModel";
 import { RolesMongoModel } from "../gateway/RolesMongoModel";
+import { IWallets } from "../schema/mongodb/models/Wallets.Model";
+import { WalletsMongoModel } from "../gateway/WalletsMongoModel";
 
 const containerApp: Container = new Container();
 
@@ -25,6 +27,7 @@ containerApp.bind<IBaseMongoModel<IChargeReportLogs>>(TYPES.ChargeReportLogsMong
 containerApp.bind<IBaseMongoModel<ICreditorCompanies>>(TYPES.CreditorCompaniesMongoModel).to(CreditorCompaniesMongoModel);
 containerApp.bind<IBaseMongoModel<IUsers>>(TYPES.UsersMongoModel).to(UsersMongoModel);
 containerApp.bind<IBaseMongoModel<IRoles>>(TYPES.RolesMongoModel).to(RolesMongoModel);
+containerApp.bind<IBaseMongoModel<IWallets>>(TYPES.WalletsMongoModel).to(WalletsMongoModel);
 
 
 //Gateway
