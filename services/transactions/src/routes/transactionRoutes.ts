@@ -5,6 +5,7 @@ import { firstValueFrom, map, Observable } from "rxjs";
 import { ITransactionService } from "../repository/ITransactionService";
 import { SearchTransactionsRequest } from "../types/SearchTransactionsRequest";
 import { SearchTransactionsByUserRequest } from "../types/SearchTransactionsByUserRequest";
+import { CreateTransactionByEmployeeRequest } from "../types/CreateTransactionByEmployeeRequest";
 
 export const transactionRouter: Router = Router();
 const transactionService = containerApp.get<ITransactionService>(TYPES.TransactionService);
@@ -54,6 +55,32 @@ transactionRouter.post("/searchTransactionsByUser", async (req: Request<SearchTr
     // 3. Envía la respuesta al cliente
     res.status(200).json(datos);
   } catch (error) {
+    // 4. Manejo de errores si el Observable falla o está vacío
+    res.status(500).json({ error: 'Ocurrió un error al procesar la solicitud' });
+  }
+});
+
+// POST endpoint: crea una transacción iniciada por un empleado (nace en PENDING)
+transactionRouter.post("/createTransactionByEmployee", async (req: Request<CreateTransactionByEmployeeRequest>, res: Response) => {
+
+  if (req.body === undefined || req.body == null) res.status(500).json({ error: 'La solicitud no cuenta con los parametros solicitados' });
+  try {
+    console.log("/createTransactionByEmployee-req.body: ", req.body);
+
+    // 1. Llama al método que devuelve el Observable
+    const result: Observable<boolean> = transactionService.createTransactionByEmployee(req.body);
+
+    // 2. Convierte el Observable a Promesa y espera el primer valor emitido
+    const datos = await firstValueFrom(
+      result.pipe(
+        map((respuesta) => ({ mensaje: 'Transacción creada', data: respuesta }))
+      )
+    );
+
+    // 3. Envía la respuesta al cliente
+    res.status(200).json(datos);
+  } catch (error) {
+    console.error("Error en /createTransactionByEmployee:", error);
     // 4. Manejo de errores si el Observable falla o está vacío
     res.status(500).json({ error: 'Ocurrió un error al procesar la solicitud' });
   }

@@ -8,7 +8,9 @@ const transactionsSchema = new Schema({
         type: String, enum: [
             TransactionTypeEnum.CREDIT,
             TransactionTypeEnum.PAYMENT,
-            TransactionTypeEnum.TRANSFER
+            TransactionTypeEnum.TRANSFER,
+            TransactionTypeEnum.DEPOSIT,
+            TransactionTypeEnum.WITHDRAWAL
         ], default: TransactionTypeEnum.DEPOSIT
     },
     status: {

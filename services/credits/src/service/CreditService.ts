@@ -45,7 +45,7 @@ export class CreditService implements ICreditService {
         this._creditMongoModel = creditMongoModel;
         this._customerMongoModel = customersMongoModel;
         this._paymentsMongoModel = paymentsMongoModel;
-         this._walletsMongoModel = walletsMongoModel
+        this._walletsMongoModel = walletsMongoModel
     }
 
     public searchCredits(
@@ -120,7 +120,7 @@ export class CreditService implements ICreditService {
         );
     }
 
-    
+
     //busca todos los documentos de payments cuyo campo creditId apunte a este crédito
     public getPaymentByCredit(
         request: GetPaymentRequest
@@ -145,23 +145,22 @@ export class CreditService implements ICreditService {
             }))
         );
     }
-   //busca el documento de wallets con su  propio _id .
-     public getWalletInfo(
-        request: GetWalletRequest
-    ): Observable<Object> {
+    //busca el documento de wallets con su  propio _id .
+    public getWalletInfo(request: GetWalletRequest): Observable<Object> {
         const walletId: string = get(request, "walletId", "");
+        const userId: string = get(request, "userId", "");
 
-        console.log("getWalletInfo-request: ", request);
-
-        if (isEmpty(walletId)) {
-            return throwError(() => new Error('walletId es requerido'));
+        if (isEmpty(walletId) && isEmpty(userId)) {
+            return throwError(() => new Error('walletId o userId es requerido'));
         }
+
+        const filter = !isEmpty(walletId)
+            ? { _id: new Types.ObjectId(walletId) }
+            : { userId: new Types.ObjectId(userId) };
 
         return of(1).pipe(
             mergeMap(() =>
-                this._walletsMongoModel.findDocuments(
-                    { _id: new Types.ObjectId(walletId) } as unknown as QueryFilter<IWallets>
-                )
+                this._walletsMongoModel.findDocuments(filter as unknown as QueryFilter<IWallets>)
             ),
             map((dataResponse: { documents: IWallets[], totalDocuments: number }) => ({
                 total: dataResponse.totalDocuments,

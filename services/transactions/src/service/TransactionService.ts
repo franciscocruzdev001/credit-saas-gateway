@@ -8,6 +8,7 @@ import { CollectionNameEnum } from "../infrastructure/CollectionNameEnum";
 import { get, isEmpty, isNil, isObject, isUndefined, omitBy } from "lodash";
 import { FiltersItems as FilterItemsTransactions, SearchTransactionsRequest } from "../types/SearchTransactionsRequest"
 import { FiltersItems as FilterItemsTransactionsByUser, SearchTransactionsByUserRequest } from "../types/SearchTransactionsByUserRequest"
+import { CreateTransactionByEmployeeRequest } from "../types/CreateTransactionByEmployeeRequest";
 import { TransactionMongoModel } from "../gateway/TransactionMongoModel";
 import { QueryOptions, Types } from "mongoose";
 import { ITransactions } from "../schema/mongodb/models/TransactionsModel";
@@ -62,6 +63,41 @@ export class TransactionService implements ITransactionService {
                         limit: get(searchTransactionData, "pagination.limit", 0)
                     }
                 )
+            )
+        );
+    }
+
+    public createTransactionByEmployee(
+        transactionData: CreateTransactionByEmployeeRequest
+    ): Observable<boolean> {
+        console.log("createTransactionByEmployee-transactionData: ", transactionData);
+
+        const transactionModelInfo: Partial<ITransactions> = {
+            transactionType: get(transactionData, "transactionType", "") as ITransactions["transactionType"],
+            // El estatus nunca se toma del request: la transacción la crea un
+            // empleado, no un admin, así que siempre nace pendiente de aprobación
+            // (mismo default que ya trae el schema).
+            status: TransactionStatusEnum.PENDING,
+            total: get(transactionData, "total", 0),
+            description: get(transactionData, "description", ""),
+            currency: get(transactionData, "currency", ""),
+            sourceAccount: {
+                accountNumber: get(transactionData, "sourceAccount.accountNumber", ""),
+                walletId: new Types.ObjectId(get(transactionData, "sourceAccount.walletId", "")),
+            },
+            destinationAccount: {
+                accountNumber: get(transactionData, "destinationAccount.accountNumber", ""),
+                walletId: new Types.ObjectId(get(transactionData, "destinationAccount.walletId", "")),
+            },
+            creditorCompanyId: new Types.ObjectId(get(transactionData, "creditorCompanyId", "")),
+            ...(get(transactionData, "creditIdSource")
+                ? { creditIdSource: new Types.ObjectId(get(transactionData, "creditIdSource", "")) }
+                : {}),
+        };
+
+        return of(1).pipe(
+            mergeMap(() =>
+                this._transactionMongoModel.create(transactionModelInfo)
             )
         );
     }
