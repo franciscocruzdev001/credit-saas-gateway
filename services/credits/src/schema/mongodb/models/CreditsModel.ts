@@ -3,6 +3,7 @@ import { CollectionNameEnum } from "../../../infrastructure/CollectionNameEnum";
 import { CreditStatusEnum } from "../../../infrastructure/CreditStatusEnum";
 import { TransactionStatusEnum } from "../../../infrastructure/TransactionStatusEnum";
 import { ICustomers } from "./Customers.Model";
+import { chargeFrequencyEnum } from "../../../infrastructure/ChargeFrequencyEnum";
 
 // 1. Define your Mongoose Schema
 const creditsSchema = new Schema({
@@ -29,7 +30,12 @@ const creditsSchema = new Schema({
     },
     chargeRules: {
         type: new Schema({
-            chargeFrequency: { type: String, required: true },
+            chargeFrequency: {
+                type : String, enum: [
+                 chargeFrequencyEnum.DAILY,
+                 chargeFrequencyEnum.WEEKLY   
+                ]
+            }, 
             chargePeriods: { type: Number, required: true },
             renovationPeriod: { type: Number, required: true },
             comissionRate: { type: Number, required: true },

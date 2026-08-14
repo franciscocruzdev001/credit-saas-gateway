@@ -15,6 +15,7 @@ export const UserRoleEmployeeCatalog: Record<string, (filters: FiltersItems) => 
     [UserRoleEnum.MANAGER]: (filters: FiltersItems) => {
         const generalSearch: string = get(filters, "generalSearch", "");
         const userId: string = get(filters, "userId", "");
+        const chargeFrequency: string[] = get(filters, "chargeFrequency", []);
         return {
             creditsFilters: {
                 creditorCompanyId: new Types.ObjectId(get(filters, "creditorCompanyId", "000000000000000000000000")),
@@ -22,7 +23,9 @@ export const UserRoleEmployeeCatalog: Record<string, (filters: FiltersItems) => 
                 transactionStatus: TransactionStatusEnum.APPROVED,
                 ...omitBy({
                     //status: get(searchCreditsData, "status", undefined),
-                    userId: !isEmpty(userId) ? new Types.ObjectId(get(filters, "userId", "")) : undefined 
+                    userId: !isEmpty(userId) ? new Types.ObjectId(get(filters, "userId", "")) : undefined,
+                    // Filtro para los botones de "créditos semanales/diarios" en mobile
+                    "chargeRules.chargeFrequency": !isEmpty(chargeFrequency) ? { $in: chargeFrequency } : undefined
                 }, (value) => {
                     return isNil(value) || isUndefined(value) || (isObject(value) && isEmpty(value));
                 }) as QueryFilter<ICredits>
@@ -44,12 +47,19 @@ export const UserRoleEmployeeCatalog: Record<string, (filters: FiltersItems) => 
     },
     [UserRoleEnum.CREDIT_COLLECTOR]: (filters: FiltersItems) => {
         const generalSearch: string = get(filters, "generalSearch", "");
+        const chargeFrequency: string[] = get(filters, "chargeFrequency", []);
         return {
             creditsFilters: {
                 creditorCompanyId: new Types.ObjectId(get(filters, "creditorCompanyId", "000000000000000000000000")),
                 userId: new Types.ObjectId(get(filters, "userId", "000000000000000000000000")),
                 status: CreditStatusEnum.CHARGE_PROCESS,
                 transactionStatus: TransactionStatusEnum.APPROVED,
+                ...omitBy({
+                    // Filtro para los botones de "créditos semanales/diarios" en mobile
+                    "chargeRules.chargeFrequency": !isEmpty(chargeFrequency) ? { $in: chargeFrequency } : undefined
+                }, (value) => {
+                    return isNil(value) || isUndefined(value) || (isObject(value) && isEmpty(value));
+                }) as QueryFilter<ICredits>
             },
             customerFilters: {
                 ...omitBy({

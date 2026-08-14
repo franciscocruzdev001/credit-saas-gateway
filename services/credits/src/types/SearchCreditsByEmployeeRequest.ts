@@ -4,6 +4,7 @@ export interface SearchCreditsByEmployeeRequest {
 }
 
 export interface FiltersItems {
+    chargeFrequency?:  string[];
     creditorCompanyId: string;
     generalSearch?:    string;
     userId:            string;
