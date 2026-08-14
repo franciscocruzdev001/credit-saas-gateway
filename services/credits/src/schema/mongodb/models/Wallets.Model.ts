@@ -14,6 +14,3 @@ const walletsSchema = new Schema({
 export type IWallets = InferSchemaType<typeof walletsSchema>;
 
 export const WalletsModel = model<IWallets>(CollectionNameEnum.WALLETS, walletsSchema);
-
-//En la vista de wallet en la tarjeta vamos a mostrar accountNumber y el totalAmount para mostrarlo en la vista 
-// Endpoint de wallet para la informacion de la wallet  

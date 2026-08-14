@@ -24,6 +24,7 @@ import { GetPaymentRequest } from "../types/GetPaymentRequest";
 import { WalletsMongoModel } from "../gateway/WalletsMongoModel";
 import { IWallets } from "../schema/mongodb/models/Wallets.Model";
 import { GetWalletRequest } from "../types/GetWalletRequest";
+import { TransactionStatusEnum } from "../infrastructure/TransactionStatusEnum";
 
 
 @injectable()
@@ -126,6 +127,7 @@ export class CreditService implements ICreditService {
         request: GetPaymentRequest
     ): Observable<Object> {
         const creditId: string = get(request, "creditId", "");
+        const status: string[] = get(request, "status", []);
 
         console.log("getPaymentHistoryByCredit-request: ", request);
 
@@ -136,7 +138,15 @@ export class CreditService implements ICreditService {
         return of(1).pipe(
             mergeMap(() =>
                 this._paymentsMongoModel.findDocuments(
-                    { creditId: new Types.ObjectId(creditId) } as unknown as QueryFilter<IPayments>
+                    {
+                        creditId: new Types.ObjectId(creditId),
+                        // Historial de pagos: por default trae pendientes + aprobados
+                        // (antes no filtraba, pero tampoco se podía pedir explícitamente
+                        // "solo pendientes" o "solo aprobados" desde el caller)
+                        transactionStatus: {
+                            $in: !isEmpty(status) ? status : [TransactionStatusEnum.PENDING, TransactionStatusEnum.APPROVED]
+                        }
+                    } as unknown as QueryFilter<IPayments>
                 )
             ),
             map((dataResponse: { documents: IPayments[], totalDocuments: number }) => ({
