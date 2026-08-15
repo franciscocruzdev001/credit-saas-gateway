@@ -70,13 +70,10 @@ export class TransactionService implements ITransactionService {
     public createTransactionByEmployee(
         transactionData: CreateTransactionByEmployeeRequest
     ): Observable<boolean> {
-        console.log("createTransactionByEmployee-transactionData: ", transactionData);
+        const destinationWalletId = get(transactionData, "destinationAccount.walletId", "");
 
         const transactionModelInfo: Partial<ITransactions> = {
             transactionType: get(transactionData, "transactionType", "") as ITransactions["transactionType"],
-            // El estatus nunca se toma del request: la transacción la crea un
-            // empleado, no un admin, así que siempre nace pendiente de aprobación
-            // (mismo default que ya trae el schema).
             status: TransactionStatusEnum.PENDING,
             total: get(transactionData, "total", 0),
             description: get(transactionData, "description", ""),
@@ -85,21 +82,21 @@ export class TransactionService implements ITransactionService {
                 accountNumber: get(transactionData, "sourceAccount.accountNumber", ""),
                 walletId: new Types.ObjectId(get(transactionData, "sourceAccount.walletId", "")),
             },
-            destinationAccount: {
-                accountNumber: get(transactionData, "destinationAccount.accountNumber", ""),
-                walletId: new Types.ObjectId(get(transactionData, "destinationAccount.walletId", "")),
-            },
             creditorCompanyId: new Types.ObjectId(get(transactionData, "creditorCompanyId", "")),
+            ...(!isEmpty(destinationWalletId)
+                ? {
+                    destinationAccount: {
+                        accountNumber: get(transactionData, "destinationAccount.accountNumber", ""),
+                        walletId: new Types.ObjectId(destinationWalletId),
+                    },
+                }
+                : {}),
             ...(get(transactionData, "creditIdSource")
                 ? { creditIdSource: new Types.ObjectId(get(transactionData, "creditIdSource", "")) }
                 : {}),
         };
 
-        return of(1).pipe(
-            mergeMap(() =>
-                this._transactionMongoModel.create(transactionModelInfo)
-            )
-        );
+        return of(1).pipe(mergeMap(() => this._transactionMongoModel.create(transactionModelInfo)));
     }
 
     private _searchTransactions(queryFilter: QueryFilter<ITransactions>, options: QueryOptions): Observable<Object> {
@@ -171,7 +168,7 @@ export class TransactionService implements ITransactionService {
 
         return {
             creditorCompanyId: new Types.ObjectId(get(filters, "creditorCompanyId", "")),
-            status: TransactionStatusEnum.APPROVED,
+            status: { $in: [TransactionStatusEnum.PENDING, TransactionStatusEnum.APPROVED] },
             $or: [
                 { "sourceAccount.walletId": walletId, "sourceAccount.accountNumber": accountNumber },
                 { "destinationAccount.walletId": walletId, "destinationAccount.accountNumber": accountNumber },
