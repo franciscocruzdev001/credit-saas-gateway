@@ -1,4 +1,4 @@
-import { map, mergeMap, Observable, of, throwError } from "rxjs";
+import { forkJoin, iif, map, mergeMap, Observable, of, throwError } from "rxjs";
 import { inject, injectable } from "inversify";
 import { IMongoGateway } from "../repository/IMongoGateway";
 import { TYPES } from "../constant/types";
@@ -6,8 +6,7 @@ import { Document, Filter } from 'mongodb';
 import { ICreditService } from "../repository/ICreditService";
 import { CollectionNameEnum } from "../infrastructure/CollectionNameEnum";
 import { FiltersItems as FilterItemsCustomers, SearchCustomersRequest } from "../types/SearchCustomersRequest";
-import { defaultTo, filter, get, isEmpty, isNil, isObject, isUndefined, omit, omitBy } from "lodash"
-
+import { defaultTo, filter, get, isEmpty, isEqual, isNil, isObject, isUndefined, omit, omitBy } from "lodash"
 import { FiltersItems as FilterItemsCredits, SearchCreditsRequest } from "../types/SearchCreditsRequest"
 import { CreditMongoModel } from "../gateway/CreditMongoModel";
 import { QueryOptions, Types } from "mongoose";
@@ -25,6 +24,19 @@ import { WalletsMongoModel } from "../gateway/WalletsMongoModel";
 import { IWallets } from "../schema/mongodb/models/Wallets.Model";
 import { GetWalletRequest } from "../types/GetWalletRequest";
 import { TransactionStatusEnum } from "../infrastructure/TransactionStatusEnum";
+import { Customers } from "../types/Customers";
+import { Credits } from "../types/Credits";
+import { TransactionTypeEnum } from "../infrastructure/TransactionTypeEnum";
+import { WalletBasicInformation } from "../types/WalletBasicInformation";
+import { CurrencyEnum } from "../infrastructure/CurrencyEnum";
+import { CustomerStatusEnum } from "../infrastructure/CustomerStatusEnum";
+import { TransactionMongoModel } from "../gateway/TransactionMongoModel";
+import { TRANSACTION_EFFECTS, TRANSACTION_PENDING_OPERATION_WALLET_BUILD, UpdateOperation } from "../infrastructure/catalogs/TrasactionEffectsCatalog";
+import { UpdateQuery } from "mongoose";
+import { generateAcccountNumberWallet } from "../infrastructure/utils/ProcessDataCreditsUtils";
+import { WalletStatusEnum } from "../infrastructure/WalletStatusEnum";
+import { CreditStatusEnum } from "../infrastructure/CreditStatusEnum";
+import { chargeFrequencyEnum } from "../infrastructure/ChargeFrequencyEnum";
 
 
 @injectable()
@@ -34,6 +46,7 @@ export class CreditService implements ICreditService {
     private readonly _customerMongoModel: CustomersMongoModel;
     private readonly _paymentsMongoModel: PaymentsMongoModel;
     private readonly _walletsMongoModel: WalletsMongoModel;
+    private readonly _transactionsMongoModel: TransactionMongoModel;
 
     constructor(
         @inject(TYPES.MongoGateway) mongodb: IMongoGateway,
@@ -41,13 +54,102 @@ export class CreditService implements ICreditService {
         @inject(TYPES.CustomersMongoModel) customersMongoModel: CustomersMongoModel,
         @inject(TYPES.PaymentsMongoModel) paymentsMongoModel: PaymentsMongoModel,
         @inject(TYPES.WalletsMongoModel) walletsMongoModel: WalletsMongoModel,
+        @inject(TYPES.TransactionMongoModel) transactionsMongoModel: TransactionMongoModel,
     ) {
         this._mongodb = mongodb;
         this._creditMongoModel = creditMongoModel;
         this._customerMongoModel = customersMongoModel;
         this._paymentsMongoModel = paymentsMongoModel;
-        this._walletsMongoModel = walletsMongoModel
+        this._walletsMongoModel = walletsMongoModel;
+        this._transactionsMongoModel = transactionsMongoModel;
     }
+
+
+    public createCreditsByEmployee(
+        creditCustomer: {
+            customer?: Customers,
+            credit: Credits
+        }
+    ): Observable<boolean> {
+        const customer: Customers | undefined = get(creditCustomer, "customer", undefined);
+        const creditorCompanyId: string = ""; // Recuperar del JWT
+        const userId: string = ""; //Recuperar del JWT
+        const userWalletId: string = ""; //Recuperar del JWT
+        const userAccountNumber: string = ""; //Recuperar del JWT
+
+        return of(true).pipe(
+            mergeMap(() =>
+                //Validate if customer form contain info
+                iif(() => !isUndefined(customer),
+                    //if customer form contain info, create customer withou wallet
+                    this._processNewCustomer(customer as Customers),
+                    //else customer form empty, get wallet info from customerId on credits form
+                    this._loadWalletInfo(CollectionNameEnum.CUSTOMERS, { customerId: get(creditCustomer.credit, "customerId", "") })
+                )
+            ),
+            mergeMap((customerTransactionalInfo: WalletBasicInformation) =>
+                //Process transaccion - validate if it can create movement
+                forkJoin([
+                    of(customerTransactionalInfo),
+                    this._processNewTrasaction(
+                        // TransactionType - movements
+                        TransactionTypeEnum.CREDIT,
+                        // source account
+                        {
+                            userId: userId,
+                            walletId: userWalletId,
+                            accountNumber: userAccountNumber
+                        },
+                        //Destination account
+                        customerTransactionalInfo,
+                        //Transaction information
+                        {
+                            amountTransaction: get(creditCustomer.credit, "creditAmount", 0),
+                            currency: CurrencyEnum.MXN,
+                            descripcion: "CREDIT - ", //Agregar el nombre del cliente,
+                            creditorCompanyId: creditorCompanyId
+                        }
+                    )
+                ])
+            ),
+            mergeMap((transactionResult: [WalletBasicInformation, { approveOperation: boolean, transactionId: string }]) =>
+                //If transaction operation create, create credit
+                iif(() => transactionResult[1].approveOperation && !isEmpty(transactionResult[1].transactionId),
+                    //if transaction approve operation is true, create credit
+                    this._creditMongoModel.create({
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                        creditorCompanyId: new Types.ObjectId(creditorCompanyId),
+                        userId: new Types.ObjectId(userId),
+                        customerId: new Types.ObjectId(transactionResult[0].customerId),
+                        transactionId: new Types.ObjectId(transactionResult[1].transactionId),
+                        startDateChargeConfig: new Date(), //Obtener en base al ultimo reporte, es la fecha en la entra el primer pago
+                        admissionDate: new Date(),
+                        expirationDate: new Date(), // Calcular en base a las reglas de cobro
+                        creditAmount: get(creditCustomer.credit, "creditAmount", 0),
+                        amountDue: get(creditCustomer.credit, "creditAmount", 0), //Calcular en base a alas reglas de cobro
+                        fixedCharge: 300, //Calcular en base a las reglas de cobro
+                        creditAmountWithMoratory: get(creditCustomer.credit, "creditAmount", 0), //Actualizar en base a las faltas
+                        status: CreditStatusEnum.CHARGE_PROCESS,
+                        transactionStatus: TransactionStatusEnum.PENDING,
+                        chargeRules: {
+                            chargeFrequency: get(creditCustomer, "chargeRules.chargeFrequency", chargeFrequencyEnum.WEEKLY),
+                            chargePeriods: get(creditCustomer, "chargeRules.chargePeriods", 1),
+                            renovationPeriod: get(creditCustomer, "chargeRules.renovationPeriod", 1),
+                            comissionRate: get(creditCustomer, "chargeRules.comissionRate", 1),
+                        },
+                    }),
+                    //else transaction approve operation is true, create credit
+                    of("")
+                )
+            ),
+            map((creditId: string) =>
+                !isEmpty(creditId) ? true : false 
+            )
+        );
+    }
+
+
 
     public searchCredits(
         searchCreditsData: SearchCreditsRequest
@@ -177,6 +279,181 @@ export class CreditService implements ICreditService {
                 records: dataResponse.documents
             }))
         );
+    }
+
+    private _processNewTrasaction(
+        transactionType: TransactionTypeEnum,
+        sourceAccount: WalletBasicInformation,
+        destinationAccount: WalletBasicInformation,
+        transacionBasicInformation: {
+            amountTransaction: number,
+            currency: string,
+            descripcion: string,
+            creditorCompanyId: string
+        }
+    ): Observable<{
+        approveOperation: boolean,
+        transactionId: string
+    }> {
+        const amountTransaction: number = transacionBasicInformation.amountTransaction;
+        const transactionEffects: {
+            sourceAccount: UpdateOperation,
+            destinationAccount: UpdateOperation
+        } = TRANSACTION_EFFECTS[transactionType];
+        /*
+            CREDIT: ACTUALIZA WALLET DE ORIGEN y WALLET DESTINO
+            WITHDRAWAL: ACTUALIZA SOLO LA WALLET DE ORIGEN
+            TRANSFER: ACTUALIZA LA WALLET DE ORIGEN Y LA WALLET DESTINO
+            DEPOSIT: ACTUALIZA LA WALLET DESTINO
+            PAYMENT: ACTUALIZA LA WALLET DESTINO, ACA IGNORA ACTUALIZAR LA WALLET ORIGEN PUESTO QUE ES UN INGRESO EN EFECTIVO
+         */
+
+        return of(true).pipe(
+            // Income movements pendingIncomesBalance - Expenses movements pendingExpensesBalance
+            mergeMap(() => {
+                const transactionOperationSourceAccount: {
+                    queryfilter: QueryFilter<IWallets>,
+                    updateQuery: UpdateQuery<IWallets>
+                } = TRANSACTION_PENDING_OPERATION_WALLET_BUILD[transactionEffects.sourceAccount.operation](sourceAccount.walletId, sourceAccount.accountNumber, amountTransaction);
+                const transactionOperationDestinationAccount: {
+                    queryfilter: QueryFilter<IWallets>,
+                    updateQuery: UpdateQuery<IWallets>
+                } = TRANSACTION_PENDING_OPERATION_WALLET_BUILD[transactionEffects.destinationAccount.operation](destinationAccount.walletId, destinationAccount.accountNumber, amountTransaction);
+
+                return forkJoin({
+                    // SourceAccount: Expenses movements (CREDIT, WITHDRAWAL, TRANSFER-OUT ) - pendingIncomesBalance
+                    sourceAccountWalletCheckUpdate: transactionEffects.sourceAccount.update ?
+                        this._walletsMongoModel.updateOne(transactionOperationSourceAccount.queryfilter, transactionOperationSourceAccount.updateQuery) : of(false),
+                    // DestinationAccount: Income movements (DEPOSIT, PAYMENT, TRANSFER-IN ) - pendingIncomesBalance
+                    destinationAccountWalletCheckUpdate: transactionEffects.destinationAccount.update ?
+                        this._walletsMongoModel.updateOne(transactionOperationDestinationAccount.queryfilter, transactionOperationDestinationAccount.updateQuery) : of(false),
+                })
+            }),
+            map((walletsProcessOperation: { sourceAccountWalletCheckUpdate: boolean, destinationAccountWalletCheckUpdate: boolean }) =>
+                // Expenses movements (DEPOSIT, PAYMENT, TRANSFER-IN ) - pendingIncomesBalance
+                this._checkValidUpdateWalletsByTransactionEffects(walletsProcessOperation, transactionEffects)
+            ),
+            mergeMap((resultWalletsApprovedOperation: boolean) =>
+                //Validate if update pending balance on wallet
+                iif(() => resultWalletsApprovedOperation,
+                    //if pending balance on wallet update, create transaction
+                    forkJoin({
+                        approveOperation: of(resultWalletsApprovedOperation),
+                        transactionId: this._transactionsMongoModel.create({
+                            transactionType: transactionType,
+                            status: TransactionStatusEnum.PENDING,
+                            total: amountTransaction,
+                            description: transacionBasicInformation.descripcion,
+                            currency: transacionBasicInformation.currency,
+                            creditorCompanyId: new Types.ObjectId(transacionBasicInformation.creditorCompanyId),
+                            sourceAccount: {
+                                walletId: new Types.ObjectId(sourceAccount.walletId),
+                                accountNumber: sourceAccount.accountNumber
+                            },
+                            destinationAccount: {
+                                walletId: new Types.ObjectId(destinationAccount.walletId),
+                                accountNumber: destinationAccount.accountNumber
+                            }
+                        })
+                    }),
+                    //else pending balance on wallet not update, get false and empty transactionId
+                    of({
+                        approveOperation: resultWalletsApprovedOperation,
+                        transactionId: ""
+                    })
+                )
+            )
+        );
+    }
+
+    private _processNewCustomer(customer: Customers): Observable<WalletBasicInformation> {
+        return of(true).pipe(
+            mergeMap(() =>
+                this._customerMongoModel.create({
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    creditorCompanyId: new Types.ObjectId(customer.creditorCompanyId),
+                    userId: new Types.ObjectId(customer.userId),
+                    status: CustomerStatusEnum.ACTIVE,
+                    threeWordsUbication: customer.threeWordsUbication,
+                    contact: customer.contact
+                })
+            ),
+            mergeMap((customerId: string) => {
+                const accountNumber: string = generateAcccountNumberWallet(false);
+                return iif(() => !isEmpty(customerId),
+                    forkJoin({
+                        customerId: customerId,
+                        walletId: this._walletsMongoModel.create({
+                            createdAt: new Date(),
+                            updatedAt: new Date(),
+                            customerId: new Types.ObjectId(customerId),
+                            status: WalletStatusEnum.ACTIVE,
+                            accountNumber: accountNumber,
+                            firmBalance: 0,
+                            pendingIncomesBalance: 0,
+                            pendingExpensesBalance: 0
+                        }),
+                        accountNumber: accountNumber
+                    }),
+                    of({
+                        customerId: "",
+                        walletId: "",
+                        accountNumber: ""
+                    })
+                )
+            })
+        );
+    }
+
+    private _loadWalletInfo(entity: CollectionNameEnum, queryfilter: QueryFilter<IWallets>): Observable<WalletBasicInformation> {
+        return of(true).pipe(
+            mergeMap(() =>
+                this._walletsMongoModel.findOneDocument(queryfilter)
+            ),
+            map((wallet: IWallets | undefined) => {
+                const objectIdWalletId: Types.ObjectId | undefined = get(defaultTo(wallet, {}), "_id", undefined);
+
+                return {
+                    ...isEqual(entity, CollectionNameEnum.CUSTOMERS) ? {
+                        customerId: "" + get(queryfilter, "customerId", "")
+                    } : {},
+                    ...isEqual(entity, CollectionNameEnum.USERS) ? {
+                        userId: "" + get(queryfilter, "userId", "")
+                    } : {},
+                    walletId: !isUndefined(objectIdWalletId) ? objectIdWalletId.toString() : "",
+                    accountNumber: get(defaultTo(wallet, {}), "accountNumber", "")
+                }
+                /*const objectIdUserId: Types.ObjectId | undefined = get(defaultTo(wallet, {}), "userId", undefined);
+                const objectIdCustomerId: Types.ObjectId | undefined = get(defaultTo(wallet, {}), "customerId", undefined);
+
+                return !isUndefined(wallet) ? {
+                    userId: !isUndefined(objectIdUserId) ? objectIdUserId.toString() : undefined,
+                    customerId: !isUndefined(objectIdCustomerId) ? objectIdCustomerId.toString() : undefined,
+                    accountNumber: get(wallet, "accountNumber", ""),
+                    status: get(wallet, "status", ""),
+                    totalAmount: get(wallet, "totalAmount", 0),
+                } as Wallets : {
+                    accountNumber: "",
+                    status: "",
+                    totalAmount: 0
+                } as Wallets*/
+            })
+        );
+    }
+
+    private _checkValidUpdateWalletsByTransactionEffects(
+        walletsProcessOperation: {
+            sourceAccountWalletCheckUpdate: boolean,
+            destinationAccountWalletCheckUpdate: boolean
+        },
+        transactionEffects: {
+            sourceAccount: UpdateOperation,
+            destinationAccount: UpdateOperation
+        }
+    ): boolean {
+        return isEqual(walletsProcessOperation.sourceAccountWalletCheckUpdate, transactionEffects.sourceAccount.update) &&
+            isEqual(walletsProcessOperation.destinationAccountWalletCheckUpdate, transactionEffects.destinationAccount.update) ? true : false;
     }
 
     private _searchCredits(queryFilter: QueryFilter<ICredits>, options?: QueryOptions): Observable<Object> {

@@ -7,6 +7,12 @@ export interface IBaseMongoModel<T> {
    */
   findAllDocuments(): Observable<{ documents: T[], totalDocuments: number }>;
   /**
+  * find one document from collection based on a filter
+  */
+  findOneDocument(
+    queryfilter: QueryFilter<T>
+  ): Observable<T | undefined>;
+  /**
   * find multiple documents from collection based on a filter
   */
   findDocuments(
@@ -24,13 +30,20 @@ export interface IBaseMongoModel<T> {
    */
   create(
     document: Partial<T>
-  ): Observable<boolean>;
+  ): Observable<string>;
   /**
    * Update document by id to collection
    */
   update(
     documentId: string,
     updateFields: UpdateQuery<T>
+  ): Observable<boolean>;
+  /**
+ * Update one document by condictions
+ */
+  updateOne(
+    queryfilter: QueryFilter<T>,
+    updateQuery: UpdateQuery<T>
   ): Observable<boolean>;
   /**
    * Remove document by id to collection

@@ -1,5 +1,7 @@
 export interface Credits {
     admissionDate?:            number;
+    amountDue?:                number;
+    amountPaid?:               number;
     chargeRules?:              ChargeRules;
     created?:                  number;
     creditAmount?:             number;

@@ -1,7 +1,8 @@
 import { injectable, unmanaged } from 'inversify';
-import mongoose, { Model, UpdateQuery, connection, QueryOptions, QueryFilter, HydratedDocument, connect } from 'mongoose';
+import mongoose, { Model, UpdateQuery, connection, QueryOptions, QueryFilter, HydratedDocument, connect, UpdateWriteOpResult } from 'mongoose';
 import { IBaseMongoModel } from '../repository/IBaseMongoModel';
 import { catchError, forkJoin, from, map, mergeMap, Observable, of, switchMap } from 'rxjs';
+import { get } from 'lodash';
 
 @injectable()
 export abstract class BaseMongoModel<T> implements IBaseMongoModel<T> {
@@ -12,7 +13,7 @@ export abstract class BaseMongoModel<T> implements IBaseMongoModel<T> {
     // Utilizamos @unmanaged() si el modelo lo provee la subclase constructora
     constructor(@unmanaged() model: Model<T>) {
         this.model = model;
-        if(this._instanceMongoose === null) {
+        if (this._instanceMongoose === null) {
             this._connect().subscribe();
         }
     }
@@ -50,6 +51,19 @@ export abstract class BaseMongoModel<T> implements IBaseMongoModel<T> {
         );
     }
 
+    public findOneDocument(
+        queryfilter: QueryFilter<T>
+    ): Observable<T | undefined> {
+        return of(true).pipe(
+            mergeMap(() =>
+                this.model.findOne(queryfilter).exec()
+            ),
+            map((result: HydratedDocument<T> | null) =>
+                result ? result.toObject() : undefined
+            )
+        );
+    }
+
     public findDocuments(
         queryfilter: QueryFilter<T>,
         options?: QueryOptions
@@ -62,7 +76,7 @@ export abstract class BaseMongoModel<T> implements IBaseMongoModel<T> {
                 return forkJoin({
                     documents: from(
                         this.model.
-                            find(queryfilter,undefined,  options).
+                            find(queryfilter, undefined, options).
                             exec()
                     ),
                     totalDocuments: this.model.countDocuments(queryfilter)
@@ -86,13 +100,13 @@ export abstract class BaseMongoModel<T> implements IBaseMongoModel<T> {
         );
     }
 
-    public create(document: Partial<T>): Observable<boolean> {
+    public create(document: Partial<T>): Observable<string> {
         return of(true).pipe(
             mergeMap(() =>
                 this.model.create(document)
             ),
             map((result: HydratedDocument<T>) => {
-                return result._id !== null ? true : false;
+                return "" + get(result, "_id", "");
             })
         );
     }
@@ -107,6 +121,20 @@ export abstract class BaseMongoModel<T> implements IBaseMongoModel<T> {
             ),
             map((result: HydratedDocument<T> | null) => {
                 return result !== null ? true : false;
+            })
+        );
+    }
+
+    public updateOne(
+        queryfilter: QueryFilter<T>,
+        updateQuery: UpdateQuery<T>
+    ): Observable<boolean> {
+        return of(true).pipe(
+            mergeMap(() =>
+                this.model.updateOne(queryfilter, updateQuery).exec()
+            ),
+            map((result: UpdateWriteOpResult) => {
+                return result.matchedCount === 0 ? false : true;
             })
         );
     }

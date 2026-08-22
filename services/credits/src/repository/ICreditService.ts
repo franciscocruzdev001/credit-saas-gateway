@@ -5,11 +5,19 @@ import { SearchCreditsRequest } from '../types/SearchCreditsRequest';
 import { SearchCreditsByEmployeeRequest } from '../types/SearchCreditsByEmployeeRequest';
 import { GetPaymentRequest } from '../types/GetPaymentRequest';
 import { GetWalletRequest } from '../types/GetWalletRequest';
+import { Customers } from '../types/Customers';
+import { Credits } from '../types/Credits';
 
 export interface ICreditService {
   /**
-   * Create credit 
+   * Create credit by employee (manager, creditCollector)
    */
+  createCreditsByEmployee(
+    creditCustomer: {
+      customer?: Customers,
+      credit: Credits
+    }
+  ): Observable<boolean>
 
   /**
     *  Search credits by fields filters 

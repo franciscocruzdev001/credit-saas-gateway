@@ -14,11 +14,20 @@
         "status": {
             "type": "string"
         },
-        "userId": {
-            "type": "string"
-        },
         "totalAmount": {
             "type": "number"
+        },
+        "firmBalance": {
+            "type": "number"
+        },
+        "pendingIncomesBalance": {
+            "type": "number"
+        },
+        "pendingExpensesBalance": {
+            "type": "number"
+        },
+        "userId": {
+            "type": "string"
         },
         "customerId": {
             "type": "string"

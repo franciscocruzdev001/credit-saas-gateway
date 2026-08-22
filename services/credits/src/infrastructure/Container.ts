@@ -16,6 +16,8 @@ import { IPayments } from "../schema/mongodb/models/Payments.Model";
 import { PaymentsMongoModel } from "../gateway/PaymentsMongoModel";
 import { IWallets } from "../schema/mongodb/models/Wallets.Model";
 import { WalletsMongoModel } from "../gateway/WalletsMongoModel";
+import { ITransactions } from "../schema/mongodb/models/TransactionsModel";
+import { TransactionMongoModel } from "../gateway/TransactionMongoModel";
 
 const containerApp: Container = new Container();
 
@@ -32,8 +34,7 @@ containerApp.bind<IBaseMongoModel<ICustomers>>(TYPES.CustomersMongoModel).to(Cus
 containerApp.bind<IBaseMongoModel<ILatePaymentFeeLogs>>(TYPES.LatePaymentFeeLogsMongoModel).to(LatePaymentFeeLogsMongoModel);
 containerApp.bind<IBaseMongoModel<IPayments>>(TYPES.PaymentsMongoModel).to(PaymentsMongoModel);
 containerApp.bind<IBaseMongoModel<IWallets>>(TYPES.WalletsMongoModel).to(WalletsMongoModel);
-
-
+containerApp.bind<IBaseMongoModel<ITransactions>>(TYPES.TransactionMongoModel).to(TransactionMongoModel);
 
 
 

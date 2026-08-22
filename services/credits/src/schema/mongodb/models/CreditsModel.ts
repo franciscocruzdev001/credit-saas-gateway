@@ -1,4 +1,4 @@
-import { InferSchemaType, model, Schema } from "mongoose";
+import { InferSchemaType, model, Schema, Types } from "mongoose";
 import { CollectionNameEnum } from "../../../infrastructure/CollectionNameEnum";
 import { CreditStatusEnum } from "../../../infrastructure/CreditStatusEnum";
 import { TransactionStatusEnum } from "../../../infrastructure/TransactionStatusEnum";
@@ -11,6 +11,8 @@ const creditsSchema = new Schema({
     admissionDate: { type: Schema.Types.Date, required: true },
     expirationDate: { type: Schema.Types.Date, required: true },
     creditAmount: { type: Number, required: true },
+    amountDue: { type: Number, required: true },
+    amountPaid: { type: Number, required: true },
     creditAmountWithMoratory: { type: Number, required: true },
     fixedCharge: { type: Number, required: true },
     status: {
@@ -45,16 +47,14 @@ const creditsSchema = new Schema({
     creditorCompanyId: { type: Schema.Types.ObjectId, ref: "CreditorCompanies", required: true },
     transactionId: { type: Schema.Types.ObjectId, ref: "Transactions", required: true },
     customerId: { type: Schema.Types.ObjectId, ref: "Customers", required: true }
-});
+}, { timestamps: true });
 
 // 2. Automatically generate/infer the TypeScript interface/type
-export type ICredits = InferSchemaType<typeof creditsSchema> & { _id?: Schema.Types.ObjectId };
+export type ICredits = InferSchemaType<typeof creditsSchema> & { _id?: Types.ObjectId };
 
 // 3. Create TypeScript interface/type to credit with customerBasicInformation
 export type ICreditsWithCustomerBasicInformation = ICredits & {
     customerInfo: ICustomers[]
 }
-
-
 
 export const CreditsModel = model<ICredits>(CollectionNameEnum.CREDITS, creditsSchema);

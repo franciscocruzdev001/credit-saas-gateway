@@ -21,6 +21,12 @@
         "creditAmount": {
             "type": "number"
         },
+        "amountDue": {
+            "type": "number"
+        },
+        "amountPaid": {
+            "type": "number"
+        },
         "creditAmountWithMoratory": {
             "type": "number"
         },

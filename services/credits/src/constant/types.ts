@@ -6,8 +6,7 @@ export type typeSymbol = {
     LatePaymentFeeLogsMongoModel: symbol;
     PaymentsMongoModel: symbol;
     WalletsMongoModel: symbol;
-
-
+    TransactionMongoModel: symbol;
 }
 
 export const TYPES: typeSymbol = {
@@ -17,6 +16,6 @@ export const TYPES: typeSymbol = {
     CustomersMongoModel: Symbol.for("CustomersMongoModel"),
     LatePaymentFeeLogsMongoModel: Symbol.for("latePaymentFeeLogsMongoModel"),
     PaymentsMongoModel: Symbol.for("PaymentsMongoModel"),
-    WalletsMongoModel: Symbol.for("WalletsMongoModel")
-
+    WalletsMongoModel: Symbol.for("WalletsMongoModel"),
+    TransactionMongoModel: Symbol.for("TransactionMongoModel")
 }
