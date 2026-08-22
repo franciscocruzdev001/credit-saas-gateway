@@ -14,6 +14,7 @@ const paymentsSchema = new Schema({
         ], default: TransactionStatusEnum.PENDING
     },
     creditId: { type: Schema.Types.ObjectId, ref: "Credits", required: true },
+    customerId: { type: Schema.Types.ObjectId, ref: "Customers", required: true },
     transactionId: { type: Schema.Types.ObjectId, ref: "Transactions", required: true }
 }, { timestamps: true });
 

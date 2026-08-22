@@ -37,6 +37,7 @@ import { generateAcccountNumberWallet } from "../infrastructure/utils/ProcessDat
 import { WalletStatusEnum } from "../infrastructure/WalletStatusEnum";
 import { CreditStatusEnum } from "../infrastructure/CreditStatusEnum";
 import { chargeFrequencyEnum } from "../infrastructure/ChargeFrequencyEnum";
+import { Payments } from "../types/Payments";
 
 
 @injectable()
@@ -144,12 +145,66 @@ export class CreditService implements ICreditService {
                 )
             ),
             map((creditId: string) =>
-                !isEmpty(creditId) ? true : false 
+                !isEmpty(creditId) ? true : false
             )
         );
     }
 
+    public createPaymentsByEmployee(paymentRequest: Payments): Observable<boolean> {
+        const amountTransaction: number = get(paymentRequest, "total", 0);
+        const creditorCompanyId: string = ""; // Recuperar del JWT
+        const userId: string = ""; //Recuperar del JWT
+        const userWalletId: string = ""; //Recuperar del JWT
+        const userAccountNumber: string = ""; //Recuperar del JWT
 
+        return of(true).pipe(
+            mergeMap(() =>
+                this._loadWalletInfo(CollectionNameEnum.CUSTOMERS, { customerId: paymentRequest.customerId })
+            ),
+            mergeMap((customerTransactionalInfo: WalletBasicInformation) =>
+                this._processNewTrasaction(
+                    // TransactionType - movements
+                    TransactionTypeEnum.PAYMENT,
+                    // source account
+                    customerTransactionalInfo,
+                    //Destination account
+                    {
+                        userId: userId,
+                        walletId: userWalletId,
+                        accountNumber: userAccountNumber
+                    },
+                    //Transaction information
+                    {
+                        amountTransaction: amountTransaction,
+                        currency: CurrencyEnum.MXN,
+                        descripcion: "PAGO - ", //Agregar el nombre del cliente,
+                        creditorCompanyId: creditorCompanyId
+                    }
+                )
+            ),
+            mergeMap((transactionResult: { approveOperation: boolean, transactionId: string }) => 
+                //If transaction operation create, create credit
+                iif(() => transactionResult.approveOperation && !isEmpty(transactionResult.transactionId),
+                    //if transaction approve operation is true, create credit
+                    this._paymentsMongoModel.create({
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                        creditId: new Types.ObjectId(paymentRequest.creditId),
+                        customerId: new Types.ObjectId(paymentRequest.customerId),
+                        transactionId: new Types.ObjectId(transactionResult.transactionId),
+                        total: amountTransaction,
+                        paymentMethod: "cash",
+                        transactionStatus: TransactionStatusEnum.PENDING
+                    }),
+                    //else transaction approve operation is true, create credit
+                    of("")
+                )
+            ),
+            map((paymentId: string) =>
+                !isEmpty(paymentId) ? true : false
+            )
+        );
+    }
 
     public searchCredits(
         searchCreditsData: SearchCreditsRequest

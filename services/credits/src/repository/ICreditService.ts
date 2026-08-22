@@ -7,6 +7,7 @@ import { GetPaymentRequest } from '../types/GetPaymentRequest';
 import { GetWalletRequest } from '../types/GetWalletRequest';
 import { Customers } from '../types/Customers';
 import { Credits } from '../types/Credits';
+import { Payments } from '../types/Payments';
 
 export interface ICreditService {
   /**
@@ -18,6 +19,13 @@ export interface ICreditService {
       credit: Credits
     }
   ): Observable<boolean>
+  /**
+   * Create payment by employee (manager, creditCollector)
+   */
+  createPaymentsByEmployee(
+    paymentRequest: Payments
+  ): Observable<boolean>
+
 
   /**
     *  Search credits by fields filters 
