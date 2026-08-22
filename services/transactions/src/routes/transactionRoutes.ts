@@ -6,6 +6,8 @@ import { ITransactionService } from "../repository/ITransactionService";
 import { SearchTransactionsRequest } from "../types/SearchTransactionsRequest";
 import { SearchTransactionsByUserRequest } from "../types/SearchTransactionsByUserRequest";
 import { CreateTransactionByEmployeeRequest } from "../types/CreateTransactionByEmployeeRequest";
+import { AuthorizationContext } from "../types/AuthorizationContext";
+import { authMiddleware, type AuthenticatedRequest } from "../infrastructure/AuthMiddleware";
 
 export const transactionRouter: Router = Router();
 const transactionService = containerApp.get<ITransactionService>(TYPES.TransactionService);
@@ -61,14 +63,22 @@ transactionRouter.post("/searchTransactionsByUser", async (req: Request<SearchTr
 });
 
 // POST endpoint: crea una transacción iniciada por un empleado (nace en PENDING)
-transactionRouter.post("/createTransactionByEmployee", async (req: Request<CreateTransactionByEmployeeRequest>, res: Response) => {
+transactionRouter.post("/createTransactionByEmployee", authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
 
   if (req.body === undefined || req.body == null) res.status(500).json({ error: 'La solicitud no cuenta con los parametros solicitados' });
   try {
     console.log("/createTransactionByEmployee-req.body: ", req.body);
+    const request: CreateTransactionByEmployeeRequest = req.body;
 
-    // 1. Llama al método que devuelve el Observable
-    const result: Observable<boolean> = transactionService.createTransactionByEmployee(req.body);
+    // 1. Llama al método que devuelve el Observable — el userId, creditorCompanyId,
+    // walletId y accountNumber vienen del JWT (req.user), nunca del body
+    const authorizationContext: AuthorizationContext = {
+      userId: req.user?.userId ?? '',
+      creditorCompanyId: req.user?.creditorCompanyId ?? '',
+      ...(req.user?.walletId ? { walletId: req.user.walletId } : {}),
+      ...(req.user?.accountNumber ? { accountNumber: req.user.accountNumber } : {}),
+    };
+    const result: Observable<boolean> = transactionService.createTransactionByEmployee(request, authorizationContext);
 
     // 2. Convierte el Observable a Promesa y espera el primer valor emitido
     const datos = await firstValueFrom(

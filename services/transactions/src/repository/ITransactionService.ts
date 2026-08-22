@@ -2,6 +2,7 @@ import { Observable } from 'rxjs';
 import { SearchTransactionsRequest } from '../types/SearchTransactionsRequest';
 import { SearchTransactionsByUserRequest } from '../types/SearchTransactionsByUserRequest';
 import { CreateTransactionByEmployeeRequest } from '../types/CreateTransactionByEmployeeRequest';
+import { AuthorizationContext } from '../types/AuthorizationContext';
 
 export interface ITransactionService {
   /**
@@ -21,6 +22,7 @@ export interface ITransactionService {
     * queda a la espera de aprobación por un admin
     */
   createTransactionByEmployee(
-    transactionData: CreateTransactionByEmployeeRequest
+    transactionData: CreateTransactionByEmployeeRequest,
+    authorizationContext: AuthorizationContext
   ): Observable<boolean>
 }

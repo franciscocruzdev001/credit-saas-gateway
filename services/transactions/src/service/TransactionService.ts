@@ -19,6 +19,7 @@ import { WalletBasicInformation } from "../types/WalletBasicInformation";
 import { TRANSACTION_EFFECTS, TRANSACTION_PENDING_OPERATION_WALLET_BUILD, UpdateOperation } from "../infrastructure/catologs/TrasactionEffectsCatalog";
 import { IWallets } from "../schema/mongodb/models/Wallets.Model";
 import { WalletsMongoModel } from "../gateway/WalletsMongoModel";
+import { AuthorizationContext } from "../types/AuthorizationContext";
 
 @injectable()
 export class TransactionService implements ITransactionService {
@@ -75,36 +76,39 @@ export class TransactionService implements ITransactionService {
     }
 
     public createTransactionByEmployee(
-        transactionData: CreateTransactionByEmployeeRequest
+        transactionData: CreateTransactionByEmployeeRequest,
+        authorizationContext: AuthorizationContext
     ): Observable<boolean> {
+        const creditorCompanyId: string = get(authorizationContext, "creditorCompanyId", "");
+        const userId: string = get(authorizationContext, "userId", "");
+        const userWalletId: string = get(authorizationContext, "walletId", "");
+        const userAccountNumber: string = get(authorizationContext, "accountNumber", "");
         const destinationWalletId = get(transactionData, "destinationAccount.walletId", "");
 
-        const transactionModelInfo: Partial<ITransactions> = {
-            transactionType: get(transactionData, "transactionType", "") as ITransactions["transactionType"],
-            status: TransactionStatusEnum.PENDING,
-            total: get(transactionData, "total", 0),
-            description: get(transactionData, "description", ""),
-            currency: get(transactionData, "currency", ""),
-            sourceAccount: {
-                accountNumber: get(transactionData, "sourceAccount.accountNumber", ""),
-                walletId: new Types.ObjectId(get(transactionData, "sourceAccount.walletId", "")),
+        return this._processNewTrasaction(
+            get(transactionData, "transactionType", "") as TransactionTypeEnum,
+            // source account: siempre la wallet del empleado autenticado (JWT)
+            {
+                userId: userId,
+                walletId: userWalletId,
+                accountNumber: userAccountNumber
             },
-            creditorCompanyId: new Types.ObjectId(get(transactionData, "creditorCompanyId", "")),
-            ...(!isEmpty(destinationWalletId)
-                ? {
-                    destinationAccount: {
-                        accountNumber: get(transactionData, "destinationAccount.accountNumber", ""),
-                        walletId: new Types.ObjectId(destinationWalletId),
-                    },
-                }
-                : {}),
-            ...(get(transactionData, "creditIdSource")
-                ? { creditIdSource: new Types.ObjectId(get(transactionData, "creditIdSource", "")) }
-                : {}),
-        };
-
-        return of(true);
-        //return of(1).pipe(mergeMap(() => this._transactionMongoModel.create(transactionModelInfo)));
+            // destination account: la que venga en la solicitud (si aplica, ej. retiro no manda)
+            !isEmpty(destinationWalletId) ? {
+                accountNumber: get(transactionData, "destinationAccount.accountNumber", ""),
+                walletId: destinationWalletId
+            } : undefined,
+            {
+                amountTransaction: get(transactionData, "total", 0),
+                currency: get(transactionData, "currency", ""),
+                descripcion: get(transactionData, "description", ""),
+                creditorCompanyId: creditorCompanyId
+            }
+        ).pipe(
+            map((transactionResult: { approveOperation: boolean, transactionId: string }) =>
+                transactionResult.approveOperation && !isEmpty(transactionResult.transactionId)
+            )
+        );
     }
 
     private _processNewTrasaction(

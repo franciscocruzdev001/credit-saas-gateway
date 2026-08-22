@@ -46,7 +46,7 @@ export const TRANSACTION_PENDING_OPERATION_WALLET_BUILD: Record<TransactionOpera
             // Condición estricta: Egresos pendiente - Ingresos pendientes + Nuevo Monto <= Limite (balance firme)
             $expr: {
                 $lte: [
-                    { $add: ["$pendingExpensesBalance", "-$pendingIncomesBalance", amountTransaction] },
+                    { $add: ["$pendingExpensesBalance", "$-pendingIncomesBalance", amountTransaction] },
                     "$firmBalance"
                 ]
             }
