@@ -1,4 +1,4 @@
-import { UpdateQuery, AnyObject, QueryFilter, QueryOptions } from 'mongoose';
+import { UpdateQuery, QueryFilter, QueryOptions } from 'mongoose';
 import { Observable } from 'rxjs';
 
 export interface IBaseMongoModel<T> {
@@ -24,13 +24,20 @@ export interface IBaseMongoModel<T> {
    */
   create(
     document: Partial<T>
-  ): Observable<boolean>;
+  ): Observable<string>;
   /**
    * Update document by id to collection
    */
   update(
     documentId: string,
     updateFields: UpdateQuery<T>
+  ): Observable<boolean>;
+  /**
+   * Update one document by condictions
+   */
+  updateOne(
+    queryfilter: QueryFilter<T>,
+    updateQuery: UpdateQuery<T>
   ): Observable<boolean>;
   /**
    * Remove document by id to collection

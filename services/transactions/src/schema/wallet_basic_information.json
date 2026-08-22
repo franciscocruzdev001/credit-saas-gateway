@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://WalletBasicInformation",
+  "title": "WalletBasicInformation",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "userId": {
+      "type": "string"
+    },
+    "customerId": {
+      "type": "string"
+    },
+    "walletId": {
+      "type": "string"
+    },
+    "accountNumber": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "walletId",
+    "accountNumber"
+  ]
+}
