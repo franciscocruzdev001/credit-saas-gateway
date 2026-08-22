@@ -7,6 +7,8 @@ import { TransactionService } from "../service/TransactionService";
 import { IBaseMongoModel } from "../repository/IBaseMongoModel";
 import { ITransactions } from "../schema/mongodb/models/TransactionsModel"
 import { TransactionMongoModel } from "../gateway/TransactionMongoModel";
+import { IWallets } from "../schema/mongodb/models/Wallets.Model";
+import { WalletsMongoModel } from "../gateway/WalletsMongoModel";
 
 const containerApp: Container = new Container();
 
@@ -18,5 +20,6 @@ containerApp.bind<IMongoGateway>(TYPES.MongoGateway).to(MongoGateway);
 
 //Mongo Models
 containerApp.bind<IBaseMongoModel<ITransactions>>(TYPES.TransactionMongoModel).to(TransactionMongoModel);
+containerApp.bind<IBaseMongoModel<IWallets>>(TYPES.WalletsMongoModel).to(WalletsMongoModel);
 
 export { containerApp }

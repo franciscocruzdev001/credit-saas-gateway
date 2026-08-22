@@ -1,0 +1,36 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://Wallets",
+    "title": "Wallets",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "created": {
+            "type": "number"
+        },
+        "accountNumber": {
+            "type": "string"
+        },
+        "status": {
+            "type": "string"
+        },
+        "totalAmount": {
+            "type": "number"
+        },
+        "firmBalance": {
+            "type": "number"
+        },
+        "pendingIncomesBalance": {
+            "type": "number"
+        },
+        "pendingExpensesBalance": {
+            "type": "number"
+        },
+        "userId": {
+            "type": "string"
+        },
+        "customerId": {
+            "type": "string"
+        }
+    }
+}
