@@ -38,6 +38,7 @@ import { WalletStatusEnum } from "../infrastructure/WalletStatusEnum";
 import { CreditStatusEnum } from "../infrastructure/CreditStatusEnum";
 import { chargeFrequencyEnum } from "../infrastructure/ChargeFrequencyEnum";
 import { Payments } from "../types/Payments";
+import { AuthorizationContext } from "../types/AuthorizationContext";
 
 
 @injectable()
@@ -70,13 +71,14 @@ export class CreditService implements ICreditService {
         creditCustomer: {
             customer?: Customers,
             credit: Credits
-        }
+        },
+        authorizationContext: AuthorizationContext
     ): Observable<boolean> {
         const customer: Customers | undefined = get(creditCustomer, "customer", undefined);
-        const creditorCompanyId: string = ""; // Recuperar del JWT
-        const userId: string = ""; //Recuperar del JWT
-        const userWalletId: string = ""; //Recuperar del JWT
-        const userAccountNumber: string = ""; //Recuperar del JWT
+        const creditorCompanyId: string = get(authorizationContext, "creditorCompanyId", "");
+        const userId: string = get(authorizationContext, "userId", "");
+        const userWalletId: string = get(authorizationContext, "walletId", "");
+        const userAccountNumber: string = get(authorizationContext, "accountNumber", "");
 
         return of(true).pipe(
             mergeMap(() =>
@@ -129,6 +131,7 @@ export class CreditService implements ICreditService {
                         expirationDate: new Date(), // Calcular en base a las reglas de cobro
                         creditAmount: get(creditCustomer.credit, "creditAmount", 0),
                         amountDue: get(creditCustomer.credit, "creditAmount", 0), //Calcular en base a alas reglas de cobro
+                        amountPaid:0,
                         fixedCharge: 300, //Calcular en base a las reglas de cobro
                         creditAmountWithMoratory: get(creditCustomer.credit, "creditAmount", 0), //Actualizar en base a las faltas
                         status: CreditStatusEnum.CHARGE_PROCESS,
@@ -150,12 +153,12 @@ export class CreditService implements ICreditService {
         );
     }
 
-    public createPaymentsByEmployee(paymentRequest: Payments): Observable<boolean> {
+    public createPaymentsByEmployee(paymentRequest: Payments, authorizationContext: AuthorizationContext): Observable<boolean> {
         const amountTransaction: number = get(paymentRequest, "total", 0);
-        const creditorCompanyId: string = ""; // Recuperar del JWT
-        const userId: string = ""; //Recuperar del JWT
-        const userWalletId: string = ""; //Recuperar del JWT
-        const userAccountNumber: string = ""; //Recuperar del JWT
+        const creditorCompanyId: string = get(authorizationContext, "creditorCompanyId", "");
+        const userId: string = get(authorizationContext, "userId", "");
+        const userWalletId: string = get(authorizationContext, "walletId", "");
+        const userAccountNumber: string = get(authorizationContext, "accountNumber", "");
 
         return of(true).pipe(
             mergeMap(() =>
@@ -362,7 +365,8 @@ export class CreditService implements ICreditService {
             DEPOSIT: ACTUALIZA LA WALLET DESTINO
             PAYMENT: ACTUALIZA LA WALLET DESTINO, ACA IGNORA ACTUALIZAR LA WALLET ORIGEN PUESTO QUE ES UN INGRESO EN EFECTIVO
          */
-
+        console.log(sourceAccount, "sourceAcount")
+        console.log(destinationAccount, "destination")
         return of(true).pipe(
             // Income movements pendingIncomesBalance - Expenses movements pendingExpensesBalance
             mergeMap(() => {
@@ -436,9 +440,11 @@ export class CreditService implements ICreditService {
             ),
             mergeMap((customerId: string) => {
                 const accountNumber: string = generateAcccountNumberWallet(false);
+                console.log("accountNumber", accountNumber)
+                console.log("customerId", customerId)                
                 return iif(() => !isEmpty(customerId),
                     forkJoin({
-                        customerId: customerId,
+                        customerId: of(customerId),
                         walletId: this._walletsMongoModel.create({
                             createdAt: new Date(),
                             updatedAt: new Date(),
@@ -449,7 +455,7 @@ export class CreditService implements ICreditService {
                             pendingIncomesBalance: 0,
                             pendingExpensesBalance: 0
                         }),
-                        accountNumber: accountNumber
+                        accountNumber: of(accountNumber)
                     }),
                     of({
                         customerId: "",

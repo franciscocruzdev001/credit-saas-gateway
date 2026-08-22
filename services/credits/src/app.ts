@@ -1,8 +1,10 @@
+import dotenv from 'dotenv';
 import "reflect-metadata";
 import express, { Application }  from "express";
 import { creditRouter } from "./routes/creditRoutes";
 import cors from "cors";
 
+dotenv.config();
 const app: Application = express();
 const PORT = Number(process.env.CREDITS_PORT) || 4001;
 

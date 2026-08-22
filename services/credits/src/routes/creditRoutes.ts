@@ -9,10 +9,91 @@ import { SearchCreditsRequest } from "../types/SearchCreditsRequest";
 import { SearchCreditsByEmployeeRequest } from "../types/SearchCreditsByEmployeeRequest";
 import { GetPaymentRequest } from "../types/GetPaymentRequest";
 import { GetWalletRequest } from "../types/GetWalletRequest";
+import { Customers } from "../types/Customers";
+import { Credits } from "../types/Credits";
+import { Payments } from "../types/Payments";
+import { AuthorizationContext } from "../types/AuthorizationContext";
+import { authMiddleware, type AuthenticatedRequest } from "../infrastructure/AuthMiddleware";
 
 export const creditRouter: Router = Router();
 const creditService = containerApp.get<ICreditService>(TYPES.CreditService);
 
+
+// POST endpoint: crea un crédito para un cliente (nuevo o existente) a nombre del empleado autenticado
+creditRouter.post("/createCreditsByEmployee", authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
+
+  if (req.body === undefined || req.body == null) {
+    res.status(400).json({ error: 'La solicitud no cuenta con los parametros solicitados' });
+    return;
+  }
+
+  try {
+
+    console.log("/createCreditsByEmployee-req.body: ", req.body);
+    const request: { customer?: Customers, credit: Credits } = req.body;
+
+    // 1. Llama al método que devuelve el Observable — el userId, creditorCompanyId,
+    // walletId y accountNumber vienen del JWT (req.user), nunca del body
+    const authorizationContext: AuthorizationContext = {
+      userId: req.user?.userId ?? '',
+      creditorCompanyId: req.user?.creditorCompanyId ?? '',
+      ...(req.user?.walletId ? { walletId: req.user.walletId } : {}),
+      ...(req.user?.accountNumber ? { accountNumber: req.user.accountNumber } : {}),
+    };
+    const result: Observable<boolean> = creditService.createCreditsByEmployee(request, authorizationContext);
+
+    // 2. Convierte el Observable a Promesa y espera el primer valor emitido
+    const datos = await firstValueFrom(
+      result.pipe(
+        map((respuesta) => ({ mensaje: 'Crédito creado', data: respuesta }))
+      )
+    );
+
+    // 3. Envía la respuesta al cliente
+    res.status(200).json(datos);
+  } catch (error) {
+    console.error("Error en /createCreditsByEmployee:", error);
+    res.status(500).json({ error: 'Ocurrió un error al procesar la solicitud' });
+  }
+});
+
+// POST endpoint: crea un pago sobre un crédito a nombre del empleado autenticado
+creditRouter.post("/createPaymentsByEmployee", authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
+
+  if (req.body === undefined || req.body == null) {
+    res.status(400).json({ error: 'La solicitud no cuenta con los parametros solicitados' });
+    return;
+  }
+
+  try {
+
+    console.log("/createPaymentsByEmployee-req.body: ", req.body);
+    const request: Payments = req.body;
+
+    // 1. Llama al método que devuelve el Observable — el userId, creditorCompanyId,
+    // walletId y accountNumber vienen del JWT (req.user), nunca del body
+    const authorizationContext: AuthorizationContext = {
+      userId: req.user?.userId ?? '',
+      creditorCompanyId: req.user?.creditorCompanyId ?? '',
+      ...(req.user?.walletId ? { walletId: req.user.walletId } : {}),
+      ...(req.user?.accountNumber ? { accountNumber: req.user.accountNumber } : {}),
+    };
+    const result: Observable<boolean> = creditService.createPaymentsByEmployee(request, authorizationContext);
+
+    // 2. Convierte el Observable a Promesa y espera el primer valor emitido
+    const datos = await firstValueFrom(
+      result.pipe(
+        map((respuesta) => ({ mensaje: 'Pago creado', data: respuesta }))
+      )
+    );
+
+    // 3. Envía la respuesta al cliente
+    res.status(200).json(datos);
+  } catch (error) {
+    console.error("Error en /createPaymentsByEmployee:", error);
+    res.status(500).json({ error: 'Ocurrió un error al procesar la solicitud' });
+  }
+});
 
 // POST endpoint search credits by filter fields
 creditRouter.post("/searchCredits", async (req: Request<SearchCreditsRequest>, res: Response) => {

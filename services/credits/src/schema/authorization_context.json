@@ -1,0 +1,31 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://AuthorizationContext",
+    "title": "AuthorizationContext",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "userId": {
+            "type": "string"
+        },
+        "roles": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "creditorCompanyId": {
+            "type": "string"
+        },
+        "walletId": {
+            "type": "string"
+        },
+        "accountNumber": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "userId",
+        "creditorCompanyId"
+    ]
+}

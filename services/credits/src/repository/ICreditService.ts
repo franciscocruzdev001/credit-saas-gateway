@@ -8,6 +8,7 @@ import { GetWalletRequest } from '../types/GetWalletRequest';
 import { Customers } from '../types/Customers';
 import { Credits } from '../types/Credits';
 import { Payments } from '../types/Payments';
+import { AuthorizationContext } from '../types/AuthorizationContext';
 
 export interface ICreditService {
   /**
@@ -17,13 +18,15 @@ export interface ICreditService {
     creditCustomer: {
       customer?: Customers,
       credit: Credits
-    }
+    },
+    authorizationContext: AuthorizationContext
   ): Observable<boolean>
   /**
    * Create payment by employee (manager, creditCollector)
    */
   createPaymentsByEmployee(
-    paymentRequest: Payments
+    paymentRequest: Payments,
+    authorizationContext: AuthorizationContext
   ): Observable<boolean>
 
 
