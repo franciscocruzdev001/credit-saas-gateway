@@ -9,6 +9,7 @@ import { Customers } from '../types/Customers';
 import { Credits } from '../types/Credits';
 import { Payments } from '../types/Payments';
 import { AuthorizationContext } from '../types/AuthorizationContext';
+import { GetCreditTotalsRequest } from '../types/GetCreditTotalsRequest';
 
 export interface ICreditService {
   /**
@@ -40,7 +41,8 @@ export interface ICreditService {
     *  Search credits by fields filters to employee
     */
   searchCreditsByEmployee(
-    searchCreditsData: SearchCreditsByEmployeeRequest
+    searchCreditsData: SearchCreditsByEmployeeRequest,
+    authorizationContext: AuthorizationContext
   ): Observable<Object>
   /**
     * Search customers by fields filters 
@@ -52,4 +54,9 @@ export interface ICreditService {
   getPaymentByCredit(request: GetPaymentRequest): Observable<Object>;
 
   getWalletInfo(request: GetWalletRequest): Observable<Object>;
+
+  getCreditTotals(
+    request: GetCreditTotalsRequest,
+    authorizationContext: AuthorizationContext
+  ): Observable<Object>;
 }

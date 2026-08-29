@@ -36,6 +36,10 @@
         "status": {
             "type": "string"
         },
+        "creationStatus": {
+            "type": "string",
+            "enum": ["new", "renewed"]
+        }, 
         "chargeRules": {
             "type": "object",
             "title": "ChargeRules",
@@ -46,6 +50,10 @@
                 },
                 "chargePeriods": {
                     "type": "number"
+                },
+                "chargeDay": {
+                    "type": "string",
+                    "enum": ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
                 },
                 "renovationPeriod": {
                     "type": "number"

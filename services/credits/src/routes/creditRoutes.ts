@@ -13,6 +13,7 @@ import { Customers } from "../types/Customers";
 import { Credits } from "../types/Credits";
 import { Payments } from "../types/Payments";
 import { AuthorizationContext } from "../types/AuthorizationContext";
+import { GetCreditTotalsRequest } from "../types/GetCreditTotalsRequest";
 import { authMiddleware, type AuthenticatedRequest } from "../infrastructure/AuthMiddleware";
 
 export const creditRouter: Router = Router();
@@ -95,6 +96,42 @@ creditRouter.post("/createPaymentsByEmployee", authMiddleware, async (req: Authe
   }
 });
 
+// POST endpoint: totales de créditos (por cobrar/cobrado/pendiente) agrupados por frecuencia
+creditRouter.post("/getCreditTotals", authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
+
+  if (req.body === undefined || req.body == null) {
+    res.status(400).json({ error: 'La solicitud no cuenta con los parametros solicitados' });
+    return;
+  }
+
+  try {
+
+    console.log("/getCreditTotals-req.body: ", req.body);
+    const request: GetCreditTotalsRequest = req.body;
+
+    // El userId, creditorCompanyId, roles, walletId y accountNumber vienen del JWT (req.user), nunca del body
+    const authorizationContext: AuthorizationContext = {
+      userId: req.user?.userId ?? '',
+      creditorCompanyId: req.user?.creditorCompanyId ?? '',
+      roles: req.user?.roles ?? [],
+      ...(req.user?.walletId ? { walletId: req.user.walletId } : {}),
+      ...(req.user?.accountNumber ? { accountNumber: req.user.accountNumber } : {}),
+    };
+    const result: Observable<Object> = creditService.getCreditTotals(request, authorizationContext);
+
+    const datos = await firstValueFrom(
+      result.pipe(
+        map((respuesta) => ({ mensaje: 'Datos obtenidos', data: respuesta }))
+      )
+    );
+
+    res.status(200).json(datos);
+  } catch (error) {
+    console.error("Error en /getCreditTotals:", error);
+    res.status(500).json({ error: 'Ocurrió un error al procesar la solicitud' });
+  }
+});
+
 // POST endpoint search credits by filter fields
 creditRouter.post("/searchCredits", async (req: Request<SearchCreditsRequest>, res: Response) => {
 
@@ -122,15 +159,22 @@ creditRouter.post("/searchCredits", async (req: Request<SearchCreditsRequest>, r
 });
 
 // POST endpoint search credits by filter fields to employee
-creditRouter.post("/searchCreditsByEmployee", async (req: Request<SearchCreditsByEmployeeRequest>, res: Response) => {
+creditRouter.post("/searchCreditsByEmployee", authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
 
   if (req.body === undefined || req.body == null) res.status(500).json({ error: 'La solicitud no cuenta con los parametros solicitados' });
 
   try {
 
      console.log("/searchCredits-req.body: ", req.body);
+
+    const authorizationContext: AuthorizationContext = {
+      userId: req.user?.userId ?? '',
+      creditorCompanyId: req.user?.creditorCompanyId ?? '',
+      ...(req.user?.walletId ? { walletId: req.user.walletId } : {}),
+      ...(req.user?.accountNumber ? { accountNumber: req.user.accountNumber } : {}),
+    };
     // 1. Llama al método que devuelve el Observable
-    const result: Observable<Object> = creditService.searchCreditsByEmployee(req.body);
+    const result: Observable<Object> = creditService.searchCreditsByEmployee(req.body, authorizationContext);
 
     // 2. Convierte el Observable a Promesa y espera el primer valor emitido
     const datos = await firstValueFrom(

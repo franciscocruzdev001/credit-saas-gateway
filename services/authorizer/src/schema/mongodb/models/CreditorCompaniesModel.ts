@@ -1,5 +1,6 @@
 import { InferSchemaType, model, Schema, Types } from "mongoose";
 import { CollectionNameEnum } from "../../../infrastructure/CollectionNameEnum";
+import { OldDayEnum } from "../../../infrastructure/OldDayEnum";
 
 // 1. Define your Mongoose Schema
 const creditorCompaniesSchema = new Schema({
@@ -7,10 +8,19 @@ const creditorCompaniesSchema = new Schema({
     socialReason: { type: String },
     phoneNumber: { type: String },
     email: { type: String },
-    chargeRules: [{
+    chargeRules: [{ 
         type: new Schema({
             chargeFrequency: { type: String },
-            chargePeriods: { type: Number },
+           chargePeriods: { type: Number, required: true },
+            chargeDay: {type: String, enum:[
+                OldDayEnum.MONDAY,
+                OldDayEnum.TUESDAY,
+                OldDayEnum.WEDNESDAY,
+                OldDayEnum.THURSDAY,
+                OldDayEnum.FRIDAY,
+                OldDayEnum.SATURDAY,
+                OldDayEnum.SUNDAY
+            ]},
             renovationPeriod: { type: Number },
             comissionRate: { type: Number },
         }, { _id: false })
@@ -21,3 +31,4 @@ const creditorCompaniesSchema = new Schema({
 export type ICreditorCompanies = InferSchemaType<typeof creditorCompaniesSchema> & { _id?: Types.ObjectId };
 
 export const CreditorCompaniesModel = model<ICreditorCompanies>(CollectionNameEnum.CREDITOR_COMPANIES, creditorCompaniesSchema);
+

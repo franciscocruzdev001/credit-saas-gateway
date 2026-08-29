@@ -25,7 +25,7 @@ import { IWallets } from "../schema/mongodb/models/Wallets.Model";
 import { GetWalletRequest } from "../types/GetWalletRequest";
 import { TransactionStatusEnum } from "../infrastructure/TransactionStatusEnum";
 import { Customers } from "../types/Customers";
-import { Credits } from "../types/Credits";
+import { ChargeRules, Credits } from "../types/Credits";
 import { TransactionTypeEnum } from "../infrastructure/TransactionTypeEnum";
 import { WalletBasicInformation } from "../types/WalletBasicInformation";
 import { CurrencyEnum } from "../infrastructure/CurrencyEnum";
@@ -37,8 +37,11 @@ import { generateAcccountNumberWallet } from "../infrastructure/utils/ProcessDat
 import { WalletStatusEnum } from "../infrastructure/WalletStatusEnum";
 import { CreditStatusEnum } from "../infrastructure/CreditStatusEnum";
 import { chargeFrequencyEnum } from "../infrastructure/ChargeFrequencyEnum";
+import { OldDayEnum } from "../infrastructure/OldDayEnum";
+import { ChargeFrequencyDateCatalog } from "../infrastructure/catalogs/ChargeFrequencyDateCatalog";
 import { Payments } from "../types/Payments";
 import { AuthorizationContext } from "../types/AuthorizationContext";
+import { GetCreditTotalsRequest } from "../types/GetCreditTotalsRequest";
 
 
 @injectable()
@@ -131,7 +134,7 @@ export class CreditService implements ICreditService {
                         expirationDate: new Date(), // Calcular en base a las reglas de cobro
                         creditAmount: get(creditCustomer.credit, "creditAmount", 0),
                         amountDue: get(creditCustomer.credit, "creditAmount", 0), //Calcular en base a alas reglas de cobro
-                        amountPaid:0,
+                        amountPaid: 0,
                         fixedCharge: 300, //Calcular en base a las reglas de cobro
                         creditAmountWithMoratory: get(creditCustomer.credit, "creditAmount", 0), //Actualizar en base a las faltas
                         status: CreditStatusEnum.CHARGE_PROCESS,
@@ -181,11 +184,12 @@ export class CreditService implements ICreditService {
                         amountTransaction: amountTransaction,
                         currency: CurrencyEnum.MXN,
                         descripcion: "PAGO - ", //Agregar el nombre del cliente,
-                        creditorCompanyId: creditorCompanyId
+                        creditorCompanyId: creditorCompanyId,
+                        creditIdSource: paymentRequest.creditId
                     }
                 )
             ),
-            mergeMap((transactionResult: { approveOperation: boolean, transactionId: string }) => 
+            mergeMap((transactionResult: { approveOperation: boolean, transactionId: string }) =>
                 //If transaction operation create, create credit
                 iif(() => transactionResult.approveOperation && !isEmpty(transactionResult.transactionId),
                     //if transaction approve operation is true, create credit
@@ -208,7 +212,6 @@ export class CreditService implements ICreditService {
             )
         );
     }
-
     public searchCredits(
         searchCreditsData: SearchCreditsRequest
     ): Observable<Object> {
@@ -230,14 +233,14 @@ export class CreditService implements ICreditService {
     }
 
     public searchCreditsByEmployee(
-        searchCreditsData: SearchCreditsByEmployeeRequest
+        searchCreditsData: SearchCreditsByEmployeeRequest,
+        authorizationContext: AuthorizationContext
     ): Observable<Object> {
         const salto = (get(searchCreditsData, "pagination.pageNumber", 1)) * get(searchCreditsData, "pagination.limit", 0);
         const filtersByRole: {
             creditsFilters: QueryFilter<ICredits>,
             customerFilters: QueryFilter<ICustomers>
-        } = UserRoleEmployeeCatalog[UserRoleEnum.MANAGER]!(searchCreditsData.filtersItems);
-
+        } = UserRoleEmployeeCatalog[UserRoleEnum.MANAGER]!(searchCreditsData.filtersItems, authorizationContext);
         console.log("searchCreditsByEmployee-searchCreditsData: ", searchCreditsData);
         console.log("searchCreditsByEmployee-salto: ", salto);
         console.log("searchCreditsByEmployee-filtersByRole: ", filtersByRole);
@@ -252,6 +255,34 @@ export class CreditService implements ICreditService {
                     }
                 )
             ),
+        );
+    }
+
+    public getCreditTotals(
+        request: GetCreditTotalsRequest,
+        authorizationContext: AuthorizationContext
+    ): Observable<Object> {
+        const userRole = get(authorizationContext, "roles.0") as UserRoleEnum;
+        const filtersByRole: {
+            creditsFilters: QueryFilter<ICredits>,
+            customerFilters: QueryFilter<ICustomers>
+        } = UserRoleEmployeeCatalog[userRole]!(request.filtersItems, authorizationContext);
+
+        const startDate = new Date(request.fromTimestamp);
+        const endDate = new Date(request.toTimestamp);
+
+        console.log("getCreditTotals - startDate:", startDate.toISOString());
+        console.log("getCreditTotals - endDate:", endDate.toISOString());
+        console.log("getCreditTotals - creditFilters:", filtersByRole.creditsFilters);
+
+        return of(1).pipe(
+            mergeMap(() =>
+                this._creditMongoModel.getCreditTotals(
+                    filtersByRole.creditsFilters,
+                    startDate,
+                    endDate
+                )
+            )
         );
     }
 
@@ -347,7 +378,8 @@ export class CreditService implements ICreditService {
             amountTransaction: number,
             currency: string,
             descripcion: string,
-            creditorCompanyId: string
+            creditorCompanyId: string,
+            creditIdSource?: string 
         }
     ): Observable<{
         approveOperation: boolean,
@@ -412,7 +444,10 @@ export class CreditService implements ICreditService {
                             destinationAccount: {
                                 walletId: new Types.ObjectId(destinationAccount.walletId),
                                 accountNumber: destinationAccount.accountNumber
-                            }
+                            },
+                            ...transacionBasicInformation.creditIdSource ? {
+                                creditIdSource : new Types.ObjectId(transacionBasicInformation.creditIdSource),
+                            } : {}
                         })
                     }),
                     //else pending balance on wallet not update, get false and empty transactionId
@@ -441,7 +476,7 @@ export class CreditService implements ICreditService {
             mergeMap((customerId: string) => {
                 const accountNumber: string = generateAcccountNumberWallet(false);
                 console.log("accountNumber", accountNumber)
-                console.log("customerId", customerId)                
+                console.log("customerId", customerId)
                 return iif(() => !isEmpty(customerId),
                     forkJoin({
                         customerId: of(customerId),
@@ -572,6 +607,26 @@ export class CreditService implements ICreditService {
         }
     }
 
+    private _fillCreditsDataFromChargeRules(creditAmount: number, chargeRules: ChargeRules): Partial<ICredits> {
+        const chargeFrequency: string = get(chargeRules, "chargeFrequency", chargeFrequencyEnum.WEEKLY);
+        const comissionRate: number = get(chargeRules, "comissionRate", 0);
+        const chargePeriods: number = get(chargeRules, "chargePeriods", 1);
+
+        const amountDue: number = creditAmount + (creditAmount * comissionRate);
+        const fixedCharge: number = amountDue / chargePeriods;
+
+        const creditsDatesData = ChargeFrequencyDateCatalog[chargeFrequency]!(chargeRules);
+
+        return {
+            ...creditsDatesData,
+            amountDue,
+            fixedCharge
+        };
+    }
+
+
+
+
 
     /***
      * quicktype -s schema ./src/schema/search_customers_request.json --just-types --lang ts -o ./src/types/SearchCustomersRequest.ts
@@ -583,6 +638,8 @@ export class CreditService implements ICreditService {
      * quicktype -s schema ./src/schema/credit_table.json --just-types --lang ts -o ./src/types/CreditTable.ts
      * quicktype -s schema ./src/schema/credit_table.json --just-types --lang ts -o ./src/types/CreditTable.ts
      * quicktype -s schema ./src/schema/get_payment_request.json --just-types --lang ts -o ./src/types/GetPayment.ts
+     * quicktype -s schema ./src/schema/get_credit_totals_request.json --just-types --lang ts -o ./src/types/GetCreditTotals.ts
+     * 
      * 
      * 
      * quicktype -s schema ./src/schema/search_credits_request.json --just-types --lang ts -o ./src/types/SearchCreditsRequest.ts

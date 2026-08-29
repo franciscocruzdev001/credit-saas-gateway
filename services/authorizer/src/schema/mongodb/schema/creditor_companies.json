@@ -33,6 +33,10 @@
                     "chargePeriods": {
                         "type": "string"
                     },
+                    "chargeDay": {
+                        "type": "string",
+                        "enum": ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+                    },
                     "renovationPeriod": {
                         "type": "number"
                     },

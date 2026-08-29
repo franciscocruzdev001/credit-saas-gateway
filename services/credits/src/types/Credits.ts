@@ -4,6 +4,7 @@ export interface Credits {
     amountPaid?:               number;
     chargeRules?:              ChargeRules;
     created?:                  number;
+    creationStatus?:           CreationStatus;
     creditAmount?:             number;
     creditAmountWithMoratory?: number;
     creditorCompanyId:         string;
@@ -20,8 +21,24 @@ export interface Credits {
 }
 
 export interface ChargeRules {
+    chargeDay?:        ChargeDay;
     chargeFrequency?:  string;
     chargePeriods?:    number;
     comissionRate?:    number;
     renovationPeriod?: number;
+}
+
+export enum ChargeDay {
+    Friday = "friday",
+    Monday = "monday",
+    Saturday = "saturday",
+    Sunday = "sunday",
+    Thursday = "thursday",
+    Tuesday = "tuesday",
+    Wednesday = "wednesday",
+}
+
+export enum CreationStatus {
+    New = "new",
+    Renewed = "renewed ",
 }

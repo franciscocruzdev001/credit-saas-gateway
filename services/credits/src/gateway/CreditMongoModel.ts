@@ -6,6 +6,7 @@ import { ICustomers } from "../schema/mongodb/models/Customers.Model";
 import { Aggregate, PipelineStage, QueryFilter, QueryOptions } from "mongoose";
 import { CollectionNameEnum } from "../infrastructure/CollectionNameEnum";
 import { defaultTo, get } from "lodash";
+import { TransactionStatusEnum } from "../infrastructure/TransactionStatusEnum";
 
 @injectable()
 export class CreditMongoModel extends BaseMongoModel<ICredits> {
@@ -32,6 +33,26 @@ export class CreditMongoModel extends BaseMongoModel<ICredits> {
         documents: get(result, "[0].data", []),
         totalDocuments: get(result, "[0].totalCount[0].count", 0)
       }))
+    );
+  }
+
+
+  public getCreditTotals(
+    creditFilters: QueryFilter<ICredits>,
+    startDate: Date,
+    endDate: Date
+  ): Observable<Object> {
+
+    return of(true).pipe(
+      mergeMap(() =>
+        this.model.aggregate(
+          this._buildCreditTotalsPipeline(
+            creditFilters,
+            startDate,
+            endDate
+          )
+        )
+      )
     );
   }
 
@@ -75,6 +96,21 @@ export class CreditMongoModel extends BaseMongoModel<ICredits> {
       },
       // Stage 3 — NUEVO: descarta créditos cuyo customer no matcheó el filtro
       { $match: { customerInfo: { $ne: [] } } },
+      // Stage 3.5 — NUEVO: último Payment generado de cada crédito
+      {
+        $lookup: {
+          from: CollectionNameEnum.PAYMENTS,
+          let: { creditId: "$_id" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$creditId", "$$creditId"] } } },
+            { $sort: { createdAt: -1 } },
+            { $limit: 1 },
+            { $project: { _id: 0, createdAt: 1, transactionStatus: 1, total: 1 } }
+          ],
+          as: "lastPayment",
+        },
+      },
+      { $unwind: { path: "$lastPayment", preserveNullAndEmptyArrays: true } },
       // Stage 4: Sort results consistently for pagination
       { $sort: { createdAt: -1 } },
 
@@ -86,4 +122,137 @@ export class CreditMongoModel extends BaseMongoModel<ICredits> {
       }
     ]
   }
+
+  public _buildCreditTotalsPipeline(
+    creditFilters: QueryFilter<ICredits>,
+    startDate: Date,
+    endDate: Date
+): PipelineStage[] {
+
+    return [
+
+        // Stage 1:
+        // Filtrar créditos
+        {
+            $match: creditFilters , 
+        },
+
+        // Stage 2:
+        // Buscar pagos relacionados al crédito
+        // y que estén dentro del periodo consultado.
+        {
+            $lookup: {
+
+                from: CollectionNameEnum.PAYMENTS,
+
+                let: {
+                    creditId: "$_id"
+                },
+
+                pipeline: [
+
+                    {
+                        $match: {
+
+                            $expr: {
+                                $and: [
+
+                                    // Payment pertenece al Credit
+                                    {
+                                        $eq: [
+                                            "$creditId",
+                                            "$$creditId"
+                                        ]
+                                    },
+
+                                    // Payment >= fecha inicio
+                                    {
+                                        $gte: [
+                                            "$createdAt",
+                                            startDate
+                                        ]
+                                    },
+
+                                    // Payment <= fecha término
+                                    {
+                                        $lt: [
+                                            "$createdAt",
+                                            endDate
+                                        ]
+                                    }
+                                ]
+                            },
+
+                            // Solo pagos aprobados
+                            transactionStatus:
+                                TransactionStatusEnum.APPROVED
+                        }
+                    },
+
+                    {
+                        $project: {
+                            _id: 0,
+                            total: 1
+                        }
+                    }
+                ],
+
+                as: "payments"
+            }
+        },
+
+        // Stage 3:
+        // Sumar pagos aprobados del periodo
+        {
+            $addFields: {
+                paidAmount: {
+                    $ifNull: [
+                        {
+                            $sum: "$payments.total"
+                        },
+                        0
+                    ]
+                }
+            }
+        },
+
+        // Stage 4:
+        // Sumar todo en un solo total, sin agrupar por frecuencia
+        {
+            $group: {
+
+                _id: null,
+
+                totalToCollect: {
+                    $sum: "$fixedCharge"
+                },
+
+                totalCollected: {
+                    $sum: "$paidAmount"
+                }
+            }
+        },
+
+        // Stage 5:
+        // Calcular pendiente
+        {
+            $project: {
+
+                _id: 0,
+
+                totalToCollect: 1,
+
+                totalCollected: 1,
+
+                totalPending: {
+                    $subtract: [
+                        "$totalToCollect",
+                        "$totalCollected"
+                    ]
+                }
+            }
+        }
+    ];
+  }
+
 }
