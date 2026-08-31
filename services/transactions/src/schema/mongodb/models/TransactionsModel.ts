@@ -1,4 +1,4 @@
-import { InferSchemaType, model, Schema } from "mongoose";
+import { InferSchemaType, model, Schema, Types } from "mongoose";
 import { CollectionNameEnum } from "../../../infrastructure/CollectionNameEnum";
 import { TransactionStatusEnum } from "../../../infrastructure/TransactionStatusEnum";
 import { TransactionTypeEnum } from "../../../infrastructure/TransactionTypeEnum";
@@ -40,6 +40,6 @@ const transactionsSchema = new Schema({
 }, { timestamps: true });
 
 // 2. Automatically generate/infer the TypeScript interface/type
-export type ITransactions = InferSchemaType<typeof transactionsSchema>;
+export type ITransactions = InferSchemaType<typeof transactionsSchema> & { _id?: Types.ObjectId };
 
 export const TransactionsModel = model<ITransactions>(CollectionNameEnum.TRANSACTIONS, transactionsSchema);

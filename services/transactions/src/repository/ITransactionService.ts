@@ -3,6 +3,7 @@ import { SearchTransactionsRequest } from '../types/SearchTransactionsRequest';
 import { SearchTransactionsByUserRequest } from '../types/SearchTransactionsByUserRequest';
 import { CreateTransactionByEmployeeRequest } from '../types/CreateTransactionByEmployeeRequest';
 import { AuthorizationContext } from '../types/AuthorizationContext';
+import { TransactionChangeStatusBatchLogs } from '../types/TransactionChangeStatusBatchLogs';
 
 export interface ITransactionService {
   /**
@@ -25,4 +26,11 @@ export interface ITransactionService {
     transactionData: CreateTransactionByEmployeeRequest,
     authorizationContext: AuthorizationContext
   ): Observable<boolean>
+  /**
+    * aprove transactions operations
+    */
+  approveTransactionsOperations(
+    transactionIds: string[],
+    authorizationContext: AuthorizationContext
+  ): Observable<TransactionChangeStatusBatchLogs>
 }

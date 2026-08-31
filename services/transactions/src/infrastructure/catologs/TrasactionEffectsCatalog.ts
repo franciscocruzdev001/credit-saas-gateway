@@ -70,5 +70,40 @@ export const TRANSACTION_PENDING_OPERATION_WALLET_BUILD: Record<TransactionOpera
         queryfilter: {},
         updateQuery: {}
     }),
+};
 
+export const TRANSACTION_APPROVED_OPERATION_WALLET_BUILD: Record<TransactionOperationEnum, (walletId: string, accountNumber: string, amountTransaction: number) => {
+    queryfilter: QueryFilter<IWallets>,
+    updateQuery: UpdateQuery<IWallets>
+}> = {
+    [TransactionOperationEnum.EXPENSES]: (walletId: string, accountNumber: string, amountTransaction: number) => ({
+        queryfilter: {
+            _id: walletId,
+            accountNumber: accountNumber,
+        },
+        updateQuery: {
+            // Si cumple la condición, reduce el acumulador de egresos pendientes de forma atómica y reduce el balance firme
+            $inc: { 
+                pendingExpensesBalance: -amountTransaction,
+                firmBalance: -amountTransaction
+            }
+        }
+    }),
+    [TransactionOperationEnum.INCOMES]: (walletId: string, accountNumber: string, amountTransaction: number) => ({
+        queryfilter: {
+            _id: walletId,
+            accountNumber: accountNumber,
+        },
+        updateQuery: {
+            // Si cumple la condición, reduce el acumulador de ingresos pendientes de forma atómica y aumenta el balance firme
+            $inc: {
+                pendingIncomesBalance: -amountTransaction,
+                firmBalance: amountTransaction
+            }
+        }
+    }),
+    [TransactionOperationEnum.NA]: (walletId: string, accountNumber: string, amountTransaction: number) => ({
+        queryfilter: {},
+        updateQuery: {}
+    }),
 };

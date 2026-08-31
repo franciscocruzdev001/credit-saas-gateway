@@ -1,0 +1,72 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://TransactionChangeStatusBatchLogs",
+    "title": "TransactionChangeStatusBatchLogs",
+    "type": "object",
+    "additionalProperties": false,
+    "$defs": {
+        "TransactionResume": {
+            "type": "object",
+            "title": "TransactionResume",
+            "additionalProperties": false,
+            "properties": {
+                "transactionId": {
+                    "type": "string"
+                },
+                "amountTransaction": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "transactionId",
+                "amountTransaction"
+            ]
+        }
+    },
+    "properties": {
+        "transactionChangeStatusBatchLogsId": {
+            "type": "string"
+        },
+        "changeStatus": {
+            "type": "string"
+        },
+        "resumeTotalsByTransactionType": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "title": "ResumeTotalsByTransactionType",
+                "additionalProperties": false,
+                "properties": {
+                    "transactionType": {
+                        "type": "string"
+                    },
+                    "totalChangeStatusApproved": {
+                        "type": "number"
+                    },
+                    "totalChangeStatusRejected": {
+                        "type": "number"
+                    },
+                    "transactionsChangeStatusApproved": {
+                        "type": "array",
+                        "items": { "$ref": "#/$defs/TransactionResume" }
+                    },
+                    "transactionsChangeStatusRejected": {
+                        "type": "array",
+                        "items": { "$ref": "#/$defs/TransactionResume" }
+                    }
+                },
+                "required": [
+                    "transactionType",
+                    "totalChangeStatusApproved",
+                    "totalChangeStatusRejected",
+                    "transactionsChangeStatusApproved",
+                    "transactionsChangeStatusRejected"
+                ]
+            }
+        }
+    },
+    "required": [
+        "changeStatus",
+        "resumeTotalsByTransactionType"
+    ]
+}

@@ -1,0 +1,32 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://Payments",
+    "title": "Payments",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "total": {
+            "type": "number"
+        },
+        "paymentMethod": {
+            "type": "string"
+        },
+        "creditId": {
+            "type": "string"
+        },
+        "customerId": {
+            "type": "string"
+        },
+        "transactionId": {
+            "type": "string"
+        },
+        "transactionStatus" :{
+            "type" : "string"
+        }
+    },
+    "required": [
+        "creditId",
+        "customerId",
+        "transactionId"
+    ]
+}

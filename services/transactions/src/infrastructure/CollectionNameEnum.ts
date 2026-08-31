@@ -4,5 +4,8 @@ export enum CollectionNameEnum{
     CREDITS_TEST = "credits_test",
     TRANSACTION_TEST = "transactions_test",
     TRANSACTIONS = "transactions",
-    WALLETS = "wallets"
+    WALLETS = "wallets",
+    CREDITS = "credits",
+    PAYMENTS = "payments",
+    TRANSACTION_CHANGE_STATUS_BATCH_LOGS= "transaction_change_status_batch_logs"
 }

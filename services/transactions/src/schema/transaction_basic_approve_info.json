@@ -1,0 +1,30 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://TransactionBasicApproveInfo",
+    "title": "TransactionBasicApproveInfo",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "transactionId": {
+            "type": "string"
+        },
+        "transactionType": {
+            "type": "string"
+        },
+        "amountTransaction": {
+            "type": "number"
+        },
+        "currency": {
+            "type": "string"
+        },
+        "creditIdSource": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "transactionId",
+        "transactionType",
+        "amountTransaction",
+        "currency"
+    ]
+}
