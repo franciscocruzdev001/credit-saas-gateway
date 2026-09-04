@@ -1,4 +1,5 @@
-import { UpdateQuery, QueryFilter, QueryOptions } from 'mongoose';
+import { UpdateOptions } from 'mongodb';
+import { UpdateQuery, QueryFilter, QueryOptions, MongooseUpdateQueryOptions } from 'mongoose';
 import { Observable } from 'rxjs';
 
 export interface IBaseMongoModel<T> {
@@ -37,7 +38,8 @@ export interface IBaseMongoModel<T> {
    */
   updateOne(
     queryfilter: QueryFilter<T>,
-    updateQuery: UpdateQuery<T>
+    updateQuery: UpdateQuery<T>,
+    options?: UpdateOptions & MongooseUpdateQueryOptions<T>
   ): Observable<boolean>;
   /**
    * Remove document by id to collection

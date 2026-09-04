@@ -494,8 +494,13 @@ export class TransactionService implements ITransactionService {
                                 } : {
                                     transactionId: trasactionBasicApproveInfo.transactionId
                                 }
-                            }, entityOperationBuild.creditsQuery) :
-                            of(false)
+                            },
+                                entityOperationBuild.creditsQuery,
+                                Array.isArray(entityOperationBuild.creditsQuery)
+                                    ? { updatePipeline: true }
+                                    : undefined
+                            )
+                            : of(false)
                 })
             ),
             map((updatesEntitiesModel: EntityUpdateResult) => (

@@ -1,8 +1,10 @@
 import { injectable, unmanaged } from 'inversify';
-import mongoose, { Model, UpdateQuery, QueryOptions, QueryFilter, HydratedDocument, connection, connect, UpdateWriteOpResult } from 'mongoose';
+import mongoose, { Model, UpdateQuery, QueryOptions, QueryFilter, HydratedDocument, connection, connect, UpdateWriteOpResult, MongooseUpdateQueryOptions } from 'mongoose';
 import { IBaseMongoModel } from '../repository/IBaseMongoModel';
 import { forkJoin, from, map, mergeMap, Observable, of, switchMap } from 'rxjs';
 import { get, merge } from 'lodash';
+import { PipelineStage } from 'mongoose';
+import { UpdateOptions } from 'mongodb';
 
 @injectable()
 export abstract class BaseMongoModel<T> implements IBaseMongoModel<T> {
@@ -107,11 +109,12 @@ export abstract class BaseMongoModel<T> implements IBaseMongoModel<T> {
 
     public updateOne(
         queryfilter: QueryFilter<T>,
-        updateQuery: UpdateQuery<T>
+        updateQuery: UpdateQuery<T> | PipelineStage[],
+        options?: UpdateOptions & MongooseUpdateQueryOptions<T>
     ): Observable<boolean> {
         return of(true).pipe(
             mergeMap(() =>
-                this.model.updateOne(queryfilter, updateQuery).exec()
+                this.model.updateOne(queryfilter, updateQuery, options).exec()
             ),
             map((result: UpdateWriteOpResult) => {
                 return result.matchedCount === 0 ? false : true;
