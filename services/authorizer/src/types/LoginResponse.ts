@@ -20,4 +20,13 @@ export interface CreditorCompanyInfo {
     email:        string;
     phoneNumber:  string;
     socialReason: string;
+    chargeRules?: CreditorCompanyChargeRules[];
+}
+
+export interface CreditorCompanyChargeRules {
+    chargeFrequency?:  string;
+    chargePeriods?:    number;
+    chargeDay?:        string;
+    renovationPeriod?: number;
+    comissionRate?:    number;
 }

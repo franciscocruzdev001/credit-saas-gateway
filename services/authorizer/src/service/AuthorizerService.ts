@@ -25,6 +25,7 @@ import { RolesMongoModel } from "../gateway/RolesMongoModel";
 import { IRoles } from "../schema/mongodb/models/RolesModel";
 import { WalletsMongoModel } from "../gateway/WalletsMongoModel";
 import { IWallets } from "../schema/mongodb//models/Wallets.Model";
+import { AuthorizationContext } from "../types/AuthorizationContext";
 
 
 const SALT_ROUNDS = 10;
@@ -95,7 +96,8 @@ export class AuthorizerService implements IAuthorizerService {
                     password: hashedPassword,
                     roles: roleIds.map((id) => new Types.ObjectId(id)),
                     status: get(userData, "status", UserStatusEnum.ACTIVE) as UserStatusEnum,
-                    creditorCompanyId: new Types.ObjectId(get(userData, "creditorCompanyId", ""))
+                    creditorCompanyId: new Types.ObjectId(get(userData, "creditorCompanyId", "")),
+                    contact: get(userData, "contact", null)
                 }
 
                 return this._usersMongoModel.create(userModelInfo);
@@ -120,7 +122,10 @@ export class AuthorizerService implements IAuthorizerService {
             )
         );
     }
-    public createCreditorCompanies(creditorCompaniesData: CreditorCompanies): Observable<boolean> {
+
+    public createCreditorCompanies(creditorCompaniesData: CreditorCompanies,
+        authorizationContext: AuthorizationContext):
+         Observable<boolean> {
         const creditorCompaniesModelInfo: ICreditorCompanies = {
             createdAt: new Date(),
             updatedAt: new Date(),
@@ -131,6 +136,7 @@ export class AuthorizerService implements IAuthorizerService {
             chargeRules: get(creditorCompaniesData, "chargeRules", []).map((rule) => ({
                 chargeFrequency: get(rule, "chargeFrequency", ""),
                 chargePeriods: get(rule, "chargePeriods", 0),
+                ...(get(rule, "chargeDay", "") ? { chargeDay: get(rule, "chargeDay", "") } : {}),
                 renovationPeriod: get(rule, "renovationPeriod", 0),
                 comissionRate: get(rule, "comissionRate", 0)
             })) as ICreditorCompanies["chargeRules"]
@@ -270,7 +276,7 @@ export class AuthorizerService implements IAuthorizerService {
                 // 4. Firma el JWT con la info mínima necesaria (nunca el password)
                 const jwtSecret = get(process.env, "JWT_SECRET", "");
                 const jwtExpiresIn = get(process.env, "JWT_EXPIRES_IN", "8h");
-                const accountNumber = wallet?.accountNumber ?? undefined; 
+                const accountNumber = wallet?.accountNumber ?? undefined;
 
                 const walletId = wallet?._id?.toString();
 
@@ -307,6 +313,13 @@ export class AuthorizerService implements IAuthorizerService {
                                 socialReason: creditorCompany.socialReason ?? "",
                                 phoneNumber: creditorCompany.phoneNumber ?? "",
                                 email: creditorCompany.email ?? "",
+                                chargeRules: get(creditorCompany, "chargeRules", []).map((rule) => ({
+                                    chargeFrequency: rule.chargeFrequency ?? "",
+                                    chargePeriods: rule.chargePeriods ?? 0,
+                                    chargeDay: rule.chargeDay ?? "",
+                                    renovationPeriod: rule.renovationPeriod ?? 0,
+                                    comissionRate: rule.comissionRate ?? 0,
+                                })),
                             }
                         } : {}),
                     },

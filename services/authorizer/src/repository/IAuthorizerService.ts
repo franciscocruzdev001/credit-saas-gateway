@@ -5,6 +5,7 @@ import { CreditorCompanies } from '../types/CreditorCompanies';
 import { SearchEmployeesRequest } from '../types/SearchEmployeesRequest';
 import { LoginRequest } from '../types/LoginRequest';
 import { LoginResponse } from '../types/LoginResponse';
+import { AuthorizationContext } from '../types/AuthorizationContext';
 
 
 export interface IAuthorizerService {
@@ -21,7 +22,9 @@ export interface IAuthorizerService {
     */
   createUser(userData: Users): Observable<boolean>
   createChargeReportLogs(chargeReportLogsData: ChargeReportLogs): Observable<boolean>
-  createCreditorCompanies(creditorCompaniesData: CreditorCompanies): Observable<boolean>
+  createCreditorCompanies(creditorCompaniesData: CreditorCompanies,
+    authorizationContext: AuthorizationContext
+  ): Observable<boolean>
 
   searchEmployees(
     searchEmployeeData: SearchEmployeesRequest
@@ -32,5 +35,5 @@ export interface IAuthorizerService {
      along with basic user information, if they are correct
    */
   authorizer(loginData: LoginRequest): Observable<LoginResponse>
- 
+
 }

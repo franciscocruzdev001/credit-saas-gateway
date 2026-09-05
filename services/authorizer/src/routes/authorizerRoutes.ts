@@ -5,13 +5,13 @@ import { IAuthorizerService } from "../repository/IAuthorizerService";
 import { firstValueFrom, map, Observable } from "rxjs";
 import { Users } from "../types/Users";
 import { ChargeReportLogs } from "../types/ChargeReportLogs";
-import { CreditorCompanies } from "../types/CreditorCompanies";
 import { SearchEmployeesRequest } from "../types/SearchEmployeesRequest";
 import { LoginRequest } from "../types/LoginRequest";
 import { LoginResponse } from "../types/LoginResponse";
 import { authMiddleware, type AuthenticatedRequest } from "../infrastructure/AuthMiddleware";
 import { requirePermission } from "../infrastructure/RequirePermission";
 import { PermissionsEnum } from "../constant/PermissionsEnum";
+import { AuthorizationContext } from "../types/AuthorizationContext";
 
 export const authRouter: Router = Router();
 
@@ -99,7 +99,10 @@ authRouter.post("/createChargeReportLogs", async (req: Request<ChargeReportLogs>
 
 
 // POST endpoint with explicit types for parameters
-authRouter.post("/createCreditorCompanies", async (req: Request<CreditorCompanies>, res: Response) => {
+// Sin authMiddleware a propósito: crear una empresa acreedora es el paso
+// inicial (bootstrap) antes de que exista cualquier usuario/token para esa
+// empresa. authorizationContext no se usa dentro del service para este método.
+authRouter.post("/createCreditorCompanies", async (req: AuthenticatedRequest, res: Response) => {
 
   if (req.body === undefined || req.body == null) res.status(500).json({ error: 'La solicitud no cuenta con los parametros solicitados' });
 
@@ -107,8 +110,14 @@ authRouter.post("/createCreditorCompanies", async (req: Request<CreditorCompanie
 
     console.log("/createCreditorCompanies-req.body: ", req.body);
 
+    const authorizationContext: AuthorizationContext = {
+      userId: req.user?.userId ?? '',
+      creditorCompanyId: req.user?.creditorCompanyId ?? '',
+      roles: req.user?.roles ?? [],
+    };
+
     // 1. Llama al método que devuelve el Observable
-    const result: Observable<Object> = authorizerService.createUser(req.body);
+    const result: Observable<Object> = authorizerService.createCreditorCompanies(req.body, authorizationContext);
 
     // 2. Convierte el Observable a Promesa y espera el primer valor emitido
     const datos = await firstValueFrom(

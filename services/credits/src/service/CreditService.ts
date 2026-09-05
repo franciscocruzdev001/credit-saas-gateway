@@ -140,10 +140,10 @@ export class CreditService implements ICreditService {
                         status: CreditStatusEnum.CHARGE_PROCESS,
                         transactionStatus: TransactionStatusEnum.PENDING,
                         chargeRules: {
-                            chargeFrequency: get(creditCustomer, "chargeRules.chargeFrequency", chargeFrequencyEnum.WEEKLY),
-                            chargePeriods: get(creditCustomer, "chargeRules.chargePeriods", 1),
-                            renovationPeriod: get(creditCustomer, "chargeRules.renovationPeriod", 1),
-                            comissionRate: get(creditCustomer, "chargeRules.comissionRate", 1),
+                            chargeFrequency: get(creditCustomer.credit, "chargeRules.chargeFrequency", chargeFrequencyEnum.WEEKLY) as chargeFrequencyEnum, 
+                            chargePeriods: get(creditCustomer.credit, "chargeRules.chargePeriods", 1), 
+                            renovationPeriod: get(creditCustomer.credit, "chargeRules.renovationPeriod", 1),
+                            comissionRate: get(creditCustomer.credit, "chargeRules.comissionRate", 1),
                         },
                     }),
                     //else transaction approve operation is true, create credit
