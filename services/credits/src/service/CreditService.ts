@@ -6,6 +6,7 @@ import { Document, Filter } from 'mongodb';
 import { ICreditService } from "../repository/ICreditService";
 import { CollectionNameEnum } from "../infrastructure/CollectionNameEnum";
 import { FiltersItems as FilterItemsCustomers, SearchCustomersRequest } from "../types/SearchCustomersRequest";
+import { SearchCustomersByEmployeeRequest } from "../types/SearchCustomersByEmployeeRequest";
 import { defaultTo, filter, get, isEmpty, isEqual, isNil, isObject, isUndefined, omit, omitBy } from "lodash"
 import { FiltersItems as FilterItemsCredits, SearchCreditsRequest } from "../types/SearchCreditsRequest"
 import { CreditMongoModel } from "../gateway/CreditMongoModel";
@@ -15,6 +16,7 @@ import { CustomersMongoModel } from "../gateway/CutomersMongoModel";
 import { QueryFilter } from "mongoose";
 import { UserRoleEnum } from "../infrastructure/UserRoleEnum";
 import { UserRoleEmployeeCatalog } from "../infrastructure/catalogs/UserRoleCatalogs";
+import { UserRoleCustomerSearchCatalog } from "../infrastructure/catalogs/UserRoleCustomerSearchCatalog";
 import { SearchCreditsByEmployeeRequest } from "../types/SearchCreditsByEmployeeRequest";
 import { ICustomers } from "../schema/mongodb/models/Customers.Model";
 import { PaymentsMongoModel } from "../gateway/PaymentsMongoModel";
@@ -42,7 +44,6 @@ import { ChargeFrequencyDateCatalog } from "../infrastructure/catalogs/ChargeFre
 import { Payments } from "../types/Payments";
 import { AuthorizationContext } from "../types/AuthorizationContext";
 import { GetCreditTotalsRequest } from "../types/GetCreditTotalsRequest";
-
 
 @injectable()
 export class CreditService implements ICreditService {
@@ -302,6 +303,36 @@ export class CreditService implements ICreditService {
                     {
                         skip: salto,
                         limit: get(searchCustomerData, "pagination.limit", 0)
+                    }
+                )
+            ),
+            map((dataResponse: { documents: Document[], totalDocuments: number }) => ({
+                total: dataResponse.totalDocuments,
+                records: dataResponse.documents
+            }))
+        );
+    }
+
+  
+    public searchCustomersByEmployee(
+        searchCustomerData: SearchCustomersByEmployeeRequest,
+        authorizationContext: AuthorizationContext
+    ): Observable<Object> {
+        const userRole = get(authorizationContext, "roles.0") as UserRoleEnum;
+        const customerFilters: QueryFilter<ICustomers> = UserRoleCustomerSearchCatalog[userRole]!(
+            searchCustomerData.filtersItems,
+            authorizationContext
+        );
+        const limit: number = get(searchCustomerData, "pagination.limit", 0);
+        const salto = (get(searchCustomerData, "pagination.pageNumber", 0)) * limit;
+
+        return of(1).pipe(
+            mergeMap(() =>
+                this._customerMongoModel.findDocuments(
+                    customerFilters,
+                    {
+                        skip: salto,
+                        limit
                     }
                 )
             ),
