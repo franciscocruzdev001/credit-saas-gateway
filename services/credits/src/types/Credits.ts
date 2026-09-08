@@ -40,5 +40,5 @@ export enum ChargeDay {
 
 export enum CreationStatus {
     New = "new",
-    Renewed = "renewed ",
+    Renewed = "renewed",
 }
