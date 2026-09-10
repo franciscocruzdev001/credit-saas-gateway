@@ -48,10 +48,10 @@
           "additionalProperties": false,
           "properties": {
             "startDate": {
-              "type": "string"
+              "type": "number"
             },
             "endDate": {
-              "type": "string"
+              "type": "number"
             }
           }
         }

@@ -556,8 +556,8 @@ export class TransactionService implements ITransactionService {
         console.log("buildSearchFiltersByTransactions-filters:", filters);
         const walletId = get(filters, "accountInformacion.walletId", "");
         const accountNumber = get(filters, "accountInformacion.accountNumber", "");
-        const startDateCreated: string = get(filters, "createdRangeDate.startDate", "");
-        const endDateCreated: string = get(filters, "createdRangeDate.endDate", "");
+        const startDateCreated: number | undefined = get(filters, "createdRangeDate.startDate", undefined);
+        const endDateCreated: number | undefined = get(filters, "createdRangeDate.endDate", undefined);
         const generalSearch: string = get(filters, "generalSearch", "");
         return {
             creditorCompanyId: new Types.ObjectId(get(filters, "creditorCompanyId", "")),
@@ -572,9 +572,9 @@ export class TransactionService implements ITransactionService {
                     : {
                         $in: get(filters, "transactionType", [])
                     },
-                createdAt: (!isEmpty(startDateCreated) || !isEmpty(endDateCreated)) ? {
-                    $gte: !isEmpty(startDateCreated) ? new Date(startDateCreated) : undefined,
-                    $lte: !isEmpty(endDateCreated) ? new Date(endDateCreated) : undefined,
+                createdAt: (!isNil(startDateCreated) || !isNil(endDateCreated)) ? {
+                    $gte: !isNil(startDateCreated) ? new Date(startDateCreated) : undefined,
+                    $lte: !isNil(endDateCreated) ? new Date(endDateCreated) : undefined,
                 } : {},
                 description: !isEmpty(generalSearch) ? { $regex: new RegExp(generalSearch, 'i') } : undefined,
                 $or: (!isEmpty(walletId))
