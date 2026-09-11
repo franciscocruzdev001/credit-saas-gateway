@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import * as jwt from "jsonwebtoken";
 import { get } from "lodash";
+import { WalletSnapshot } from "../types/LoginResponse";
 
 export interface AuthenticatedUser {
     userId: string;
@@ -8,6 +9,9 @@ export interface AuthenticatedUser {
     roles: string[];
     creditorCompanyId: string;
      permissions: string[];
+    walletId?: string;
+    accountNumber?: string;
+    walletSnapshot: WalletSnapshot;
 }
 
 export interface AuthenticatedRequest extends Request {

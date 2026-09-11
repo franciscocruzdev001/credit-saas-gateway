@@ -6,7 +6,10 @@ const walletsSchema = new Schema({
     status: { type: String, enum: ["CHARGE-PROCESS", "SLOW-PAY", "PAID", "RESTRUCTURED"], default: "CHARGE-PROCESS" },
     userId: { type: Schema.Types.ObjectId, ref: "Users" },
     totalAmount: { type: Number },
-    customerId: { type: Schema.Types.ObjectId, ref: "Customers" }
+    customerId: { type: Schema.Types.ObjectId, ref: "Customers" },
+    firmBalance: { type: Number },
+    pendingIncomesBalance: { type: Number },
+    pendingExpensesBalance: { type: Number }
 }, { timestamps: true });
 
 export type IWallets = InferSchemaType<typeof walletsSchema> & { _id?: Types.ObjectId };

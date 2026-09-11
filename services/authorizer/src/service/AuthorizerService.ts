@@ -277,8 +277,17 @@ export class AuthorizerService implements IAuthorizerService {
                 const jwtSecret = get(process.env, "JWT_SECRET", "");
                 const jwtExpiresIn = get(process.env, "JWT_EXPIRES_IN", "8h");
                 const accountNumber = wallet?.accountNumber ?? undefined;
-
                 const walletId = wallet?._id?.toString();
+                // Foto del saldo de la wallet al momento exacto del login — el front la
+                // usa para inicializar su "cartera local" (ver WalletSnapshot en
+                // types/LoginResponse.ts). No es opcional: si el user no tiene wallet
+                // todavía, se manda en ceros en vez de omitir el campo.
+                const walletSnapshot = {
+                    firmBalance: wallet?.firmBalance ?? 0,
+                    pendingIncomesBalance: wallet?.pendingIncomesBalance ?? 0,
+                    pendingExpensesBalance: wallet?.pendingExpensesBalance ?? 0,
+                    queriedAt: Date.now(), 
+                };
 
                 const token = jwt.sign(
                     {
@@ -289,6 +298,7 @@ export class AuthorizerService implements IAuthorizerService {
                         creditorCompanyId: userDoc.creditorCompanyId?.toString(),
                         walletId,
                         accountNumber,
+                        walletSnapshot,
 
                     },
                     jwtSecret,
@@ -306,6 +316,7 @@ export class AuthorizerService implements IAuthorizerService {
                         creditorCompanyId: userDoc.creditorCompanyId?.toString() ?? '',
                         ...(walletId ? { walletId } : {}),
                         ...(accountNumber ? { accountNumber } : {}),
+                        walletSnapshot,
                         ...(creditorCompany ? {
                             creditorCompanyInfo: {
                                 _id: creditorCompany._id?.toString() ?? '',

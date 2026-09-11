@@ -12,6 +12,18 @@ export interface User {
     roles:                string[];
     userName:             string;
     walletId?:            string;
+    walletSnapshot:       WalletSnapshot;
+}
+
+// Foto del saldo de la wallet al momento del login — el front la usa para
+// inicializar su "cartera local" y luego la reconcilia cada vez que vuelve a
+// consultar /getWalletInfo (el servidor siempre tiene prioridad sobre lo local).
+export interface WalletSnapshot {
+    firmBalance:            number;
+    pendingIncomesBalance:  number;
+    pendingExpensesBalance: number;
+    // Epoch millis (Date.now()) del momento exacto en que se consultó este saldo.
+    queriedAt:               number;
 }
 
 export interface CreditorCompanyInfo {
