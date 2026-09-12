@@ -1,4 +1,4 @@
-import { forkJoin, iif, map, mergeMap, Observable, of, throwError } from "rxjs";
+import { defer, forkJoin, iif, map, mergeMap, Observable, of, throwError } from "rxjs";
 import { inject, injectable } from "inversify";
 import { IMongoGateway } from "../repository/IMongoGateway";
 import { TYPES } from "../constant/types";
@@ -119,11 +119,12 @@ export class CreditService implements ICreditService {
                     )
                 ])
             ),
-            mergeMap((transactionResult: [WalletBasicInformation, { approveOperation: boolean, transactionId: string }]) =>
+            mergeMap((transactionResult: [WalletBasicInformation, { approveOperation: boolean, transactionId: string }]) => {
                 //If transaction operation create, create credit
-                iif(() => transactionResult[1].approveOperation && !isEmpty(transactionResult[1].transactionId),
+                console.log("Transaction result", transactionResult);
+                return iif(() => transactionResult[1].approveOperation && !isEmpty(transactionResult[1].transactionId),
                     //if transaction approve operation is true, create credit
-                    this._creditMongoModel.create({
+                    defer(() => this._creditMongoModel.create({
                         createdAt: new Date(),
                         updatedAt: new Date(),
                         creditorCompanyId: new Types.ObjectId(creditorCompanyId),
@@ -141,16 +142,16 @@ export class CreditService implements ICreditService {
                         status: CreditStatusEnum.CHARGE_PROCESS,
                         transactionStatus: TransactionStatusEnum.PENDING,
                         chargeRules: {
-                            chargeFrequency: get(creditCustomer.credit, "chargeRules.chargeFrequency", chargeFrequencyEnum.WEEKLY) as chargeFrequencyEnum, 
-                            chargePeriods: get(creditCustomer.credit, "chargeRules.chargePeriods", 1), 
+                            chargeFrequency: get(creditCustomer.credit, "chargeRules.chargeFrequency", chargeFrequencyEnum.WEEKLY) as chargeFrequencyEnum,
+                            chargePeriods: get(creditCustomer.credit, "chargeRules.chargePeriods", 1),
                             renovationPeriod: get(creditCustomer.credit, "chargeRules.renovationPeriod", 1),
                             comissionRate: get(creditCustomer.credit, "chargeRules.comissionRate", 1),
                         },
-                    }),
+                    })),
                     //else transaction approve operation is true, create credit
                     of("")
                 )
-            ),
+            }),
             map((creditId: string) =>
                 !isEmpty(creditId) ? true : false
             )
@@ -313,7 +314,7 @@ export class CreditService implements ICreditService {
         );
     }
 
-  
+
     public searchCustomersByEmployee(
         searchCustomerData: SearchCustomersByEmployeeRequest,
         authorizationContext: AuthorizationContext
@@ -410,7 +411,7 @@ export class CreditService implements ICreditService {
             currency: string,
             descripcion: string,
             creditorCompanyId: string,
-            creditIdSource?: string 
+            creditIdSource?: string
         }
     ): Observable<{
         approveOperation: boolean,
@@ -477,7 +478,7 @@ export class CreditService implements ICreditService {
                                 accountNumber: destinationAccount.accountNumber
                             },
                             ...transacionBasicInformation.creditIdSource ? {
-                                creditIdSource : new Types.ObjectId(transacionBasicInformation.creditIdSource),
+                                creditIdSource: new Types.ObjectId(transacionBasicInformation.creditIdSource),
                             } : {}
                         })
                     }),
