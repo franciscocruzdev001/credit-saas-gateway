@@ -1,19 +1,26 @@
-import { injectable, unmanaged } from 'inversify';
+import { inject, injectable, unmanaged } from 'inversify';
 import mongoose, { Model, UpdateQuery, QueryOptions, QueryFilter, HydratedDocument, connection, connect, UpdateWriteOpResult, MongooseUpdateQueryOptions } from 'mongoose';
 import { IBaseMongoModel } from '../repository/IBaseMongoModel';
 import { forkJoin, from, map, mergeMap, Observable, of, switchMap } from 'rxjs';
 import { get, merge } from 'lodash';
 import { PipelineStage } from 'mongoose';
 import { UpdateOptions } from 'mongodb';
+import { ILoggerGateway } from '../repository/ILoggerGateway';
+import { TYPES } from '../constant/types';
 
 @injectable()
 export abstract class BaseMongoModel<T> implements IBaseMongoModel<T> {
     protected model: Model<T>;
+    private readonly _logger: ILoggerGateway;
     private _uri = process.env.MONGO_URI || "mongodb://localhost:27017/admin";
     private _instanceMongoose: typeof mongoose | null = null;
 
     // Utilizamos @unmanaged() si el modelo lo provee la subclase constructora
-    constructor(@unmanaged() model: Model<T>) {
+    constructor(
+        @unmanaged() model: Model<T>,
+        @inject(TYPES.LoggerGateway) logger: ILoggerGateway,
+    ) {
+        this._logger = logger;
         this.model = model;
         if (this._instanceMongoose === null) {
             this._connect().subscribe();

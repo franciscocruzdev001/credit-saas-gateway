@@ -15,6 +15,8 @@ import { IPayments } from "../schema/mongodb/models/Payments.Model";
 import { PaymentsMongoModel } from "../gateway/PaymentsMongoModel";
 import { ITransactionChangeStatusBatchLogs } from "../schema/mongodb/models/TransactionChangeStatusBatchLogsModel";
 import { TransactionChangeStatusBatchLogsMongoModel } from "../gateway/TransactionChangeStatusBatchLogsMongoModel";
+import { ILoggerGateway } from "../repository/ILoggerGateway";
+import { LoggerGateway } from "../gateway/LoggerGateway";
 
 const containerApp: Container = new Container();
 
@@ -23,6 +25,7 @@ containerApp.bind<ITransactionService>(TYPES.TransactionService).to(TransactionS
 
 //Gateway
 containerApp.bind<IMongoGateway>(TYPES.MongoGateway).to(MongoGateway);
+containerApp.bind<ILoggerGateway>(TYPES.LoggerGateway).to(LoggerGateway);
 
 //Mongo Models
 containerApp.bind<IBaseMongoModel<ITransactions>>(TYPES.TransactionMongoModel).to(TransactionMongoModel);

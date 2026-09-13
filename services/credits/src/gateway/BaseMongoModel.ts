@@ -1,17 +1,24 @@
-import { injectable, unmanaged } from 'inversify';
+import { inject, injectable, unmanaged } from 'inversify';
 import mongoose, { Model, UpdateQuery, connection, QueryOptions, QueryFilter, HydratedDocument, connect, UpdateWriteOpResult } from 'mongoose';
 import { IBaseMongoModel } from '../repository/IBaseMongoModel';
 import { catchError, forkJoin, from, map, mergeMap, Observable, of, switchMap } from 'rxjs';
 import { get } from 'lodash';
+import { ILoggerGateway } from '../repository/ILoggerGateway';
+import { TYPES } from '../constant/types';
 
 @injectable()
 export abstract class BaseMongoModel<T> implements IBaseMongoModel<T> {
     protected model: Model<T>;
+    private readonly _logger: ILoggerGateway;
     private _uri = process.env.MONGO_URI || "mongodb://localhost:27017/admin";
     private _instanceMongoose: typeof mongoose | null = null;
 
     // Utilizamos @unmanaged() si el modelo lo provee la subclase constructora
-    constructor(@unmanaged() model: Model<T>) {
+    constructor(
+        @unmanaged() model: Model<T>,
+        @inject(TYPES.LoggerGateway) logger: ILoggerGateway,
+    ) {
+        this._logger = logger;
         this.model = model;
         if (this._instanceMongoose === null) {
             this._connect().subscribe();
@@ -102,9 +109,13 @@ export abstract class BaseMongoModel<T> implements IBaseMongoModel<T> {
 
     public create(document: Partial<T>): Observable<string> {
         return of(true).pipe(
-            mergeMap(() =>
-                this.model.create(document)
-            ),
+            mergeMap(() => {
+                this._logger.info(
+                    { event: "mongo create document by collection " + this.model.modelName, data: document },
+                    "mongo create document by collection " + this.model.modelName
+                );
+                return this.model.create(document)
+            }),
             map((result: HydratedDocument<T>) => {
                 return "" + get(result, "_id", "");
             })
@@ -116,9 +127,13 @@ export abstract class BaseMongoModel<T> implements IBaseMongoModel<T> {
         updateFields: UpdateQuery<T>
     ): Observable<boolean> {
         return of(true).pipe(
-            mergeMap(() =>
-                this.model.findByIdAndUpdate(documentId, updateFields, { new: true }).exec()
-            ),
+            mergeMap(() => {
+                this._logger.info(
+                    { event: "mongo update document by collection " + this.model.modelName, data: document },
+                    "mongo update document by collection " + this.model.modelName
+                );
+                return this.model.findByIdAndUpdate(documentId, updateFields, { new: true }).exec()
+            }),
             map((result: HydratedDocument<T> | null) => {
                 return result !== null ? true : false;
             })

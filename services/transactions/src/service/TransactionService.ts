@@ -26,10 +26,12 @@ import { TransactionBasicApproveInfo } from "../types/TransactionBasicApproveInf
 import { ResumeTotalsByTransactionType, TransactionChangeStatusBatchLogs } from "../types/TransactionChangeStatusBatchLogs";
 import { TransactionChangeStatusBatchLogsMongoModel } from "../gateway/TransactionChangeStatusBatchLogsMongoModel";
 import { TransactionChangeStatusBatchModel } from "../schema/mongodb/models/TransactionChangeStatusBatchLogsModel";
+import { ILoggerGateway } from "../repository/ILoggerGateway";
 
 @injectable()
 export class TransactionService implements ITransactionService {
     private readonly _mongodb: IMongoGateway;
+    private readonly _logger: ILoggerGateway;
     private readonly _transactionMongoModel: TransactionMongoModel;
     private readonly _walletsMongoModel: WalletsMongoModel;
     private readonly _creditMongoModel: CreditMongoModel;
@@ -38,6 +40,7 @@ export class TransactionService implements ITransactionService {
 
     constructor(
         @inject(TYPES.MongoGateway) mongodb: IMongoGateway,
+        @inject(TYPES.LoggerGateway) logger: ILoggerGateway,
         @inject(TYPES.TransactionMongoModel) transactionMongoModel: TransactionMongoModel,
         @inject(TYPES.WalletsMongoModel) walletsMongoModel: WalletsMongoModel,
         @inject(TYPES.CreditMongoModel) creditMongoModel: CreditMongoModel,
@@ -45,6 +48,7 @@ export class TransactionService implements ITransactionService {
         @inject(TYPES.TransactionChangeStatusBatchLogsMongoModel) transactionChangeStatusBatchLogsMongoModel: TransactionChangeStatusBatchLogsMongoModel
     ) {
         this._mongodb = mongodb;
+        this._logger = logger;
         this._transactionMongoModel = transactionMongoModel;
         this._walletsMongoModel = walletsMongoModel;
         this._creditMongoModel = creditMongoModel;

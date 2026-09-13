@@ -44,10 +44,12 @@ import { ChargeFrequencyDateCatalog } from "../infrastructure/catalogs/ChargeFre
 import { Payments } from "../types/Payments";
 import { AuthorizationContext } from "../types/AuthorizationContext";
 import { GetCreditTotalsRequest } from "../types/GetCreditTotalsRequest";
+import { ILoggerGateway } from "../repository/ILoggerGateway";
 
 @injectable()
 export class CreditService implements ICreditService {
     private readonly _mongodb: IMongoGateway;
+    private readonly _logger: ILoggerGateway;
     private readonly _creditMongoModel: CreditMongoModel;
     private readonly _customerMongoModel: CustomersMongoModel;
     private readonly _paymentsMongoModel: PaymentsMongoModel;
@@ -56,6 +58,7 @@ export class CreditService implements ICreditService {
 
     constructor(
         @inject(TYPES.MongoGateway) mongodb: IMongoGateway,
+        @inject(TYPES.LoggerGateway) logger: ILoggerGateway,
         @inject(TYPES.CreditMongoModel) creditMongoModel: CreditMongoModel,
         @inject(TYPES.CustomersMongoModel) customersMongoModel: CustomersMongoModel,
         @inject(TYPES.PaymentsMongoModel) paymentsMongoModel: PaymentsMongoModel,
@@ -63,6 +66,7 @@ export class CreditService implements ICreditService {
         @inject(TYPES.TransactionMongoModel) transactionsMongoModel: TransactionMongoModel,
     ) {
         this._mongodb = mongodb;
+        this._logger = logger;
         this._creditMongoModel = creditMongoModel;
         this._customerMongoModel = customersMongoModel;
         this._paymentsMongoModel = paymentsMongoModel;
@@ -195,16 +199,18 @@ export class CreditService implements ICreditService {
                 //If transaction operation create, create credit
                 iif(() => transactionResult.approveOperation && !isEmpty(transactionResult.transactionId),
                     //if transaction approve operation is true, create credit
-                    this._paymentsMongoModel.create({
-                        createdAt: new Date(),
-                        updatedAt: new Date(),
-                        creditId: new Types.ObjectId(paymentRequest.creditId),
-                        customerId: new Types.ObjectId(paymentRequest.customerId),
-                        transactionId: new Types.ObjectId(transactionResult.transactionId),
-                        total: amountTransaction,
-                        paymentMethod: "cash",
-                        transactionStatus: TransactionStatusEnum.PENDING
-                    }),
+                    defer(() =>
+                        this._paymentsMongoModel.create({
+                            createdAt: new Date(),
+                            updatedAt: new Date(),
+                            creditId: new Types.ObjectId(paymentRequest.creditId),
+                            customerId: new Types.ObjectId(paymentRequest.customerId),
+                            transactionId: new Types.ObjectId(transactionResult.transactionId),
+                            total: amountTransaction,
+                            paymentMethod: "cash",
+                            transactionStatus: TransactionStatusEnum.PENDING
+                        })
+                    ),
                     //else transaction approve operation is true, create credit
                     of("")
                 )

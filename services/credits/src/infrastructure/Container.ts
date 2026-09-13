@@ -18,6 +18,8 @@ import { IWallets } from "../schema/mongodb/models/Wallets.Model";
 import { WalletsMongoModel } from "../gateway/WalletsMongoModel";
 import { ITransactions } from "../schema/mongodb/models/TransactionsModel";
 import { TransactionMongoModel } from "../gateway/TransactionMongoModel";
+import { ILoggerGateway } from "../repository/ILoggerGateway";
+import { LoggerGateway } from "../gateway/LoggerGateway";
 
 const containerApp: Container = new Container();
 
@@ -26,7 +28,7 @@ containerApp.bind<ICreditService>(TYPES.CreditService).to(CreditService);
 
 //Gateway
 containerApp.bind<IMongoGateway>(TYPES.MongoGateway).to(MongoGateway);
-
+containerApp.bind<ILoggerGateway>(TYPES.LoggerGateway).to(LoggerGateway);
 
 //Mongo Models
 containerApp.bind<IBaseMongoModel<ICredits>>(TYPES.CreditMongoModel).to(CreditMongoModel);
