@@ -111,13 +111,21 @@ export abstract class BaseMongoModel<T> implements IBaseMongoModel<T> {
         return of(true).pipe(
             mergeMap(() => {
                 this._logger.info(
-                    { event: "mongo create document by collection " + this.model.modelName, data: document },
+                    { event: "mongo create document from collection " + this.model.modelName, data: document },
                     "mongo create document by collection " + this.model.modelName
                 );
-                return this.model.create(document)
+                return this.model.create(document);
             }),
             map((result: HydratedDocument<T>) => {
                 return "" + get(result, "_id", "");
+            }),
+            catchError(err => {
+                this._logger.error(
+                    { event: "mongo create document from collection failed " + this.model.modelName, err },
+                    "mongo create document by collection failed " + this.model.modelName
+                );
+                console.error('Error:', err);
+                return of(""); // fallback value
             })
         );
     }
@@ -129,13 +137,21 @@ export abstract class BaseMongoModel<T> implements IBaseMongoModel<T> {
         return of(true).pipe(
             mergeMap(() => {
                 this._logger.info(
-                    { event: "mongo update document by collection " + this.model.modelName, data: document },
+                    { event: "mongo update document from collection " + this.model.modelName, data: { documentId, updateFields } },
                     "mongo update document by collection " + this.model.modelName
                 );
                 return this.model.findByIdAndUpdate(documentId, updateFields, { new: true }).exec()
             }),
             map((result: HydratedDocument<T> | null) => {
                 return result !== null ? true : false;
+            }),
+            catchError(err => {
+                this._logger.error(
+                    { event: "mongo update document from collection failed " + this.model.modelName, err },
+                    "mongo update document by collection failed " + this.model.modelName
+                );
+                console.error('Error:', err);
+                return of(false); // fallback value
             })
         );
     }
@@ -145,22 +161,46 @@ export abstract class BaseMongoModel<T> implements IBaseMongoModel<T> {
         updateQuery: UpdateQuery<T>
     ): Observable<boolean> {
         return of(true).pipe(
-            mergeMap(() =>
-                this.model.updateOne(queryfilter, updateQuery).exec()
-            ),
+            mergeMap(() => {
+                this._logger.info(
+                    { event: "mongo update one document from collection " + this.model.modelName, data: { queryfilter, updateQuery } },
+                    "mongo update one document by collection " + this.model.modelName
+                );
+                return this.model.updateOne(queryfilter, updateQuery).exec()
+            }),
             map((result: UpdateWriteOpResult) => {
                 return result.matchedCount === 0 ? false : true;
+            }),
+            catchError(err => {
+                this._logger.error(
+                    { event: "mongo update one document from collection failed " + this.model.modelName, err },
+                    "mongo update one document by collection failed " + this.model.modelName
+                );
+                console.error('Error:', err);
+                return of(false); // fallback value
             })
         );
     }
 
     public remove(documentId: string): Observable<boolean> {
         return of(true).pipe(
-            mergeMap(() =>
-                this.model.findByIdAndDelete(documentId).exec()
-            ),
+            mergeMap(() => {
+                this._logger.info(
+                    { event: "mongo remove document from collection " + this.model.modelName, data: { documentId } },
+                    "mongo update one document by collection " + this.model.modelName
+                );
+                return this.model.findByIdAndDelete(documentId).exec()
+            }),
             map((result: HydratedDocument<T> | null) => {
                 return result !== null ? true : false;
+            }),
+            catchError(err => {
+                this._logger.error(
+                    { event: "mongo remove document from collection failed " + this.model.modelName, err },
+                    "mongo remove document by collection failed " + this.model.modelName
+                );
+                console.error('Error:', err);
+                return of(false); // fallback value
             })
         );
     }
