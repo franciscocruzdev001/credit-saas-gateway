@@ -126,6 +126,19 @@ export class CreditService implements ICreditService {
             mergeMap((transactionResult: [WalletBasicInformation, { approveOperation: boolean, transactionId: string }]) => {
                 //If transaction operation create, create credit
                 console.log("Transaction result", transactionResult);
+
+                const creditAmount: number = get(creditCustomer.credit, "creditAmount", 0);
+                const chargeDay = get(creditCustomer.credit, "chargeRules.chargeDay");
+                const chargeRules = {
+                    chargeFrequency: get(creditCustomer.credit, "chargeRules.chargeFrequency", chargeFrequencyEnum.WEEKLY) as chargeFrequencyEnum,
+                    chargePeriods: get(creditCustomer.credit, "chargeRules.chargePeriods", 1),
+                    ...(chargeDay ? { chargeDay } : {}),
+                    renovationPeriod: get(creditCustomer.credit, "chargeRules.renovationPeriod", 1),
+                    comissionRate: get(creditCustomer.credit, "chargeRules.comissionRate", 1),
+                };
+        
+                const computedCreditData = this._fillCreditsDataFromChargeRules(creditAmount, chargeRules);
+
                 return iif(() => transactionResult[1].approveOperation && !isEmpty(transactionResult[1].transactionId),
                     //if transaction approve operation is true, create credit
                     defer(() => this._creditMongoModel.create({
@@ -135,22 +148,20 @@ export class CreditService implements ICreditService {
                         userId: new Types.ObjectId(userId),
                         customerId: new Types.ObjectId(transactionResult[0].customerId),
                         transactionId: new Types.ObjectId(transactionResult[1].transactionId),
-                        startDateChargeConfig: new Date(), //Obtener en base al ultimo reporte, es la fecha en la entra el primer pago
+                        // El "!" es porque _fillCreditsDataFromChargeRules regresa
+                        // Partial<ICredits> (tipo amplio), pero en la práctica estos
+                        // 4 campos siempre vienen — la función nunca los omite.
+                        startDateChargeConfig: computedCreditData.startDateChargeConfig!,
                         admissionDate: new Date(),
-                        expirationDate: new Date(), // Calcular en base a las reglas de cobro
-                        creditAmount: get(creditCustomer.credit, "creditAmount", 0),
-                        amountDue: get(creditCustomer.credit, "creditAmount", 0), //Calcular en base a alas reglas de cobro
+                        expirationDate: computedCreditData.expirationDate!,
+                        creditAmount: creditAmount,
+                        amountDue: computedCreditData.amountDue!,
                         amountPaid: 0,
-                        fixedCharge: 300, //Calcular en base a las reglas de cobro
-                        creditAmountWithMoratory: get(creditCustomer.credit, "creditAmount", 0), //Actualizar en base a las faltas
+                        fixedCharge: computedCreditData.fixedCharge!,
+                        creditAmountWithMoratory: creditAmount, //Actualizar en base a las faltas
                         status: CreditStatusEnum.CHARGE_PROCESS,
                         transactionStatus: TransactionStatusEnum.PENDING,
-                        chargeRules: {
-                            chargeFrequency: get(creditCustomer.credit, "chargeRules.chargeFrequency", chargeFrequencyEnum.WEEKLY) as chargeFrequencyEnum,
-                            chargePeriods: get(creditCustomer.credit, "chargeRules.chargePeriods", 1),
-                            renovationPeriod: get(creditCustomer.credit, "chargeRules.renovationPeriod", 1),
-                            comissionRate: get(creditCustomer.credit, "chargeRules.comissionRate", 1),
-                        },
+                        chargeRules: chargeRules,
                     })),
                     //else transaction approve operation is true, create credit
                     of("")

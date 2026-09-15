@@ -26,19 +26,6 @@ const getLastOccurrenceOfDay = (dayIndex: number, referenceDate: Date): Date => 
     return start;
 };
 
-// Avanza "periods" días de cobro a partir de startDate, sin contar los domingos
-const addChargeDaysSkippingSunday = (startDate: Date, periods: number): Date => {
-    const result = new Date(startDate);
-    let remaining = periods;
-    while (remaining > 0) {
-        result.setDate(result.getDate() + 1);
-        if (result.getDay() !== 0) { // 0 = domingo
-            remaining--;
-        }
-    }
-    return result;
-};
-
 export const ChargeFrequencyDateCatalog: Record<string, (chargeRules: {
     chargePeriods?: number,
     chargeDay?: string
@@ -47,9 +34,13 @@ export const ChargeFrequencyDateCatalog: Record<string, (chargeRules: {
     expirationDate: Date
 }> = {
     [chargeFrequencyEnum.DAILY]: (chargeRules, referenceDate = new Date()) => {
+        // Rango de calendario fijo: chargePeriods días exactos desde el inicio,
+        // igual que WEEKLY. El domingo simplemente no es día de cobro dentro de
+        // ese rango — no se compensa alargando la fecha de expiración.
         const chargePeriods: number = get(chargeRules, "chargePeriods", 1);
         const startDateChargeConfig = getStartOfDay(referenceDate);
-        const expirationDate = addChargeDaysSkippingSunday(startDateChargeConfig, chargePeriods);
+        const expirationDate = new Date(startDateChargeConfig);
+        expirationDate.setDate(expirationDate.getDate() + chargePeriods);
 
         return { startDateChargeConfig, expirationDate };
     },
@@ -64,3 +55,5 @@ export const ChargeFrequencyDateCatalog: Record<string, (chargeRules: {
         return { startDateChargeConfig, expirationDate };
     },
 };
+
+

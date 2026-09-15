@@ -47,7 +47,7 @@ creditRouter.post("/createCreditsByEmployee", authMiddleware, async (req: Authen
     // 2. Convierte el Observable a Promesa y espera el primer valor emitido
     const datos = await firstValueFrom(
       result.pipe(
-        map((respuesta) => ({ mensaje: 'Crédito creado', data: respuesta }))
+        map((respuesta) => ({ mensaje: respuesta ? 'Crédito creado' : 'No se pudo crear el crédito', data: respuesta }))
       )
     );
 

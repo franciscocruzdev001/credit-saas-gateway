@@ -1,4 +1,4 @@
-import { injectable } from "inversify";
+import { inject, injectable } from "inversify";
 import { CreditsModel, ICredits, ICreditsWithCustomerBasicInformation } from "../schema/mongodb/models/CreditsModel";
 import { BaseMongoModel } from "./BaseMongoModel";
 import { map, mergeMap, Observable, of } from "rxjs";
@@ -7,12 +7,14 @@ import { Aggregate, PipelineStage, QueryFilter, QueryOptions } from "mongoose";
 import { CollectionNameEnum } from "../infrastructure/CollectionNameEnum";
 import { defaultTo, get } from "lodash";
 import { TransactionStatusEnum } from "../infrastructure/TransactionStatusEnum";
+import { ILoggerGateway } from "../repository/ILoggerGateway";
+import { TYPES } from "../constant/types";
 
 @injectable()
 export class CreditMongoModel extends BaseMongoModel<ICredits> {
-  constructor() {
+  constructor(@inject(TYPES.LoggerGateway) logger: ILoggerGateway) {
     // Inyectamos explícitamente el modelo Mongoose de manera estática a la clase superior
-    super(CreditsModel);
+    super(CreditsModel, logger);
   }
   // Aquí puedes añadir métodos específicos que solo pertenezcan a User
   /*public async findByEmail(email: string): Promise<IUserDocument | null> {
@@ -127,131 +129,131 @@ export class CreditMongoModel extends BaseMongoModel<ICredits> {
     creditFilters: QueryFilter<ICredits>,
     startDate: Date,
     endDate: Date
-): PipelineStage[] {
+  ): PipelineStage[] {
 
     return [
 
-        // Stage 1:
-        // Filtrar créditos
-        {
-            $match: creditFilters , 
-        },
+      // Stage 1:
+      // Filtrar créditos
+      {
+        $match: creditFilters,
+      },
 
-        // Stage 2:
-        // Buscar pagos relacionados al crédito
-        // y que estén dentro del periodo consultado.
-        {
-            $lookup: {
+      // Stage 2:
+      // Buscar pagos relacionados al crédito
+      // y que estén dentro del periodo consultado.
+      {
+        $lookup: {
 
-                from: CollectionNameEnum.PAYMENTS,
+          from: CollectionNameEnum.PAYMENTS,
 
-                let: {
-                    creditId: "$_id"
-                },
+          let: {
+            creditId: "$_id"
+          },
 
-                pipeline: [
+          pipeline: [
 
+            {
+              $match: {
+
+                $expr: {
+                  $and: [
+
+                    // Payment pertenece al Credit
                     {
-                        $match: {
-
-                            $expr: {
-                                $and: [
-
-                                    // Payment pertenece al Credit
-                                    {
-                                        $eq: [
-                                            "$creditId",
-                                            "$$creditId"
-                                        ]
-                                    },
-
-                                    // Payment >= fecha inicio
-                                    {
-                                        $gte: [
-                                            "$createdAt",
-                                            startDate
-                                        ]
-                                    },
-
-                                    // Payment <= fecha término
-                                    {
-                                        $lt: [
-                                            "$createdAt",
-                                            endDate
-                                        ]
-                                    }
-                                ]
-                            },
-
-                            // Solo pagos aprobados
-                            transactionStatus:
-                                TransactionStatusEnum.APPROVED
-                        }
+                      $eq: [
+                        "$creditId",
+                        "$$creditId"
+                      ]
                     },
 
+                    // Payment >= fecha inicio
                     {
-                        $project: {
-                            _id: 0,
-                            total: 1
-                        }
+                      $gte: [
+                        "$createdAt",
+                        startDate
+                      ]
+                    },
+
+                    // Payment <= fecha término
+                    {
+                      $lt: [
+                        "$createdAt",
+                        endDate
+                      ]
                     }
-                ],
-
-                as: "payments"
-            }
-        },
-
-        // Stage 3:
-        // Sumar pagos aprobados del periodo
-        {
-            $addFields: {
-                paidAmount: {
-                    $ifNull: [
-                        {
-                            $sum: "$payments.total"
-                        },
-                        0
-                    ]
-                }
-            }
-        },
-
-        // Stage 4:
-        // Sumar todo en un solo total, sin agrupar por frecuencia
-        {
-            $group: {
-
-                _id: null,
-
-                totalToCollect: {
-                    $sum: "$fixedCharge"
+                  ]
                 },
 
-                totalCollected: {
-                    $sum: "$paidAmount"
-                }
-            }
-        },
+                // Solo pagos aprobados
+                transactionStatus:
+                  TransactionStatusEnum.APPROVED
+              }
+            },
 
-        // Stage 5:
-        // Calcular pendiente
-        {
-            $project: {
-
+            {
+              $project: {
                 _id: 0,
-
-                totalToCollect: 1,
-
-                totalCollected: 1,
-
-                totalPending: {
-                    $subtract: [
-                        "$totalToCollect",
-                        "$totalCollected"
-                    ]
-                }
+                total: 1
+              }
             }
+          ],
+
+          as: "payments"
         }
+      },
+
+      // Stage 3:
+      // Sumar pagos aprobados del periodo
+      {
+        $addFields: {
+          paidAmount: {
+            $ifNull: [
+              {
+                $sum: "$payments.total"
+              },
+              0
+            ]
+          }
+        }
+      },
+
+      // Stage 4:
+      // Sumar todo en un solo total, sin agrupar por frecuencia
+      {
+        $group: {
+
+          _id: null,
+
+          totalToCollect: {
+            $sum: "$fixedCharge"
+          },
+
+          totalCollected: {
+            $sum: "$paidAmount"
+          }
+        }
+      },
+
+      // Stage 5:
+      // Calcular pendiente
+      {
+        $project: {
+
+          _id: 0,
+
+          totalToCollect: 1,
+
+          totalCollected: 1,
+
+          totalPending: {
+            $subtract: [
+              "$totalToCollect",
+              "$totalCollected"
+            ]
+          }
+        }
+      }
     ];
   }
 

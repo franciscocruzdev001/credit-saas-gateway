@@ -1,3 +1,5 @@
+import { OldDayEnum } from "../infrastructure/OldDayEnum";
+
 export interface Credits {
     admissionDate?:            number;
     amountDue?:                number;
@@ -21,21 +23,11 @@ export interface Credits {
 }
 
 export interface ChargeRules {
-    chargeDay?:        ChargeDay;
+    chargeDay?:        OldDayEnum;
     chargeFrequency?:  string;
     chargePeriods?:    number;
     comissionRate?:    number;
     renovationPeriod?: number;
-}
-
-export enum ChargeDay {
-    Friday = "friday",
-    Monday = "monday",
-    Saturday = "saturday",
-    Sunday = "sunday",
-    Thursday = "thursday",
-    Tuesday = "tuesday",
-    Wednesday = "wednesday",
 }
 
 export enum CreationStatus {

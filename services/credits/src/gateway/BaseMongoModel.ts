@@ -16,7 +16,7 @@ export abstract class BaseMongoModel<T> implements IBaseMongoModel<T> {
     // Utilizamos @unmanaged() si el modelo lo provee la subclase constructora
     constructor(
         @unmanaged() model: Model<T>,
-        @inject(TYPES.LoggerGateway) logger: ILoggerGateway,
+        @unmanaged() logger: ILoggerGateway,
     ) {
         this._logger = logger;
         this.model = model;
