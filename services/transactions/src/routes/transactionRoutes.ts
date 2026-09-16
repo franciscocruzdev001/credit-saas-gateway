@@ -96,6 +96,40 @@ transactionRouter.post("/approveTransactionsOperations", authMiddleware, async (
   }
 });
 
+// POST endpoint: cancela en lote las transacciones seleccionadas (revierte el saldo pendiente)
+transactionRouter.post("/cancelTransactionsOperations", authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
+
+  if (req.body === undefined || req.body == null) {
+    res.status(400).json({ error: 'La solicitud no cuenta con los parametros solicitados' });
+    return;
+  }
+
+  try {
+    console.log("/cancelTransactionsOperations-req.body: ", req.body);
+    const transactionIds: string[] = req.body.transactionIds ?? [];
+
+    // El userId, creditorCompanyId, walletId y accountNumber vienen del JWT (req.user), nunca del body
+    const authorizationContext: AuthorizationContext = {
+      userId: req.user?.userId ?? '',
+      creditorCompanyId: req.user?.creditorCompanyId ?? '',
+      ...(req.user?.walletId ? { walletId: req.user.walletId } : {}),
+      ...(req.user?.accountNumber ? { accountNumber: req.user.accountNumber } : {}),
+    };
+    const result: Observable<Object> = transactionService.cancelTransactionsOperations(transactionIds, authorizationContext);
+
+    const datos = await firstValueFrom(
+      result.pipe(
+        map((respuesta) => ({ mensaje: 'Transacciones canceladas', data: respuesta }))
+      )
+    );
+
+    res.status(200).json(datos);
+  } catch (error) {
+    console.error("Error en /cancelTransactionsOperations:", error);
+    res.status(500).json({ error: 'Ocurrió un error al procesar la solicitud' });
+  }
+});
+
 // POST endpoint: crea una transacción iniciada por un empleado (nace en PENDING)
 transactionRouter.post("/createTransactionByEmployee", authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
 
