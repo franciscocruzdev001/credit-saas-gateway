@@ -33,4 +33,11 @@ export interface ITransactionService {
     transactionIds: string[],
     authorizationContext: AuthorizationContext
   ): Observable<TransactionChangeStatusBatchLogs>
+  /**
+    * cancel transactions operations
+    */
+  cancelTransactionsOperations(
+    transactionIds: string[],
+    authorizationContext: AuthorizationContext
+  ): Observable<TransactionChangeStatusBatchLogs>
 }

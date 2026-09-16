@@ -47,3 +47,16 @@ export const ENTITY_OPERATION_BUID_UPDATE: Record<string, (amountTransaction: nu
         ]
     })
 };
+
+export const ENTITY_CANCEL_OPERATION_BUILD_UPDATE: Record<string, (amountTransaction: number) => UpdateQueryFiltersByEntity> = {
+    [TransactionTypeEnum.CREDIT]: (_: number) => ({
+        creditsQuery: {
+            transactionStatus: TransactionStatusEnum.CANCELLED
+        }
+    }),
+    [TransactionTypeEnum.PAYMENT]: (_: number) => ({
+        paymentsQuery: {
+            transactionStatus: TransactionStatusEnum.CANCELLED
+        }
+    })
+};

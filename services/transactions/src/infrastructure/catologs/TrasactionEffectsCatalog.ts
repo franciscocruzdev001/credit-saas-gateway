@@ -112,3 +112,40 @@ export const TRANSACTION_APPROVED_OPERATION_WALLET_BUILD: Record<TransactionOper
         updateQuery: {}
     }),
 };
+
+
+export const TRANSACTION_CANCEL_OPERATION_WALLET_BUILD: Record<TransactionOperationEnum, (walletId: string, accountNumber: string, amountTransaction: number) => {
+    queryfilter: QueryFilter<IWallets>,
+    updateQuery: UpdateQuery<IWallets>
+}> = {
+    [TransactionOperationEnum.EXPENSES]: (walletId: string, accountNumber: string, amountTransaction: number) => ({
+        queryfilter: {
+            _id: walletId,
+            accountNumber: accountNumber,
+        },
+        updateQuery: {
+            // Si cumple la condición, reduce el acumulador de egresos pendientes de forma atómica
+            $inc: {
+                pendingExpensesBalance: -amountTransaction,
+                //firmBalance: -amountTransaction
+            }
+        }
+    }),
+    [TransactionOperationEnum.INCOMES]: (walletId: string, accountNumber: string, amountTransaction: number) => ({
+        queryfilter: {
+            _id: walletId,
+            accountNumber: accountNumber,
+        },
+        updateQuery: {
+            // Si cumple la condición, reduce el acumulador de ingresos pendientes de forma atómica
+            $inc: {
+                pendingIncomesBalance: -amountTransaction,
+                //firmBalance: amountTransaction
+            }
+        }
+    }),
+    [TransactionOperationEnum.NA]: (walletId: string, accountNumber: string, amountTransaction: number) => ({
+        queryfilter: {},
+        updateQuery: {}
+    }),
+};

@@ -14,12 +14,12 @@ import { QueryFilter } from "mongoose";
 import { TransactionStatusEnum } from "../infrastructure/TransactionStatusEnum";
 import { TransactionTypeEnum } from "../infrastructure/TransactionTypeEnum";
 import { WalletBasicInformation } from "../types/WalletBasicInformation";
-import { TRANSACTION_APPROVED_OPERATION_WALLET_BUILD, TRANSACTION_EFFECTS, TRANSACTION_PENDING_OPERATION_WALLET_BUILD, UpdateOperation } from "../infrastructure/catologs/TrasactionEffectsCatalog";
+import { TRANSACTION_APPROVED_OPERATION_WALLET_BUILD, TRANSACTION_CANCEL_OPERATION_WALLET_BUILD, TRANSACTION_EFFECTS, TRANSACTION_PENDING_OPERATION_WALLET_BUILD, UpdateOperation } from "../infrastructure/catologs/TrasactionEffectsCatalog";
 import { IWallets } from "../schema/mongodb/models/Wallets.Model";
 import { WalletsMongoModel } from "../gateway/WalletsMongoModel";
 import { AuthorizationContext } from "../types/AuthorizationContext";
 import { CurrencyEnum } from "../infrastructure/CurrencyEnum";
-import { ENTITY_OPERATION_BUID_UPDATE, EntityUpdateResult, UpdateQueryFiltersByEntity } from "../infrastructure/catologs/EntityOperationBuildUpdate";
+import { ENTITY_CANCEL_OPERATION_BUILD_UPDATE, ENTITY_OPERATION_BUID_UPDATE, EntityUpdateResult, UpdateQueryFiltersByEntity } from "../infrastructure/catologs/EntityOperationBuildUpdate";
 import { CreditMongoModel } from "../gateway/CreditMongoModel";
 import { PaymentsMongoModel } from "../gateway/PaymentsMongoModel";
 import { TransactionBasicApproveInfo } from "../types/TransactionBasicApproveInfo";
@@ -184,7 +184,7 @@ export class TransactionService implements ITransactionService {
                     //{ code here}
                     forkJoin([
                         of(transactionResult[0]),
-                        this._processUpdateEntityByTransactionType(transactionResult[0]),
+                        this._processUpdateEntityByTransactionType(transactionResult[0], TransactionStatusEnum.APPROVED),
                     ]),
                     //else transaction approve operation is false
                     forkJoin([
@@ -234,6 +234,134 @@ export class TransactionService implements ITransactionService {
             },
                 {
                     changeStatus: TransactionStatusEnum.APPROVED,
+                    resumeTotalsByTransactionType: []
+                }
+            ),
+            mergeMap((report: TransactionChangeStatusBatchLogs) =>
+                forkJoin([
+                    of(report),
+                    this._transactionChangeStatusBatchLogsMongoModel.create(new TransactionChangeStatusBatchModel({
+                        changeStatus: report.changeStatus as TransactionStatusEnum,
+                        resumeTotalsByTransactionType: report.resumeTotalsByTransactionType.map(item => ({
+                            ...item,
+                            transactionType: item.transactionType as TransactionTypeEnum,
+                            transactionsChangeStatusApproved: [
+                                ...item.transactionsChangeStatusApproved
+                            ],
+                            transactionsChangeStatusRejected: [
+                                ...item.transactionsChangeStatusRejected
+                            ]
+                        }))
+                    }))
+                ])
+            ),
+            map((resultReport: [TransactionChangeStatusBatchLogs, string]) => ({
+                ...resultReport[0],
+                transactionChangeStatusBatchLogsId: resultReport[1]
+            }))
+        );
+    }
+
+    public cancelTransactionsOperations(
+        transactionIds: string[],
+        authorizationContext: AuthorizationContext
+    ): Observable<TransactionChangeStatusBatchLogs> {
+        return from(transactionIds).pipe(
+            mergeMap((transactionId: string) =>
+                //Consultar la informacion de las wallets en la transaccion (Origen, Destino) con el id de la transaccion
+                this._loadTransactionBasicInformationById(transactionId)
+            ),
+            mergeMap((transactionalOperationInfo: {
+                wallets: {
+                    sourceAccount: WalletBasicInformation,
+                    destinationAccount: WalletBasicInformation
+                },
+                trasactionBasicApproveInfo: TransactionBasicApproveInfo
+            }) => {
+                const sourceAccount: WalletBasicInformation = transactionalOperationInfo.wallets.sourceAccount;
+                const destinationAccount: WalletBasicInformation = transactionalOperationInfo.wallets.destinationAccount;
+                //realizar la operacion en las wallets
+                return forkJoin([
+                    of(transactionalOperationInfo.trasactionBasicApproveInfo),
+                    this._processCancelTransaction(
+                        //Transaction type - Define operation
+                        transactionalOperationInfo.trasactionBasicApproveInfo.transactionType as TransactionTypeEnum,
+                        // Source Account info if walletId exist
+                        !isEmpty(sourceAccount.walletId) ? {
+                            walletId: sourceAccount.walletId,
+                            accountNumber: sourceAccount.accountNumber
+                        } : undefined,
+                        // Destination Account info if walletId exist
+                        !isEmpty(destinationAccount.walletId) ? {
+                            walletId: destinationAccount.walletId,
+                            accountNumber: destinationAccount.accountNumber
+                        } : undefined,
+                        // Trasaction Basic Approve Info
+                        {
+                            transactionId: transactionalOperationInfo.trasactionBasicApproveInfo.transactionId,
+                            amountTransaction: transactionalOperationInfo.trasactionBasicApproveInfo.amountTransaction,
+                            currency: transactionalOperationInfo.trasactionBasicApproveInfo.currency
+                        }
+                    )
+                ])
+            }),
+            mergeMap((transactionResult: [TransactionBasicApproveInfo, { cancelOperation: boolean, transactionId: string }]) =>
+                //If transaction operation create, Update credit and payment only when the transactionType is equal to credit or payment
+                iif(() => transactionResult[1].cancelOperation && !isEmpty(transactionResult[1].transactionId),
+                    //if transaction approve operation cancel is true, Update credit and payment only when the transactionType is equal to credit or payment
+                    //{ code here}
+                    forkJoin([
+                        of(transactionResult[0]),
+                        this._processUpdateEntityByTransactionType(transactionResult[0], TransactionStatusEnum.CANCELLED),
+                    ]),
+                    //else transaction cancel operation is false
+                    forkJoin([
+                        of(transactionResult[0]),
+                        of(false)
+                    ])
+                )
+            ),
+            // Acumular todas las respuestas
+            reduce((report: TransactionChangeStatusBatchLogs, result: [TransactionBasicApproveInfo, boolean]) => {
+                const resumeTotals: ResumeTotalsByTransactionType | undefined = report.resumeTotalsByTransactionType.find(
+                    (resume: ResumeTotalsByTransactionType) => isEqual(resume.transactionType, result[0].transactionType)
+                );
+
+                if (!isUndefined(resumeTotals)) {
+                    if (result[1]) {
+                        resumeTotals.totalChangeStatusApproved += result[0].amountTransaction,
+                            resumeTotals.transactionsChangeStatusApproved.push({
+                                transactionId: result[0].transactionId,
+                                amountTransaction: result[0].amountTransaction
+                            });
+                    } else {
+                        resumeTotals.totalChangeStatusRejected += result[0].amountTransaction,
+                            resumeTotals.transactionsChangeStatusRejected.push({
+                                transactionId: result[0].transactionId,
+                                amountTransaction: result[0].amountTransaction
+                            });
+                    }
+                } else {
+                    report.resumeTotalsByTransactionType.push({
+                        transactionType: result[0].transactionType,
+                        ...result[1] ? {
+                            totalChangeStatusRejected: 0,
+                            transactionsChangeStatusRejected: [],
+                            totalChangeStatusApproved: result[0].amountTransaction,
+                            transactionsChangeStatusApproved: [{ transactionId: result[0].transactionId, amountTransaction: result[0].amountTransaction }]
+                        } : {
+                            totalChangeStatusApproved: 0,
+                            transactionsChangeStatusApproved: [],
+                            totalChangeStatusRejected: result[0].amountTransaction,
+                            transactionsChangeStatusRejected: [{ transactionId: result[0].transactionId, amountTransaction: result[0].amountTransaction }]
+                        }
+                    });
+                }
+
+                return report;
+            },
+                {
+                    changeStatus: TransactionStatusEnum.CANCELLED,
                     resumeTotalsByTransactionType: []
                 }
             ),
@@ -474,12 +602,90 @@ export class TransactionService implements ITransactionService {
         );
     }
 
-    private _processUpdateEntityByTransactionType(trasactionBasicApproveInfo: TransactionBasicApproveInfo): Observable<boolean> {
+    private _processCancelTransaction(
+        transactionType: TransactionTypeEnum,
+        sourceAccount: WalletBasicInformation | undefined,
+        destinationAccount: WalletBasicInformation | undefined,
+        trasactionBasicApproveInfo: {
+            transactionId: string,
+            amountTransaction: number,
+            currency: string
+        }
+    ): Observable<{
+        cancelOperation: boolean,
+        transactionId: string
+    }> {
+        const transactionId: string = trasactionBasicApproveInfo.transactionId;
+        const amountTransaction: number = trasactionBasicApproveInfo.amountTransaction;
+        const transactionEffects: {
+            sourceAccount: UpdateOperation,
+            destinationAccount: UpdateOperation
+        } = TRANSACTION_EFFECTS[transactionType];
+        return of(1).pipe(
+            mergeMap(() => {
+                const transactionOperationSourceAccount: {
+                    queryfilter: QueryFilter<IWallets>,
+                    updateQuery: UpdateQuery<IWallets>
+                } = TRANSACTION_CANCEL_OPERATION_WALLET_BUILD[transactionEffects.sourceAccount.operation](
+                    get(sourceAccount, "walletId", ""),
+                    get(sourceAccount, "accountNumber", ""),
+                    amountTransaction
+                );
+                const transactionOperationDestinationAccount: {
+                    queryfilter: QueryFilter<IWallets>,
+                    updateQuery: UpdateQuery<IWallets>
+                } = TRANSACTION_CANCEL_OPERATION_WALLET_BUILD[transactionEffects.destinationAccount.operation](
+                    get(destinationAccount, "walletId", ""),
+                    get(destinationAccount, "accountNumber", ""),
+                    amountTransaction
+                );
+
+                return forkJoin({
+                    // SourceAccount: Expenses movements (CREDIT, WITHDRAWAL, TRANSFER-OUT ) - pendingExpensesBalance
+                    sourceAccountWalletCheckUpdate: transactionEffects.sourceAccount.update ?
+                        this._walletsMongoModel.updateOne(transactionOperationSourceAccount.queryfilter, transactionOperationSourceAccount.updateQuery) : of(false),
+                    // DestinationAccount: Income movements (DEPOSIT, PAYMENT, TRANSFER-IN ) - pendingIncomesBalance
+                    destinationAccountWalletCheckUpdate: transactionEffects.destinationAccount.update ?
+                        this._walletsMongoModel.updateOne(transactionOperationDestinationAccount.queryfilter, transactionOperationDestinationAccount.updateQuery) : of(false),
+                })
+            }),
+            map((walletsProcessOperation: { sourceAccountWalletCheckUpdate: boolean, destinationAccountWalletCheckUpdate: boolean }) =>
+                this._checkValidUpdateWalletsByTransactionEffects(walletsProcessOperation, transactionEffects)
+            ),
+            mergeMap((resultWalletsCancelOperation: boolean) =>
+                //Validate if update pendings balance on wallet
+                iif(() => resultWalletsCancelOperation,
+                    //if pending balance on wallet update, update transaction status
+                    forkJoin({
+                        cancelOperation: this._transactionMongoModel.updateOne(
+                            { _id: transactionId }, // query filter
+                            { status: TransactionStatusEnum.CANCELLED } // update query
+                        ),
+                        transactionId: transactionId
+                    }),
+                    //else pending balance on wallet not update, get false and empty transactionId
+                    of({
+                        cancelOperation: resultWalletsCancelOperation,
+                        transactionId: ""
+                    })
+                )
+            )
+        );
+    }
+
+    private _processUpdateEntityByTransactionType(trasactionBasicApproveInfo: TransactionBasicApproveInfo, transactionStatus: TransactionStatusEnum): Observable<boolean> {
         //Si no existe mapeo, eso indica que no se requiere actualizar ninguna entidad
-        if (!ENTITY_OPERATION_BUID_UPDATE[trasactionBasicApproveInfo.transactionType]) return of(true)
+        const entityBuildUpdate: ((amountTransaction: number) => UpdateQueryFiltersByEntity) | undefined =
+            isEqual(transactionStatus, TransactionStatusEnum.APPROVED) ?
+                ENTITY_OPERATION_BUID_UPDATE[trasactionBasicApproveInfo.transactionType] :
+                isEqual(transactionStatus, TransactionStatusEnum.CANCELLED) ?
+                    ENTITY_CANCEL_OPERATION_BUILD_UPDATE[trasactionBasicApproveInfo.transactionType] :
+                    undefined
+
+        if (!entityBuildUpdate) return of(true)
 
         const entityOperationBuild: UpdateQueryFiltersByEntity = defaultTo(
-            ENTITY_OPERATION_BUID_UPDATE[trasactionBasicApproveInfo.transactionType],
+            entityBuildUpdate,
             (amountTransaction: number) => ({})
         )(trasactionBasicApproveInfo.amountTransaction);
 
@@ -604,7 +810,7 @@ export class TransactionService implements ITransactionService {
         console.log("_buildSearchFiltersByTransactionsToUser-filters:", filters);
         const walletId = new Types.ObjectId(get(filters, "accountInformacion.walletId", ""));
         const accountNumber = get(filters, "accountInformacion.accountNumber", "");
-        const startDateCreated: number | undefined = get( filters, "createdRangeDate.startDate", undefined );
+        const startDateCreated: number | undefined = get(filters, "createdRangeDate.startDate", undefined);
         const endDateCreated: number | undefined = get(filters, "createdRangeDate.endDate", undefined);
         const generalSearch: string = get(filters, "generalSearch", "");
 
@@ -623,7 +829,7 @@ export class TransactionService implements ITransactionService {
                         $in: get(filters, "transactionType", [])
                     },
                 createdAt: (!isNil(startDateCreated) || !isNil(endDateCreated)) ? {
-                    $gte: !isNil(startDateCreated)? new Date(startDateCreated) : undefined,
+                    $gte: !isNil(startDateCreated) ? new Date(startDateCreated) : undefined,
                     $lte: !isNil(endDateCreated) ? new Date(endDateCreated) : undefined,
                 } : {}
             }, (value: any) => {
