@@ -344,12 +344,21 @@ export class AuthorizerService implements IAuthorizerService {
 
     private _buildSearchFiltersByEmployees(filters: FilterItemsEmployees): Filter<Document> {
         console.log("buildSearchFiltersByEmployees-filters:", filters);
+        const generalSearch: string = get(filters, "generalSearch", "");
         const queryFilter = {
             //status: get(searchCustomerData, "status", undefined),
             status: isEmpty(get(filters, "status", [])) ? undefined : {
                 $in: get(filters, "status", []),
             },
-            creditorCompanyId: new Types.ObjectId(get(filters, "creditorCompanyId", ""))
+            creditorCompanyId: new Types.ObjectId(get(filters, "creditorCompanyId", "")),
+            // Mismo criterio que _buildSearchFiltersByCustomers en credits — nombre
+            // de usuario, email, nombre o apellido de contacto.
+            $or: !isEmpty(generalSearch) ? [
+                { userName: { $regex: new RegExp(generalSearch, 'i') } },
+                { email: { $regex: new RegExp(generalSearch, 'i') } },
+                { "contact.name": { $regex: new RegExp(generalSearch, 'i') } },
+                { "contact.lastName": { $regex: new RegExp(generalSearch, 'i') } },
+            ] : undefined
         }
         console.log("buildSearchFiltersByEmployees-queryFilter:", queryFilter);
         return omitBy(queryFilter,

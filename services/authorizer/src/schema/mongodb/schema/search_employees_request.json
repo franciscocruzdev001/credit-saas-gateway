@@ -17,6 +17,9 @@
         },
         "creditorCompanyId": {
           "type": "string"
+        },
+        "generalSearch": {
+          "type": "string"
         }
       }
     },

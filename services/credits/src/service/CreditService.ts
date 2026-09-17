@@ -11,7 +11,7 @@ import { defaultTo, filter, get, isEmpty, isEqual, isNil, isObject, isUndefined,
 import { FiltersItems as FilterItemsCredits, SearchCreditsRequest } from "../types/SearchCreditsRequest"
 import { CreditMongoModel } from "../gateway/CreditMongoModel";
 import { QueryOptions, Types } from "mongoose";
-import { ICredits } from "../schema/mongodb/models/CreditsModel";
+import { ICredits, ICreditsWithCustomerBasicInformation } from "../schema/mongodb/models/CreditsModel";
 import { CustomersMongoModel } from "../gateway/CutomersMongoModel";
 import { QueryFilter } from "mongoose";
 import { UserRoleEnum } from "../infrastructure/UserRoleEnum";
@@ -605,10 +605,10 @@ export class CreditService implements ICreditService {
         //Validar filtros vacios si no trae ningun filtro rechazar
         return of(1).pipe(
             mergeMap(() =>
-                this._creditMongoModel.findDocuments(queryFilter, options)
+                this._creditMongoModel.findCreditsJoinCustomer(queryFilter, {}, options ?? {})
             ),
-            map((dataResponse: { documents: ICredits[], totalDocuments: number }) => {
-                console.log("this._creditMongoModel.findDocuments-dataResponse", dataResponse);
+            map((dataResponse: { documents: ICreditsWithCustomerBasicInformation[], totalDocuments: number }) => {
+                console.log("this._creditMongoModel.findCreditsJoinCustomer-dataResponse", dataResponse);
                 return {
                     total: dataResponse.totalDocuments,
                     records: dataResponse.documents
@@ -618,12 +618,20 @@ export class CreditService implements ICreditService {
     }
 
     private _buildSearchFiltersByCustomers(filters: FilterItemsCustomers): QueryFilter<ICustomers> {
+        const generalSearch: string = get(filters, "generalSearch", "");
         const queryFilter = {
             //status: get(searchCustomerData, "status", undefined),
             status: isEmpty(get(filters, "status", [])) ? undefined : {
                 $in: get(filters, "status", []),
             },
-            creditorCompanyId: new Types.ObjectId(get(filters, "creditorCompanyId", ""))
+            creditorCompanyId: new Types.ObjectId(get(filters, "creditorCompanyId", "")),
+            // Mismo criterio de búsqueda que ya usa UserRoleCustomerSearchCatalog
+            // (searchCustomersByEmployee, mobile) — nombre, apellido o teléfono.
+            $or: !isEmpty(generalSearch) ? [
+                { "contact.name": { $regex: new RegExp(generalSearch, 'i') } },
+                { "contact.lastName": { $regex: new RegExp(generalSearch, 'i') } },
+                { "contact.phoneNumber": { $regex: new RegExp(generalSearch, 'i') } },
+            ] : undefined
         }
         console.log("buildSearchFiltersByCustomers-queryFilter:", queryFilter);
         return omitBy(queryFilter,
@@ -637,6 +645,9 @@ export class CreditService implements ICreditService {
         console.log("buildSearchFiltersByCredits-filters:", filters);
         const userId: string = get(filters, "userId", "");
         const customerId: string = get(filters, "customerId", "");
+    //manejamos como number el  startDateCreated endDateCreated igual que en transactions para filtrar por fecha 
+        const startDateCreated: number | undefined = get(filters, "createdRangeDate.startDate", undefined);
+        const endDateCreated: number | undefined = get(filters, "createdRangeDate.endDate", undefined);
         return {
             creditorCompanyId: new Types.ObjectId(get(filters, "creditorCompanyId", "000000000000000000000000")),
             ...omitBy({
@@ -647,7 +658,11 @@ export class CreditService implements ICreditService {
                 },
                 transactionStatus: isEmpty(get(filters, "transactionStatus", [])) ? undefined : {
                     $in: get(filters, "transactionStatus", []),
-                }
+                },
+                admissionDate: (!isNil(startDateCreated) || !isNil(endDateCreated)) ? omitBy({
+                    $gte: !isNil(startDateCreated) ? new Date(startDateCreated) : undefined,
+                    $lte: !isNil(endDateCreated) ? new Date(endDateCreated) : undefined,
+                }, isUndefined) : undefined
             },
                 (value) => {
                     return isNil(value) || isUndefined(value) || (isObject(value) && isEmpty(value));

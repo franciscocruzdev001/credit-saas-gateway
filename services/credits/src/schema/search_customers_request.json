@@ -17,6 +17,12 @@
         },
         "createdByEmployeeId": {
           "type": "string"
+        },
+        "creditorCompanyId": {
+          "type": "string"
+        },
+        "generalSearch": {
+          "type": "string"
         }
       }
     },

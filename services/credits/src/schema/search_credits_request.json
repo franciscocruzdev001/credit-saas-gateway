@@ -29,6 +29,18 @@
           "items": {
             "type": "string"
           }
+        },
+        "createdRangeDate": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "startDate": {
+              "type": "number"
+            },
+            "endDate": {
+              "type": "number"
+            }
+          }
         }
       },
       "required": [
