@@ -11,6 +11,13 @@ const customersSchema = new Schema({
             lastName: { type: String },
             address: { type: String },
             phoneNumber: { type: String },
+            ubication: {
+                type: new Schema({
+                    latitude: { type: String },
+                    longitude: { type: String },
+                }, { _id: false }),
+                required: false
+            },
         }, { _id: false })
     },
     creditorCompanyId: { type: Schema.Types.ObjectId, ref: "CreditorCompanies", required: true },

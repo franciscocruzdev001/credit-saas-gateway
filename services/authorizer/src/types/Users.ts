@@ -10,8 +10,14 @@ export interface Users {
 }
 
 export interface Contact {
-    adress?:      string;
+    address?:     string;
     lastName?:    string;
     name?:        string;
     phoneNumber?: string;
+    ubication?:   Ubication;
+}
+
+export interface Ubication {
+    latitude?:  string;
+    longitude?: string;
 }
