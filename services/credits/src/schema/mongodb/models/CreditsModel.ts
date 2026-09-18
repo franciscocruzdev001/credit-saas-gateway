@@ -71,9 +71,20 @@ const creditsSchema = new Schema({
 // 2. Automatically generate/infer the TypeScript interface/type
 export type ICredits = InferSchemaType<typeof creditsSchema> & { _id?: Types.ObjectId };
 
+// Solo lo que se proyecta en el $lookup a "users" — sin importar el schema
+// completo del servicio de authorizer (cada servicio es independiente).
+export interface IEmployeeBasicInfo {
+    contact?: {
+        name?: string;
+        lastName?: string;
+        phoneNumber?: string;
+    };
+}
+
 // 3. Create TypeScript interface/type to credit with customerBasicInformation
 export type ICreditsWithCustomerBasicInformation = ICredits & {
-    customerInfo: ICustomers[]
+    customerInfo: ICustomers[];
+    employeeInfo?: IEmployeeBasicInfo[];
 }
 
 export const CreditsModel = model<ICredits>(CollectionNameEnum.CREDITS, creditsSchema);

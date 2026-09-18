@@ -20,7 +20,8 @@ export class CreditMongoModel extends BaseMongoModel<ICredits> {
   /*public async findByEmail(email: string): Promise<IUserDocument | null> {
     return this.model.findOne({ email }).exec();
   }*/
-
+  // findCreditsJoinCustomer — mobile (searchCreditsByEmployee). No trae
+  // employeeInfo: ver findCreditsJoinCustomerAndEmployee para eso (web).
   public findCreditsJoinCustomer(
     creditFilters: QueryFilter<ICredits>,
     customerFilters: QueryFilter<ICustomers>,
@@ -57,7 +58,6 @@ export class CreditMongoModel extends BaseMongoModel<ICredits> {
       )
     );
   }
-
   // Construct Pipeline
   public _buildPipelineToUser(
     creditFilters: QueryFilter<ICredits>,
@@ -87,7 +87,6 @@ export class CreditMongoModel extends BaseMongoModel<ICredits> {
                   $and: [
                     // Filter 1: Primary Join Condition (User._id === Order.userId)
                     //{ $eq: ['$_id', '$$creditCustomerId'] },
-                    
                   ]
                 }*/
               }
@@ -113,6 +112,78 @@ export class CreditMongoModel extends BaseMongoModel<ICredits> {
         },
       },
       { $unwind: { path: "$lastPayment", preserveNullAndEmptyArrays: true } },
+      // Stage 4: Sort results consistently for pagination
+      { $sort: { createdAt: -1 } },
+
+      {
+        $facet: {
+          data: [{ $skip: defaultTo(pagination.skip, 1) }, { $limit: defaultTo(pagination.limit, 1) }],
+          totalCount: [{ $count: 'count' }],
+        },
+      }
+    ]
+  }
+
+  // findCreditsJoinCustomerAndEmployee — de grado administrativo (web, searchCredits).
+  public findCreditsJoinCustomerAndEmployee(
+    creditFilters: QueryFilter<ICredits>,
+    customerFilters: QueryFilter<ICustomers>,
+    pagination: QueryOptions
+  ): Observable<{
+    documents: ICreditsWithCustomerBasicInformation[],
+    totalDocuments: number
+  }> {
+    return of(true).pipe(
+      mergeMap(() => this.model.aggregate(this._buildPipelineToUserAndEmployee(creditFilters, customerFilters, pagination))),
+      map((result: Aggregate<{ data: any[], totalCount: { count: number }[] }>[]) => ({
+        documents: get(result, "[0].data", []),
+        totalDocuments: get(result, "[0].totalCount[0].count", 0)
+      }))
+    );
+  }
+
+  public _buildPipelineToUserAndEmployee(
+    creditFilters: QueryFilter<ICredits>,
+    customerFilters: QueryFilter<ICustomers>,
+    pagination: QueryOptions
+  ): PipelineStage[] {
+    return [
+      // Stage 1: Filter documents first for performance
+      { $match: creditFilters },
+      // Stage 2: Join customers
+      {
+        $lookup: {
+          from: CollectionNameEnum.CUSTOMERS,
+          let: { creditCustomerId: "$customerId" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ['$_id', '$$creditCustomerId'] },
+                  ]
+                },
+                ...customerFilters
+              }
+            },
+          ],
+          as: "customerInfo",
+        },
+      },
+      // Stage 3: descarta créditos cuyo customer no matcheó el filtro
+      { $match: { customerInfo: { $ne: [] } } },
+      // Stage 3.4: datos del empleado (cobrador) dueño del crédito.
+      {
+        $lookup: {
+          from: CollectionNameEnum.USERS,
+          let: { creditUserId: "$userId" },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$_id', '$$creditUserId'] } } },
+            { $project: { "contact.name": 1, "contact.lastName": 1, "contact.phoneNumber": 1 } }
+          ],
+          as: "employeeInfo",
+        },
+      },
       // Stage 4: Sort results consistently for pagination
       { $sort: { createdAt: -1 } },
 

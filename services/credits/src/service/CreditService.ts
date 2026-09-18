@@ -605,10 +605,10 @@ export class CreditService implements ICreditService {
         //Validar filtros vacios si no trae ningun filtro rechazar
         return of(1).pipe(
             mergeMap(() =>
-                this._creditMongoModel.findCreditsJoinCustomer(queryFilter, {}, options ?? {})
+                this._creditMongoModel.findCreditsJoinCustomerAndEmployee(queryFilter, {}, options ?? {})
             ),
             map((dataResponse: { documents: ICreditsWithCustomerBasicInformation[], totalDocuments: number }) => {
-                console.log("this._creditMongoModel.findCreditsJoinCustomer-dataResponse", dataResponse);
+                console.log("this._creditMongoModel.findCreditsJoinCustomerAndEmployee-dataResponse", dataResponse);
                 return {
                     total: dataResponse.totalDocuments,
                     records: dataResponse.documents
