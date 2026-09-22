@@ -19,3 +19,4 @@ export class CreditMongoModel extends BaseMongoModel<ICredits> {
     return this.model.findOne({ email }).exec();
   }*/
 }
+

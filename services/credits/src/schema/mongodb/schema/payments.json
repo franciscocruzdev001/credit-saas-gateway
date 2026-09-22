@@ -22,6 +22,14 @@
         },
         "transactionStatus" :{
             "type" : "string"
+        },
+        "paymentCategory": {
+            "type": "string",
+            "enum": ["chargePeriod", "other"]
+        },
+        "paymentSubType": {
+            "type": "string",
+            "enum": ["liquidation", "renewal"]
         }
     },
     "required": [

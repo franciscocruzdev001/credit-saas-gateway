@@ -10,6 +10,7 @@ export interface FiltersItems {
     generalSearch?:      string;
     status?:             string[];
     transactionType?:    string[];
+    chargeFrequency?:    string[];
 }
 
 export interface AccountInformacion {

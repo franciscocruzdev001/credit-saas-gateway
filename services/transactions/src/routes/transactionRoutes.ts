@@ -33,6 +33,7 @@ transactionRouter.post("/searchTransactions", async (req: Request<SearchTransact
     res.status(200).json(datos);
   } catch (error) {
     // 4. Manejo de errores si el Observable falla o está vacío
+    console.error("Error en /searchTransactions:", error);
     res.status(500).json({ error: 'Ocurrió un error al procesar la solicitud' });
   }
 });

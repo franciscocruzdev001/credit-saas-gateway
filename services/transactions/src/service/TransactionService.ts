@@ -27,6 +27,7 @@ import { ResumeTotalsByTransactionType, TransactionChangeStatusBatchLogs } from 
 import { TransactionChangeStatusBatchLogsMongoModel } from "../gateway/TransactionChangeStatusBatchLogsMongoModel";
 import { TransactionChangeStatusBatchModel } from "../schema/mongodb/models/TransactionChangeStatusBatchLogsModel";
 import { ILoggerGateway } from "../repository/ILoggerGateway";
+import { ICredits } from "../schema/mongodb/models/CreditsModel";
 
 @injectable()
 export class TransactionService implements ITransactionService {
@@ -56,24 +57,47 @@ export class TransactionService implements ITransactionService {
         this._transactionChangeStatusBatchLogsMongoModel = transactionChangeStatusBatchLogsMongoModel;
     }
 
+    /*public searchTransactions(
+         searchTransactionData: SearchTransactionsRequest
+     ): Observable<Object> {
+         const salto = (get(searchTransactionData, "pagination.pageNumber", 1)) * get(searchTransactionData, "pagination.limit", 0);
+         console.log("searchCredits-searchTransactionData: ", searchTransactionData);
+         console.log("searchCredits-salto: ", salto);
+         return of(1).pipe(
+             mergeMap(() =>
+                 this._searchTransactions(
+                     this._buildSearchFiltersByTransactions(searchTransactionData.filtersItems),
+                     {
+                         skip: salto,
+                         limit: get(searchTransactionData, "pagination.limit", 0)
+                     }
+                 )
+             )
+         );
+     }*/
     public searchTransactions(
         searchTransactionData: SearchTransactionsRequest
     ): Observable<Object> {
-        const salto = (get(searchTransactionData, "pagination.pageNumber", 1)) * get(searchTransactionData, "pagination.limit", 0);
-        console.log("searchCredits-searchTransactionData: ", searchTransactionData);
-        console.log("searchCredits-salto: ", salto);
+        const pageNumber = get(searchTransactionData, "pagination.pageNumber", 0);
+        const limit = get(searchTransactionData, "pagination.limit", 10);
+        const pagination = { skip: pageNumber * limit, limit };
+
+        const transactionFilters = this._buildSearchFiltersByTransactions(searchTransactionData.filtersItems);
+        const chargeFrequency: string[] = get(searchTransactionData, "filtersItems.chargeFrequency", []);
+
         return of(1).pipe(
             mergeMap(() =>
                 this._searchTransactions(
-                    this._buildSearchFiltersByTransactions(searchTransactionData.filtersItems),
-                    {
-                        skip: salto,
-                        limit: get(searchTransactionData, "pagination.limit", 0)
-                    }
+                    transactionFilters,
+                    pagination,
+                    !isEmpty(chargeFrequency) ? 
+                    this._buildSearchFiltersByChargeRule(searchTransactionData.filtersItems) : undefined
                 )
             )
         );
     }
+
+
 
     public searchTransactionsByUser(
         searchTransactionData: SearchTransactionsByUserRequest
@@ -747,7 +771,9 @@ export class TransactionService implements ITransactionService {
             isEqual(walletsProcessOperation.destinationAccountWalletCheckUpdate, transactionEffects.destinationAccount.update) ? true : false;
     }
 
-    private _searchTransactions(queryFilter: QueryFilter<ITransactions>, options: QueryOptions): Observable<Object> {
+    /*private _searchTransactions(
+    queryFilter: QueryFilter<ITransactions>, 
+    options: QueryOptions): Observable<Object> {
         return of(1).pipe(
             mergeMap(() =>
                 this._transactionMongoModel.findDocuments(
@@ -760,7 +786,26 @@ export class TransactionService implements ITransactionService {
                 records: dataResponse.documents
             }))
         );
+    }*/
+
+    private _searchTransactions(
+        queryFilter: QueryFilter<ITransactions>,
+        options: QueryOptions,
+        creditFilters?: QueryFilter<ICredits>
+    ): Observable<Object> {
+        return of(1).pipe(
+            mergeMap(() =>
+                this._transactionMongoModel.findTransactionsJoinCredit(queryFilter, creditFilters ?? {}, options)
+                // : this._transactionMongoModel.findDocuments(queryFilter, options)
+            ),
+            map((dataResponse: { documents: ITransactions[] | any[], totalDocuments: number }) => ({
+                total: dataResponse.totalDocuments,
+                records: dataResponse.documents
+            }))
+        );
     }
+
+
 
     private _buildSearchFiltersByTransactions(filters: FilterItemsTransactions): QueryFilter<ITransactions> {
         console.log("buildSearchFiltersByTransactions-filters:", filters);
@@ -804,6 +849,13 @@ export class TransactionService implements ITransactionService {
                 return isNil(value) || isUndefined(value) || (isObject(value) && isEmpty(value));
             })
         }
+    }
+
+    private _buildSearchFiltersByChargeRule(filters: FilterItemsTransactions): QueryFilter<ICredits> {
+        const chargeFrequency: string[] = get(filters, "chargeFrequency", []);
+        return omitBy({
+            "chargeRules.chargeFrequency": !isEmpty(chargeFrequency) ? { $in: chargeFrequency } : undefined,
+        }, (value: any) => isNil(value) || isUndefined(value));
     }
 
     private _buildSearchFiltersByTransactionsToUser(filters: FilterItemsTransactionsByUser): QueryFilter<ITransactions> {

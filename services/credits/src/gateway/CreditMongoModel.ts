@@ -9,6 +9,7 @@ import { defaultTo, get } from "lodash";
 import { TransactionStatusEnum } from "../infrastructure/TransactionStatusEnum";
 import { ILoggerGateway } from "../repository/ILoggerGateway";
 import { TYPES } from "../constant/types";
+import { PaymentCategoryEnum } from "../infrastructure/PaymentCategoryEnum";
 
 @injectable()
 export class CreditMongoModel extends BaseMongoModel<ICredits> {
@@ -258,8 +259,10 @@ export class CreditMongoModel extends BaseMongoModel<ICredits> {
 
                 // Solo pagos aprobados
                 transactionStatus:
-                  TransactionStatusEnum.APPROVED
-              }
+                  TransactionStatusEnum.APPROVED,
+                paymentCategory: PaymentCategoryEnum.CHARGE_PERIOD
+
+              },
             },
 
             {
@@ -318,9 +321,14 @@ export class CreditMongoModel extends BaseMongoModel<ICredits> {
           totalCollected: 1,
 
           totalPending: {
-            $subtract: [
-              "$totalToCollect",
-              "$totalCollected"
+            $max: [
+              {
+                $subtract: [
+                  "$totalToCollect",
+                  "$totalCollected"
+                ]
+              },
+              0
             ]
           }
         }

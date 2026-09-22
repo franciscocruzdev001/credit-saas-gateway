@@ -45,6 +45,7 @@ import { Payments } from "../types/Payments";
 import { AuthorizationContext } from "../types/AuthorizationContext";
 import { GetCreditTotalsRequest } from "../types/GetCreditTotalsRequest";
 import { ILoggerGateway } from "../repository/ILoggerGateway";
+import { PaymentCategoryEnum } from "../infrastructure/PaymentCategoryEnum";
 
 @injectable()
 export class CreditService implements ICreditService {
@@ -219,7 +220,9 @@ export class CreditService implements ICreditService {
                             transactionId: new Types.ObjectId(transactionResult.transactionId),
                             total: amountTransaction,
                             paymentMethod: "cash",
-                            transactionStatus: TransactionStatusEnum.PENDING
+                            transactionStatus: TransactionStatusEnum.PENDING,
+                            paymentCategory: get(paymentRequest, "paymentCategory", PaymentCategoryEnum.CHARGE_PERIOD),
+                            paymentSubType: get(paymentRequest, "paymentSubType", null)
                         })
                     ),
                     //else transaction approve operation is true, create credit
