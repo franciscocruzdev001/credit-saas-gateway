@@ -6,6 +6,7 @@ export enum CollectionNameEnum{
     TRANSACTIONS = "transactions",
     WALLETS = "wallets",
     CREDITS = "credits",
+    CUSTOMERS = "customers",
     PAYMENTS = "payments",
     TRANSACTION_CHANGE_STATUS_BATCH_LOGS= "transaction_change_status_batch_logs"
 }

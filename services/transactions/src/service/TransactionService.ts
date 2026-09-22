@@ -90,8 +90,8 @@ export class TransactionService implements ITransactionService {
                 this._searchTransactions(
                     transactionFilters,
                     pagination,
-                    !isEmpty(chargeFrequency) ? 
-                    this._buildSearchFiltersByChargeRule(searchTransactionData.filtersItems) : undefined
+                    !isEmpty(chargeFrequency) ?
+                    this._buildSearchFiltersByChargeRule(searchTransactionData.filtersItems) : {}
                 )
             )
         );
@@ -795,8 +795,9 @@ export class TransactionService implements ITransactionService {
     ): Observable<Object> {
         return of(1).pipe(
             mergeMap(() =>
-                this._transactionMongoModel.findTransactionsJoinCredit(queryFilter, creditFilters ?? {}, options)
-                // : this._transactionMongoModel.findDocuments(queryFilter, options)
+                !isUndefined(creditFilters)
+                    ? this._transactionMongoModel.findTransactionsJoinCredit(queryFilter, creditFilters, options)
+                    : this._transactionMongoModel.findDocuments(queryFilter, options)
             ),
             map((dataResponse: { documents: ITransactions[] | any[], totalDocuments: number }) => ({
                 total: dataResponse.totalDocuments,

@@ -6,7 +6,7 @@ import { TYPES } from "../constant/types";
 import { ILoggerGateway } from "../repository/ILoggerGateway";
 import { Aggregate, PipelineStage, QueryFilter, QueryOptions } from "mongoose";
 import { map, mergeMap, Observable, of } from "rxjs";
-import { get } from "lodash";
+import { get, isEmpty } from "lodash";
 import { CollectionNameEnum } from "../infrastructure/CollectionNameEnum";
 
 @injectable()
@@ -63,12 +63,22 @@ export class TransactionMongoModel extends BaseMongoModel<ITransactions> {
                 ],
                 ...creditFilters
               }
+            },
+            {
+              $lookup: {
+                from: CollectionNameEnum.CUSTOMERS,
+                let: { creditCustomerId: "$customerId" },
+                pipeline: [
+                  { $match: { $expr: { $eq: ["$_id", "$$creditCustomerId"] } } }
+                ],
+                as: "customerInfo"
+              }
             }
           ],
           as: "creditInfo"
         }
       },
-      { $match: { creditInfo: { $ne: [] } } },
+      ...(!isEmpty(creditFilters) ? [{ $match: { creditInfo: { $ne: [] } } }] : []),
       { $sort: { createdAt: -1 } },
       {
         $facet: {
