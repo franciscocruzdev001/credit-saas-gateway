@@ -25,6 +25,8 @@ const creditsSchema = new Schema({
             CreditStatusEnum.RESTRUCTURED
         ], default: CreditStatusEnum.CHARGE_PROCESS
     },
+    // Fecha en la que "status" cambió por última vez.
+    changeDateStatus: { type: Schema.Types.Date},
     creationStatus :{
         type: String, enum :[
         CreationStatusEnum.NEW,

@@ -28,6 +28,11 @@ export const ENTITY_OPERATION_BUID_UPDATE: Record<string, (amountTransaction: nu
         creditsQuery: [
             {
                 $set: {
+                    previousStatus: '$status'
+                }
+            },
+            {
+                $set: {
                     amountPaid: {
                         $add: ['$amountPaid', amountTransaction]
                     }
@@ -43,6 +48,22 @@ export const ENTITY_OPERATION_BUID_UPDATE: Record<string, (amountTransaction: nu
                         ]
                     }
                 }
+            },
+            {
+                $set: {
+                    changeDateStatus: {
+                        $cond: [
+                            {
+                                $ne: ['$previousStatus', '$status']
+                            },
+                            '$$NOW',
+                            '$changeDateStatus'
+                        ]
+                    }
+                }
+            },
+            {
+                $unset: 'previousStatus'
             }
         ]
     })

@@ -7,7 +7,7 @@ import { ICreditService } from "../repository/ICreditService";
 import { CollectionNameEnum } from "../infrastructure/CollectionNameEnum";
 import { FiltersItems as FilterItemsCustomers, SearchCustomersRequest } from "../types/SearchCustomersRequest";
 import { SearchCustomersByEmployeeRequest } from "../types/SearchCustomersByEmployeeRequest";
-import { defaultTo, filter, get, isEmpty, isEqual, isNil, isObject, isUndefined, omit, omitBy } from "lodash"
+import { defaultTo, filter, get, isEmpty, isEqual, isNil, isObject, isUndefined, omitBy } from "lodash"
 import { FiltersItems as FilterItemsCredits, SearchCreditsRequest } from "../types/SearchCreditsRequest"
 import { CreditMongoModel } from "../gateway/CreditMongoModel";
 import { QueryOptions, Types } from "mongoose";
@@ -16,6 +16,7 @@ import { CustomersMongoModel } from "../gateway/CutomersMongoModel";
 import { QueryFilter } from "mongoose";
 import { UserRoleEnum } from "../infrastructure/UserRoleEnum";
 import { UserRoleEmployeeCatalog } from "../infrastructure/catalogs/UserRoleCatalogs";
+import { UserRoleEmployeeTotalsCatalog } from "../infrastructure/catalogs/UserRoleEmployeeTotalsCatalog";
 import { UserRoleCustomerSearchCatalog } from "../infrastructure/catalogs/UserRoleCustomerSearchCatalog";
 import { SearchCreditsByEmployeeRequest } from "../types/SearchCreditsByEmployeeRequest";
 import { ICustomers } from "../schema/mongodb/models/Customers.Model";
@@ -285,22 +286,20 @@ export class CreditService implements ICreditService {
         authorizationContext: AuthorizationContext
     ): Observable<Object> {
         const userRole = get(authorizationContext, "roles.0") as UserRoleEnum;
-        const filtersByRole: {
-            creditsFilters: QueryFilter<ICredits>,
-            customerFilters: QueryFilter<ICustomers>
-        } = UserRoleEmployeeCatalog[userRole]!(request.filtersItems, authorizationContext);
-
         const startDate = new Date(request.fromTimestamp);
         const endDate = new Date(request.toTimestamp);
+        
+        const creditFiltersForTotals: QueryFilter<ICredits> =
+            UserRoleEmployeeTotalsCatalog[userRole]!(request.filtersItems, authorizationContext, startDate, endDate);
 
         console.log("getCreditTotals - startDate:", startDate.toISOString());
         console.log("getCreditTotals - endDate:", endDate.toISOString());
-        console.log("getCreditTotals - creditFilters:", filtersByRole.creditsFilters);
+        console.log("getCreditTotals - creditFilters:", creditFiltersForTotals);
 
         return of(1).pipe(
             mergeMap(() =>
                 this._creditMongoModel.getCreditTotals(
-                    filtersByRole.creditsFilters,
+                    creditFiltersForTotals,
                     startDate,
                     endDate
                 )
@@ -483,6 +482,8 @@ export class CreditService implements ICreditService {
                     forkJoin({
                         approveOperation: of(resultWalletsApprovedOperation),
                         transactionId: this._transactionsMongoModel.create({
+                            createdAt: new Date(),
+                            updatedAt: new Date(),
                             transactionType: transactionType,
                             status: TransactionStatusEnum.PENDING,
                             total: amountTransaction,

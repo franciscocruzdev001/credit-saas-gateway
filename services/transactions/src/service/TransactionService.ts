@@ -481,6 +481,8 @@ export class TransactionService implements ITransactionService {
                     forkJoin({
                         approveOperation: of(resultWalletsApprovedOperation),
                         transactionId: this._transactionMongoModel.create({
+                            createdAt: new Date(),
+                            updatedAt: new Date(),
                             transactionType: transactionType,
                             status: TransactionStatusEnum.PENDING,
                             total: amountTransaction,

@@ -153,14 +153,13 @@ export class AuthorizerService implements IAuthorizerService {
         searchEmployeeData: SearchEmployeesRequest
     ): Observable<Object> {
 
-        const dbName: string = "admin";
         const salto = (get(searchEmployeeData, "pagination.pageNumber", 1)) * get(searchEmployeeData, "pagination.limit", 0)
 
         console.log("searchCustomer-searchEmployeeData: ", searchEmployeeData);
         console.log("searchCustomer-salto: ", salto);
         return of(1).pipe(
             mergeMap(() =>
-                this._usersMongoModel.findDocuments(
+                this._usersMongoModel.findEmployeesJoinWallet(
                     this._buildSearchFiltersByEmployees(searchEmployeeData.filtersItems),
                     {
                         skip: salto,
