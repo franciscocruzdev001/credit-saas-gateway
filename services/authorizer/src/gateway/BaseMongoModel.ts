@@ -6,7 +6,7 @@ import { catchError, forkJoin, from, map, mergeMap, Observable, of, switchMap } 
 @injectable()
 export abstract class BaseMongoModel<T> implements IBaseMongoModel<T> {
     protected model: Model<T>;
-    private _uri = process.env.MONGO_URI || "mongodb://localhost:27017/atlas_copy";
+    private _uri = process.env.MONGO_URI || "mongodb://localhost:27017/new_copia_db_sep";
     private _instanceMongoose: typeof mongoose | null = null;
 
     // Utilizamos @unmanaged() si el modelo lo provee la subclase constructora

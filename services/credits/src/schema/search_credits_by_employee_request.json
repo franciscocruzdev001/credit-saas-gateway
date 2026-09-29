@@ -17,6 +17,12 @@
                 },
                 "generalSearch": {
                     "type": "string"
+                },
+                "creditId": {
+                    "type": "string"
+                },
+                "transactionId": {
+                    "type": "string"
                 }
             },
             "required": [

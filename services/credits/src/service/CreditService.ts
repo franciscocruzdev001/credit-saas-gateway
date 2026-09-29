@@ -259,11 +259,12 @@ export class CreditService implements ICreditService {
         searchCreditsData: SearchCreditsByEmployeeRequest,
         authorizationContext: AuthorizationContext
     ): Observable<Object> {
+         const userRole = get(authorizationContext, "roles.0") as UserRoleEnum;
         const salto = (get(searchCreditsData, "pagination.pageNumber", 1)) * get(searchCreditsData, "pagination.limit", 0);
         const filtersByRole: {
             creditsFilters: QueryFilter<ICredits>,
             customerFilters: QueryFilter<ICustomers>
-        } = UserRoleEmployeeCatalog[UserRoleEnum.MANAGER]!(searchCreditsData.filtersItems, authorizationContext);
+        } = UserRoleEmployeeCatalog[userRole]!(searchCreditsData.filtersItems, authorizationContext);
         console.log("searchCreditsByEmployee-searchCreditsData: ", searchCreditsData);
         console.log("searchCreditsByEmployee-salto: ", salto);
         console.log("searchCreditsByEmployee-filtersByRole: ", filtersByRole);

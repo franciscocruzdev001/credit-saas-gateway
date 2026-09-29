@@ -16,6 +16,12 @@ export const UserRoleEmployeeCatalog: Record<string, (filters: FiltersItems ,  a
         const generalSearch: string = get(filters, "generalSearch", "");
         const userId: string = get(filters, "userId", "");
         const chargeFrequency: string[] = get(filters, "chargeFrequency", []);
+        const creditId: string = get(filters, "creditId", "");
+        const transactionId: string = get(filters, "transactionId", "");
+        const creditOrConditions = [
+            ...(!isEmpty(creditId) ? [{ _id: new Types.ObjectId(creditId) }] : []),
+            ...(!isEmpty(transactionId) ? [{ transactionId: new Types.ObjectId(transactionId) }] : [])
+        ];
         return {
             creditsFilters: {
                 creditorCompanyId: new Types.ObjectId(get(authorizationContext, "creditorCompanyId", "000000000000000000000000")),
@@ -26,7 +32,9 @@ export const UserRoleEmployeeCatalog: Record<string, (filters: FiltersItems ,  a
                     userId: !isEmpty(userId) ? new Types.ObjectId(userId) : undefined,
                     // Se normaliza a minúsculas porque chargeRules.chargeFrequency se
                     // guarda en minúsculas (ej. "weekly", "daily") en la base de datos
-                    "chargeRules.chargeFrequency": !isEmpty(chargeFrequency) ? { $in: chargeFrequency.map((f) => f.toLowerCase()) } : undefined
+                    "chargeRules.chargeFrequency": !isEmpty(chargeFrequency) ? { $in: chargeFrequency.map((f) => f.toLowerCase()) } : undefined,
+                    // Navegación desde Transacciones
+                    $or: creditOrConditions.length > 0 ? creditOrConditions : undefined
                 }, (value) => {
                     return isNil(value) || isUndefined(value) || (isObject(value) && isEmpty(value));
                 }) as QueryFilter<ICredits>
@@ -49,6 +57,12 @@ export const UserRoleEmployeeCatalog: Record<string, (filters: FiltersItems ,  a
     [UserRoleEnum.CREDIT_COLLECTOR]: (filters: FiltersItems, authorizationContext: AuthorizationContext) => {
         const generalSearch: string = get(filters, "generalSearch", "");
         const chargeFrequency: string[] = get(filters, "chargeFrequency", []);
+        const creditId: string = get(filters, "creditId", "");
+        const transactionId: string = get(filters, "transactionId", "");
+        const creditOrConditions = [
+            ...(!isEmpty(creditId) ? [{ _id: new Types.ObjectId(creditId) }] : []),
+            ...(!isEmpty(transactionId) ? [{ transactionId: new Types.ObjectId(transactionId) }] : [])
+        ];
         return {
             creditsFilters: {
                 // CREDIT_COLLECTOR: creditorCompanyId y userId salen exclusivamente del
@@ -59,7 +73,9 @@ export const UserRoleEmployeeCatalog: Record<string, (filters: FiltersItems ,  a
                 transactionStatus: TransactionStatusEnum.APPROVED,
                 ...omitBy({
                     // Se normaliza a minúsculas por la misma razón que en MANAGER
-                    "chargeRules.chargeFrequency": !isEmpty(chargeFrequency) ? { $in: chargeFrequency.map((f) => f.toLowerCase()) } : undefined
+                    "chargeRules.chargeFrequency": !isEmpty(chargeFrequency) ? { $in: chargeFrequency.map((f) => f.toLowerCase()) } : undefined,
+                    // Navegación desde Transacciones
+                    $or: creditOrConditions.length > 0 ? creditOrConditions : undefined
                 }, (value) => {
                     return isNil(value) || isUndefined(value) || (isObject(value) && isEmpty(value));
                 }) as QueryFilter<ICredits>

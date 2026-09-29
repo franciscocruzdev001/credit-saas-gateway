@@ -40,6 +40,10 @@
             "type": "string",
             "enum": ["new", "renewed"]
         }, 
+        "changeDateStatus": {
+            "type": "number",
+            "description": "Fecha en la que 'status' cambio por ultima vez"
+        },
         "chargeRules": {
             "type": "object",
             "title": "ChargeRules",

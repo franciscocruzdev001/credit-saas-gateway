@@ -10,6 +10,8 @@ export interface FiltersItems {
     creditorCompanyId?: string;
     generalSearch?:     string;
     userId?:            string;
+    creditId?:      string;
+    transactionId?: string;
 }
 
 export interface Pagination {

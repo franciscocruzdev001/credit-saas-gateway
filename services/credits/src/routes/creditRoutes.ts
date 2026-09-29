@@ -171,6 +171,7 @@ creditRouter.post("/searchCreditsByEmployee", authMiddleware, async (req: Authen
     const authorizationContext: AuthorizationContext = {
       userId: req.user?.userId ?? '',
       creditorCompanyId: req.user?.creditorCompanyId ?? '',
+      roles: req.user?.roles ?? [],
       ...(req.user?.walletId ? { walletId: req.user.walletId } : {}),
       ...(req.user?.accountNumber ? { accountNumber: req.user.accountNumber } : {}),
     };
