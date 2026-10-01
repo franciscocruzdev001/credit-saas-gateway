@@ -285,7 +285,7 @@ export class CreditMongoModel extends BaseMongoModel<ICredits> {
       // Stage 3:
       // Clasificar los pagos del periodo (no se excluye ninguno):
       // paymentCategory === CHARGE_PERIOD -> paidAmount (cuota regular)
-      // cualquier otro valor, o si no trae paymentCategory -> otherAmount
+      // liquidation / renewal / firstCharge (o si no trae paymentCategory) -> otherAmount
       {
         $addFields: {
           paidAmount: {

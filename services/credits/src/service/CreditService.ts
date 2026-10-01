@@ -76,14 +76,16 @@ export class CreditService implements ICreditService {
         this._transactionsMongoModel = transactionsMongoModel;
     }
 
-
+    // Regresa los ids del crédito y del cliente (en vez de solo un boolean) para
+    // que el front pueda registrar el primer cobro (firstCharge) con
+    // createPaymentsByEmployee. Si no se pudo crear, ambos vienen vacíos ("").
     public createCreditsByEmployee(
         creditCustomer: {
             customer?: Customers,
             credit: Credits
         },
         authorizationContext: AuthorizationContext
-    ): Observable<boolean> {
+    ): Observable<{ creditId: string, customerId: string }> {
         const customer: Customers | undefined = get(creditCustomer, "customer", undefined);
         const creditorCompanyId: string = get(authorizationContext, "creditorCompanyId", "");
         const userId: string = get(authorizationContext, "userId", "");
@@ -137,8 +139,9 @@ export class CreditService implements ICreditService {
                     ...(chargeDay ? { chargeDay } : {}),
                     renovationPeriod: get(creditCustomer.credit, "chargeRules.renovationPeriod", 1),
                     comissionRate: get(creditCustomer.credit, "chargeRules.comissionRate", 1),
+                    firstCharge: get(creditCustomer.credit,"chargeRules.firstCharge",false)
                 };
-        
+
                 const computedCreditData = this._fillCreditsDataFromChargeRules(creditAmount, chargeRules);
 
                 return iif(() => transactionResult[1].approveOperation && !isEmpty(transactionResult[1].transactionId),
@@ -164,14 +167,22 @@ export class CreditService implements ICreditService {
                         status: CreditStatusEnum.CHARGE_PROCESS,
                         transactionStatus: TransactionStatusEnum.PENDING,
                         chargeRules: chargeRules,
-                    })),
-                    //else transaction approve operation is true, create credit
-                    of("")
+
+                    })).pipe(
+                        // create() regresa el creditId ("" si falló). Se arma la
+                        // respuesta aquí y no al final de la cadena porque
+                        // transactionResult (donde está el customerId, sea cliente
+                        // nuevo o existente) solo existe dentro de este mergeMap.
+                        map((creditId: string) => ({
+                            creditId: creditId,
+                            customerId: !isEmpty(creditId) ? transactionResult[0].customerId ?? "" : ""
+                        }))
+                    ),
+                    //else transaction not approved (ej. saldo insuficiente): no se crea
+                    //el crédito y se regresan los ids vacíos
+                    of({ creditId: "", customerId: "" })
                 )
-            }),
-            map((creditId: string) =>
-                !isEmpty(creditId) ? true : false
-            )
+            })
         );
     }
 
@@ -222,8 +233,7 @@ export class CreditService implements ICreditService {
                             total: amountTransaction,
                             paymentMethod: "cash",
                             transactionStatus: TransactionStatusEnum.PENDING,
-                            paymentCategory: get(paymentRequest, "paymentCategory", PaymentCategoryEnum.CHARGE_PERIOD),
-                            paymentSubType: get(paymentRequest, "paymentSubType", null)
+                            paymentCategory: get(paymentRequest, "paymentCategory", PaymentCategoryEnum.CHARGE_PERIOD)
                         })
                     ),
                     //else transaction approve operation is true, create credit
@@ -259,7 +269,7 @@ export class CreditService implements ICreditService {
         searchCreditsData: SearchCreditsByEmployeeRequest,
         authorizationContext: AuthorizationContext
     ): Observable<Object> {
-         const userRole = get(authorizationContext, "roles.0") as UserRoleEnum;
+        const userRole = get(authorizationContext, "roles.0") as UserRoleEnum;
         const salto = (get(searchCreditsData, "pagination.pageNumber", 1)) * get(searchCreditsData, "pagination.limit", 0);
         const filtersByRole: {
             creditsFilters: QueryFilter<ICredits>,
@@ -289,7 +299,7 @@ export class CreditService implements ICreditService {
         const userRole = get(authorizationContext, "roles.0") as UserRoleEnum;
         const startDate = new Date(request.fromTimestamp);
         const endDate = new Date(request.toTimestamp);
-        
+
         const creditFiltersForTotals: QueryFilter<ICredits> =
             UserRoleEmployeeTotalsCatalog[userRole]!(request.filtersItems, authorizationContext, startDate, endDate);
 
@@ -524,7 +534,16 @@ export class CreditService implements ICreditService {
                     userId: new Types.ObjectId(customer.userId),
                     status: CustomerStatusEnum.ACTIVE,
                     threeWordsUbication: customer.threeWordsUbication,
-                    contact: customer.contact
+                    contact: customer.contact,
+                    ...(customer.aval ? {
+                        aval: {
+                            // customerId solo si el aval ya es un customer registrado
+                            ...(!isEmpty(customer.aval.customerId) ? {
+                                customerId: new Types.ObjectId(customer.aval.customerId)
+                            } : {}),
+                            contact: customer.aval.contact
+                        }
+                    } : {})
                 })
             ),
             mergeMap((customerId: string) => {
@@ -650,7 +669,7 @@ export class CreditService implements ICreditService {
         console.log("buildSearchFiltersByCredits-filters:", filters);
         const userId: string = get(filters, "userId", "");
         const customerId: string = get(filters, "customerId", "");
-    //manejamos como number el  startDateCreated endDateCreated igual que en transactions para filtrar por fecha 
+        //manejamos como number el  startDateCreated endDateCreated igual que en transactions para filtrar por fecha 
         const startDateCreated: number | undefined = get(filters, "createdRangeDate.startDate", undefined);
         const endDateCreated: number | undefined = get(filters, "createdRangeDate.endDate", undefined);
         return {

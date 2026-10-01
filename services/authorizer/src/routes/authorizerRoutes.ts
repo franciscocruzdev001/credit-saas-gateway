@@ -12,6 +12,7 @@ import { authMiddleware, type AuthenticatedRequest } from "../infrastructure/Aut
 import { requirePermission } from "../infrastructure/RequirePermission";
 import { PermissionsEnum } from "../constant/PermissionsEnum";
 import { AuthorizationContext } from "../types/AuthorizationContext";
+import { ChangePasswordRequest } from "../types/ChangePasswordRequest";
 
 export const authRouter: Router = Router();
 
@@ -194,6 +195,42 @@ authRouter.post("/login", async (req: Request<LoginRequest>, res: Response) => {
   }
 });
 
+// POST endpoint: cambia la contraseña del usuario autenticado
+authRouter.post("/changePassword", authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
+
+  if (req.body === undefined || req.body == null) {
+    res.status(400).json({ error: 'La solicitud no cuenta con los parametros solicitados' });
+    return;
+  }
+
+  try {
+
+    console.log("/changePassword-req.body: ", { userId: req.user?.userId }); // nunca loguear contraseñas
+
+    const request: ChangePasswordRequest = req.body;
+
+    // El userId viene del JWT (req.user), nunca del body
+    const authorizationContext: AuthorizationContext = {
+      userId: req.user?.userId ?? '',
+      creditorCompanyId: req.user?.creditorCompanyId ?? '',
+      roles: req.user?.roles ?? [],
+    };
+
+    const result: Observable<boolean> = authorizerService.changePassword(request, authorizationContext);
+
+    const datos = await firstValueFrom(
+      result.pipe(
+        map((respuesta) => ({ mensaje: 'Contraseña actualizada', data: respuesta }))
+      )
+    );
+
+    res.status(200).json(datos);
+  } catch (error) {
+    console.error("Error en /changePassword:", error);
+    // Usuario no encontrado o contraseña actual incorrecta -> 401, no 500
+    res.status(401).json({ error: (error as Error).message || 'No se pudo cambiar la contraseña' });
+  }
+});
 
 //authRouter.get("/auth", authorizerService.authorization);
 authRouter.get("/testakjshfdjkhasjhd", authorizerService.test);

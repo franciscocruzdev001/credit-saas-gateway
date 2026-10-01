@@ -10,7 +10,7 @@ export interface Credits {
     creditAmount?:             number;
     creditAmountWithMoratory?: number;
     creditorCompanyId:         string;
-    customerId:                string;
+    customerId:                string;  
     expirationDate?:           number;
     fixedCharge?:              number;
     /**
@@ -27,6 +27,7 @@ export interface ChargeRules {
     chargeFrequency?:  string;
     chargePeriods?:    number;
     comissionRate?:    number;
+    firstCharge?:      boolean;
     renovationPeriod?: number;
 }
 

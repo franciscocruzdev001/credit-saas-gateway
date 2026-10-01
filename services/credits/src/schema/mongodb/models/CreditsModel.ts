@@ -26,11 +26,11 @@ const creditsSchema = new Schema({
         ], default: CreditStatusEnum.CHARGE_PROCESS
     },
     // Fecha en la que "status" cambió por última vez.
-    changeDateStatus: { type: Schema.Types.Date},
-    creationStatus :{
-        type: String, enum :[
-        CreationStatusEnum.NEW,
-        CreationStatusEnum.RENEWED
+    changeDateStatus: { type: Schema.Types.Date },
+    creationStatus: {
+        type: String, enum: [
+            CreationStatusEnum.NEW,
+            CreationStatusEnum.RENEWED
         ]
 
     },
@@ -44,24 +44,27 @@ const creditsSchema = new Schema({
     chargeRules: {
         type: new Schema({
             chargeFrequency: {
-                type : String, enum: [
-                 chargeFrequencyEnum.DAILY, 
-                 chargeFrequencyEnum.WEEKLY  
+                type: String, enum: [
+                    chargeFrequencyEnum.DAILY,
+                    chargeFrequencyEnum.WEEKLY
                 ]
-            }, 
-            
+            },
+
             chargePeriods: { type: Number, required: true },
-            chargeDay: {type: String, enum:[
-                OldDayEnum.MONDAY,
-                OldDayEnum.TUESDAY,
-                OldDayEnum.WEDNESDAY,
-                OldDayEnum.THURSDAY,
-                OldDayEnum.FRIDAY,
-                OldDayEnum.SATURDAY,
-                OldDayEnum.SUNDAY
-            ]},
+            chargeDay: {
+                type: String, enum: [
+                    OldDayEnum.MONDAY,
+                    OldDayEnum.TUESDAY,
+                    OldDayEnum.WEDNESDAY,
+                    OldDayEnum.THURSDAY,
+                    OldDayEnum.FRIDAY,
+                    OldDayEnum.SATURDAY,
+                    OldDayEnum.SUNDAY
+                ]
+            },
             renovationPeriod: { type: Number, required: true },
             comissionRate: { type: Number, required: true },
+            firstCharge: {type: Boolean,default: false},
         }, { _id: false }), required: true
     },
     userId: { type: Schema.Types.ObjectId, ref: "Users", required: true },

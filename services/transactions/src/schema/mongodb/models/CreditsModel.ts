@@ -61,6 +61,7 @@ const creditsSchema = new Schema({
             },
             renovationPeriod: { type: Number, required: true },
             comissionRate: { type: Number, required: true },
+            
         }, { _id: false }), required: true
     },
     userId: { type: Schema.Types.ObjectId, ref: "Users", required: true },

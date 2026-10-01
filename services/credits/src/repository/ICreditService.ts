@@ -15,6 +15,7 @@ import { GetCreditTotalsRequest } from '../types/GetCreditTotalsRequest';
 export interface ICreditService {
   /**
    * Create credit by employee (manager, creditCollector)
+   * Regresa creditId y customerId del crédito creado — vacíos ("") si no se pudo crear
    */
   createCreditsByEmployee(
     creditCustomer: {
@@ -22,7 +23,7 @@ export interface ICreditService {
       credit: Credits
     },
     authorizationContext: AuthorizationContext
-  ): Observable<boolean>
+  ): Observable<{ creditId: string, customerId: string }>
   /**
    * Create payment by employee (manager, creditCollector)
    */

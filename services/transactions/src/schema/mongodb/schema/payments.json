@@ -25,11 +25,7 @@
         },
         "paymentCategory": {
             "type": "string",
-            "enum": ["chargePeriod", "other"]
-        },
-        "paymentSubType": {
-            "type": "string",
-            "enum": ["liquidation", "renewal"]
+            "enum": ["chargePeriod", "liquidation", "renewal", "firstCharge"]
         }
     },
     "required": [

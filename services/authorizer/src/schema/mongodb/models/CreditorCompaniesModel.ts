@@ -8,21 +8,24 @@ const creditorCompaniesSchema = new Schema({
     socialReason: { type: String },
     phoneNumber: { type: String },
     email: { type: String },
-    chargeRules: [{ 
+    chargeRules: [{
         type: new Schema({
             chargeFrequency: { type: String },
-           chargePeriods: { type: Number, required: true },
-            chargeDay: {type: String, enum:[
-                OldDayEnum.MONDAY,
-                OldDayEnum.TUESDAY,
-                OldDayEnum.WEDNESDAY,
-                OldDayEnum.THURSDAY,
-                OldDayEnum.FRIDAY,
-                OldDayEnum.SATURDAY,
-                OldDayEnum.SUNDAY
-            ]},
+            chargePeriods: { type: Number, required: true },
+            chargeDay: {
+                type: String, enum: [
+                    OldDayEnum.MONDAY,
+                    OldDayEnum.TUESDAY,
+                    OldDayEnum.WEDNESDAY,
+                    OldDayEnum.THURSDAY,
+                    OldDayEnum.FRIDAY,
+                    OldDayEnum.SATURDAY,
+                    OldDayEnum.SUNDAY
+                ]
+            },
             renovationPeriod: { type: Number },
             comissionRate: { type: Number },
+            firstCharge: {type: Boolean ,default: false }
         }, { _id: false })
     }]
 }, { timestamps: true });

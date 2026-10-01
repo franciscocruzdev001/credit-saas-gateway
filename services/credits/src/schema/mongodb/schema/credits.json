@@ -64,6 +64,9 @@
                 },
                 "comissionRate": {
                     "type": "number"
+                },
+                "firstCharge": {
+                    "type": "boolean"
                 }
             }
         },

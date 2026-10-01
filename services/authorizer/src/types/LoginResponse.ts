@@ -41,4 +41,5 @@ export interface CreditorCompanyChargeRules {
     chargeDay?:        string;
     renovationPeriod?: number;
     comissionRate?:    number;
+    firstCharge?:      boolean;
 }

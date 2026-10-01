@@ -46,6 +46,22 @@
                 }
             }
         },
+        "aval": {
+            "type": "object",
+            "title": "Aval",
+            "additionalProperties": false,
+            "properties": {
+                "customerId": {
+                    "type": "string"
+                },
+                "contact": {
+                    "$ref": "#/properties/contact"
+                }
+            },
+            "required": [
+                "contact"
+            ]
+        },
         "creditorCompanyId": {
             "type": "string"
         },

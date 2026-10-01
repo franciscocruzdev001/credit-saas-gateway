@@ -6,6 +6,7 @@ import { SearchEmployeesRequest } from '../types/SearchEmployeesRequest';
 import { LoginRequest } from '../types/LoginRequest';
 import { LoginResponse } from '../types/LoginResponse';
 import { AuthorizationContext } from '../types/AuthorizationContext';
+import { ChangePasswordRequest } from '../types/ChangePasswordRequest';
 
 
 export interface IAuthorizerService {
@@ -35,5 +36,11 @@ export interface IAuthorizerService {
      along with basic user information, if they are correct
    */
   authorizer(loginData: LoginRequest): Observable<LoginResponse>
+
+  
+ changePassword(
+  request: ChangePasswordRequest,
+  authorizationContext: AuthorizationContext
+): Observable<boolean>
 
 }

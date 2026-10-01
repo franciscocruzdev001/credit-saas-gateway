@@ -12,6 +12,7 @@ export interface ChargeRules {
     chargeFrequency?:  string;
     chargePeriods?:    string;
     comissionRate?:    number;
+    firstCharge?:      boolean;
     renovationPeriod?: number;
 }
 

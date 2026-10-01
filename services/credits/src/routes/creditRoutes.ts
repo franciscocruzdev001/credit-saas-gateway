@@ -1,4 +1,5 @@
 import { Router, Request, Response } from "express";
+import { isEmpty } from "lodash";
 import { containerApp } from "../infrastructure/Container";
 import { TYPES } from "../constant/types";
 import { firstValueFrom, map, Observable } from "rxjs";
@@ -42,12 +43,14 @@ creditRouter.post("/createCreditsByEmployee", authMiddleware, async (req: Authen
       ...(req.user?.walletId ? { walletId: req.user.walletId } : {}),
       ...(req.user?.accountNumber ? { accountNumber: req.user.accountNumber } : {}),
     };
-    const result: Observable<boolean> = creditService.createCreditsByEmployee(request, authorizationContext);
+    const result: Observable<{ creditId: string, customerId: string }> = creditService.createCreditsByEmployee(request, authorizationContext);
 
-    // 2. Convierte el Observable a Promesa y espera el primer valor emitido
+    // 2. Convierte el Observable a Promesa y espera el primer valor emitido.
+    // "respuesta" ahora es un objeto { creditId, customerId } (siempre truthy),
+    // así que el éxito se decide por si viene creditId, no por la respuesta en sí.
     const datos = await firstValueFrom(
       result.pipe(
-        map((respuesta) => ({ mensaje: respuesta ? 'Crédito creado' : 'No se pudo crear el crédito', data: respuesta }))
+        map((respuesta) => ({ mensaje: !isEmpty(respuesta.creditId) ? 'Crédito creado' : 'No se pudo crear el crédito', data: respuesta }))
       )
     );
 

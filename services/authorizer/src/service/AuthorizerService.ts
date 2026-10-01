@@ -26,6 +26,7 @@ import { IRoles } from "../schema/mongodb/models/RolesModel";
 import { WalletsMongoModel } from "../gateway/WalletsMongoModel";
 import { IWallets } from "../schema/mongodb//models/Wallets.Model";
 import { AuthorizationContext } from "../types/AuthorizationContext";
+import { ChangePasswordRequest } from "../types/ChangePasswordRequest";
 
 
 const SALT_ROUNDS = 10;
@@ -125,7 +126,7 @@ export class AuthorizerService implements IAuthorizerService {
 
     public createCreditorCompanies(creditorCompaniesData: CreditorCompanies,
         authorizationContext: AuthorizationContext):
-         Observable<boolean> {
+        Observable<boolean> {
         const creditorCompaniesModelInfo: ICreditorCompanies = {
             createdAt: new Date(),
             updatedAt: new Date(),
@@ -138,7 +139,8 @@ export class AuthorizerService implements IAuthorizerService {
                 chargePeriods: get(rule, "chargePeriods", 0),
                 ...(get(rule, "chargeDay", "") ? { chargeDay: get(rule, "chargeDay", "") } : {}),
                 renovationPeriod: get(rule, "renovationPeriod", 0),
-                comissionRate: get(rule, "comissionRate", 0)
+                comissionRate: get(rule, "comissionRate", 0),
+                firstCharge: get(rule, "firstCharge", false)
             })) as ICreditorCompanies["chargeRules"]
         }
 
@@ -285,7 +287,7 @@ export class AuthorizerService implements IAuthorizerService {
                     firmBalance: wallet?.firmBalance ?? 0,
                     pendingIncomesBalance: wallet?.pendingIncomesBalance ?? 0,
                     pendingExpensesBalance: wallet?.pendingExpensesBalance ?? 0,
-                    queriedAt: Date.now(), 
+                    queriedAt: Date.now(),
                 };
 
                 const token = jwt.sign(
@@ -329,6 +331,7 @@ export class AuthorizerService implements IAuthorizerService {
                                     chargeDay: rule.chargeDay ?? "",
                                     renovationPeriod: rule.renovationPeriod ?? 0,
                                     comissionRate: rule.comissionRate ?? 0,
+                                    firstCharge: rule.firstCharge ?? false,
                                 })),
                             }
                         } : {}),
@@ -339,6 +342,54 @@ export class AuthorizerService implements IAuthorizerService {
             })
         );
 
+    }
+
+    public changePassword(
+        request: ChangePasswordRequest,
+        authorizationContext: AuthorizationContext
+    ): Observable<boolean> {
+        const userId = get(authorizationContext, "userId", "");
+        const currentPassword = get(request, "currentPassword", "");
+        const newPassword = get(request, "newPassword", "");
+
+        return of(1).pipe(
+            // 1. Busca al usuario autenticado por su _id
+            mergeMap(() =>
+                this._usersMongoModel.findByIdDocument(userId)
+            ),
+            mergeMap((userDoc: IUsers | null) => {
+                if (!userDoc) {
+                    return throwError(
+                        () => new Error("Usuario no encontrado")
+                    );
+                }
+                // 2. Verifica que la contraseña actual en texto plano coincida
+                // con el hash guardado antes de permitir el cambio
+                return from(
+                    bcrypt.compare(currentPassword, userDoc.password)
+                ).pipe(
+                    mergeMap(isValid => {
+
+                        if (!isValid) {
+                            return throwError(
+                                () => new Error("La contraseña actual es incorrecta")
+                            );
+                        }
+                        // 3. Genera el hash de la nueva contraseña
+                        return from(
+                            bcrypt.hash(newPassword, SALT_ROUNDS)
+                        );
+                    }),
+                    // 4. Actualiza únicamente el campo password en Mongo
+                    mergeMap((hashedPassword: string) =>
+                        this._usersMongoModel.update(userId, {
+                            password: hashedPassword,
+                            updatedAt: new Date()
+                        })
+                    )
+                );
+            })
+        );
     }
 
     private _buildSearchFiltersByEmployees(filters: FilterItemsEmployees): Filter<Document> {
@@ -367,5 +418,7 @@ export class AuthorizerService implements IAuthorizerService {
         )
 
     }
+
+
 
 }
