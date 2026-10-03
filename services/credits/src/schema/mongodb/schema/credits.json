@@ -81,6 +81,9 @@
         },
         "customerId": {
             "type": "string"
+        },
+        "customerName": {
+            "type": "string"
         }
     },
     "required": [

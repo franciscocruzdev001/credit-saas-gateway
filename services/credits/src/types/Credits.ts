@@ -11,6 +11,7 @@ export interface Credits {
     creditAmountWithMoratory?: number;
     creditorCompanyId:         string;
     customerId:                string;  
+    customerName?:              string;
     expirationDate?:           number;
     fixedCharge?:              number;
     /**

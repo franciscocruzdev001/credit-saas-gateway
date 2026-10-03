@@ -31,4 +31,4 @@ const paymentsSchema = new Schema({
 
 export type IPayments = InferSchemaType<typeof paymentsSchema> & { _id?: Types.ObjectId };
 
-export const PaymentsModel = model<IPayments>(CollectionNameEnum.PAYMENTS, paymentsSchema); 
+export const PaymentsModel = model<IPayments>(CollectionNameEnum.PAYMENTS, paymentsSchema);

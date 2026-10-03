@@ -91,6 +91,8 @@ export class CreditService implements ICreditService {
         const userId: string = get(authorizationContext, "userId", "");
         const userWalletId: string = get(authorizationContext, "walletId", "");
         const userAccountNumber: string = get(authorizationContext, "accountNumber", "");
+        // Nombre del cliente para la descripción de la transacción —  si no viene, la descripción queda sin nombre.
+        const customerName: string = get(creditCustomer.credit, "customerName", "").trim();
 
         return of(true).pipe(
             mergeMap(() =>
@@ -121,7 +123,7 @@ export class CreditService implements ICreditService {
                         {
                             amountTransaction: get(creditCustomer.credit, "creditAmount", 0),
                             currency: CurrencyEnum.MXN,
-                            descripcion: "CREDIT - ", //Agregar el nombre del cliente,
+                            descripcion: `CREDIT - ${customerName}`.trim(),
                             creditorCompanyId: creditorCompanyId
                         }
                     )
@@ -192,6 +194,8 @@ export class CreditService implements ICreditService {
         const userId: string = get(authorizationContext, "userId", "");
         const userWalletId: string = get(authorizationContext, "walletId", "");
         const userAccountNumber: string = get(authorizationContext, "accountNumber", "");
+        // Nombre del cliente para la descripción de la transacción — si no viene, la descripción queda sin nombre.
+        const customerName: string = get(paymentRequest, "customerName", "").trim();
 
         return of(true).pipe(
             mergeMap(() =>
@@ -213,7 +217,7 @@ export class CreditService implements ICreditService {
                     {
                         amountTransaction: amountTransaction,
                         currency: CurrencyEnum.MXN,
-                        descripcion: "PAGO - ", //Agregar el nombre del cliente,
+                        descripcion: `PAGO - ${customerName}`.trim(),
                         creditorCompanyId: creditorCompanyId,
                         creditIdSource: paymentRequest.creditId
                     }

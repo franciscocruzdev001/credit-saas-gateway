@@ -7,5 +7,6 @@ export interface Payments {
     total?: number;
     transactionId: string;
     transactionStatus?: string;
-    paymentCategory?: PaymentCategoryEnum; 
+    paymentCategory?: PaymentCategoryEnum;
+    customerName?: string;
 }

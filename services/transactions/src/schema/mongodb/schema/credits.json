@@ -64,6 +64,9 @@
                 },
                 "comissionRate": {
                     "type": "number"
+                },
+                "firstCharge": {
+                    "type": "boolean"
                 }
             }
         },
@@ -77,6 +80,9 @@
             "type": "string"
         },
         "customerId": {
+            "type": "string"
+        },
+        "customerName": {
             "type": "string"
         }
     },
