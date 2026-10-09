@@ -47,6 +47,9 @@ import { AuthorizationContext } from "../types/AuthorizationContext";
 import { GetCreditTotalsRequest } from "../types/GetCreditTotalsRequest";
 import { ILoggerGateway } from "../repository/ILoggerGateway";
 import { PaymentCategoryEnum } from "../infrastructure/PaymentCategoryEnum";
+import { CreationStatusEnum } from "../infrastructure/CreationStatusEnum";
+import { GetCreditSummaryRequest } from "../types/GetCreditSummaryRequest";
+import { UserRoleEmployeeSummaryCatalog } from "../infrastructure/catalogs/UserRoleEmployeeSummaryCatalog";
 
 @injectable()
 export class CreditService implements ICreditService {
@@ -141,8 +144,10 @@ export class CreditService implements ICreditService {
                     ...(chargeDay ? { chargeDay } : {}),
                     renovationPeriod: get(creditCustomer.credit, "chargeRules.renovationPeriod", 1),
                     comissionRate: get(creditCustomer.credit, "chargeRules.comissionRate", 1),
-                    firstCharge: get(creditCustomer.credit,"chargeRules.firstCharge",false)
+                    firstCharge: get(creditCustomer.credit, "chargeRules.firstCharge", false)
                 };
+                const creationStatus: CreationStatusEnum = get(creditCustomer.credit, "creationStatus", CreationStatusEnum.NEW) as CreationStatusEnum;
+
 
                 const computedCreditData = this._fillCreditsDataFromChargeRules(creditAmount, chargeRules);
 
@@ -167,6 +172,7 @@ export class CreditService implements ICreditService {
                         fixedCharge: computedCreditData.fixedCharge!,
                         creditAmountWithMoratory: creditAmount, //Actualizar en base a las faltas
                         status: CreditStatusEnum.CHARGE_PROCESS,
+                        creationStatus: creationStatus,
                         transactionStatus: TransactionStatusEnum.PENDING,
                         chargeRules: chargeRules,
 
@@ -322,6 +328,32 @@ export class CreditService implements ICreditService {
         );
     }
 
+    public getCreditSummary(
+        request: GetCreditSummaryRequest,
+        authorizationContext: AuthorizationContext
+    ): Observable<Object> {
+        const userRole = get(authorizationContext, "roles.0") as UserRoleEnum;
+        const startDate = new Date(request.fromTimestamp);
+        const endDate = new Date(request.toTimestamp);
+
+        const creditFiltersForSummary: QueryFilter<ICredits> =
+            UserRoleEmployeeSummaryCatalog[userRole]!(request.filtersItems, authorizationContext, startDate, endDate);
+
+        console.log("getCreditSummary - startDate:", startDate.toISOString());
+        console.log("getCreditSummary - endDate:", endDate.toISOString());
+        console.log("getCreditSummary - creditFilters:", creditFiltersForSummary);
+
+        return of(1).pipe(
+            mergeMap(() =>
+                this._creditMongoModel.getCreditSummary(
+                    creditFiltersForSummary,
+                    startDate,
+                    endDate
+                )
+            )
+        );
+    }
+
     public searchCustomer(
         searchCustomerData: SearchCustomersRequest
     ): Observable<Object> {
@@ -403,7 +435,9 @@ export class CreditService implements ICreditService {
                         transactionStatus: {
                             $in: !isEmpty(status) ? status : [TransactionStatusEnum.PENDING, TransactionStatusEnum.APPROVED]
                         }
-                    } as unknown as QueryFilter<IPayments>
+                    } as unknown as QueryFilter<IPayments>,
+                    // Siempre ordenados por fecha del pago (del más antiguo al más reciente)
+                    { sort: { createdAt: 1 } }
                 )
             ),
             map((dataResponse: { documents: IPayments[], totalDocuments: number }) => ({

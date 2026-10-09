@@ -16,6 +16,7 @@ import { Credits } from "../types/Credits";
 import { Payments } from "../types/Payments";
 import { AuthorizationContext } from "../types/AuthorizationContext";
 import { GetCreditTotalsRequest } from "../types/GetCreditTotalsRequest";
+import { GetCreditSummaryRequest } from "../types/GetCreditSummaryRequest";
 import { authMiddleware, type AuthenticatedRequest } from "../infrastructure/AuthMiddleware";
 
 export const creditRouter: Router = Router();
@@ -132,6 +133,41 @@ creditRouter.post("/getCreditTotals", authMiddleware, async (req: AuthenticatedR
     res.status(200).json(datos);
   } catch (error) {
     console.error("Error en /getCreditTotals:", error);
+    res.status(500).json({ error: 'Ocurrió un error al procesar la solicitud' });
+  }
+});
+
+// POST endpoint: resumen de métricas del cobrador (solo conteos): cobrados
+// (pagos registrados), nuevos y renovaciones, agrupados por frecuencia
+creditRouter.post("/getCreditSummary", authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
+
+  if (req.body === undefined || req.body == null) {
+    res.status(400).json({ error: 'La solicitud no cuenta con los parametros solicitados' });
+    return;
+  }
+
+  try {
+
+    console.log("/getCreditSummary-req.body: ", req.body);
+    const request: GetCreditSummaryRequest = req.body;
+
+    // El userId, creditorCompanyId y roles vienen del JWT (req.user), nunca del body
+    const authorizationContext: AuthorizationContext = {
+      userId: req.user?.userId ?? '',
+      creditorCompanyId: req.user?.creditorCompanyId ?? '',
+      roles: req.user?.roles ?? [],
+    };
+    const result: Observable<Object> = creditService.getCreditSummary(request, authorizationContext);
+
+    const datos = await firstValueFrom(
+      result.pipe(
+        map((respuesta) => ({ mensaje: 'Datos obtenidos', data: respuesta }))
+      )
+    );
+
+    res.status(200).json(datos);
+  } catch (error) {
+    console.error("Error en /getCreditSummary:", error);
     res.status(500).json({ error: 'Ocurrió un error al procesar la solicitud' });
   }
 });

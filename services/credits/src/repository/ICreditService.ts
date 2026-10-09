@@ -11,6 +11,7 @@ import { Credits } from '../types/Credits';
 import { Payments } from '../types/Payments';
 import { AuthorizationContext } from '../types/AuthorizationContext';
 import { GetCreditTotalsRequest } from '../types/GetCreditTotalsRequest';
+import { GetCreditSummaryRequest } from '../types/GetCreditSummaryRequest';
 
 export interface ICreditService {
   /**
@@ -67,6 +68,15 @@ export interface ICreditService {
 
   getCreditTotals(
     request: GetCreditTotalsRequest,
+    authorizationContext: AuthorizationContext
+  ): Observable<Object>;
+  
+  /**
+   * Resumen de métricas del cobrador (solo conteos): créditos cobrados,
+   * nuevos y renovaciones, agrupados por chargeFrequency.
+   */
+  getCreditSummary(
+    request: GetCreditSummaryRequest,
     authorizationContext: AuthorizationContext
   ): Observable<Object>;
 }

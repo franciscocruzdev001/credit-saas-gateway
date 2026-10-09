@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://GetCreditSummaryRequest",
+  "title": "GetCreditSummaryRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "fromTimestamp": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "toTimestamp": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "filtersItems": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "userId": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "required": [
+    "fromTimestamp",
+    "toTimestamp"
+  ]
+}

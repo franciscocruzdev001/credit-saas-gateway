@@ -1,5 +1,4 @@
 import { OldDayEnum } from "../infrastructure/OldDayEnum";
-
 export interface Credits {
     admissionDate?:            number;
     amountDue?:                number;
