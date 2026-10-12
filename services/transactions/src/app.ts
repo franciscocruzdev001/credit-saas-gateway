@@ -3,6 +3,7 @@ import "reflect-metadata";
 import express, { Application }  from "express";
 import { transactionRouter } from "./routes/transactionRoutes";
 import cors from "cors";
+import { helloCronJob } from './cronjobs/hello-cron';
 
 dotenv.config();
 const app: Application = express();
@@ -25,4 +26,5 @@ app.get("/", (_:any, res:any) => {
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Transactions service is running at PORT ${PORT}.`);
+    helloCronJob();
 });
