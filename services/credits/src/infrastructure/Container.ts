@@ -5,6 +5,8 @@ import { IMongoGateway } from "../repository/IMongoGateway";
 import { MongoGateway } from "../gateway/MongoGateway";
 import { ICreditService } from "../repository/ICreditService";
 import { CreditService } from "../service/CreditService";
+import { IIncidentService } from "../repository/IIncidentService";
+import { IncidentService } from "../service/IncidentService";
 import { IBaseMongoModel } from "../repository/IBaseMongoModel";
 import { ICredits } from "../schema/mongodb/models/CreditsModel";
 import { CreditMongoModel } from "../gateway/CreditMongoModel";
@@ -25,6 +27,7 @@ const containerApp: Container = new Container();
 
 //Service
 containerApp.bind<ICreditService>(TYPES.CreditService).to(CreditService);
+containerApp.bind<IIncidentService>(TYPES.IncidentService).to(IncidentService);
 
 //Gateway
 containerApp.bind<IMongoGateway>(TYPES.MongoGateway).to(MongoGateway);

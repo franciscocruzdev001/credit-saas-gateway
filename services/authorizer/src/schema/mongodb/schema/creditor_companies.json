@@ -45,6 +45,9 @@
                     },
                     "firstCharge": {
                         "type": "boolean"
+                    },
+                    "latePaymentCharge": {
+                        "type": "number"
                     }
                 }
             }

@@ -35,7 +35,9 @@ export const ENTITY_OPERATION_BUID_UPDATE: Record<string, (amountTransaction: nu
                 $set: {
                     amountPaid: {
                         $add: ['$amountPaid', amountTransaction]
-                    }
+                    },
+                    // Fecha del último pago aprobado: el momento en que se aprueba este pago
+                    lastPaymentDateApproved: '$$NOW'
                 }
             },
             {

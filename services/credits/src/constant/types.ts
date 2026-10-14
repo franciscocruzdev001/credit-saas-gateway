@@ -1,5 +1,6 @@
 export type typeSymbol = {
     CreditService: symbol;
+    IncidentService: symbol;
     MongoGateway: symbol;
     LoggerGateway: symbol;
     CreditMongoModel: symbol;
@@ -12,6 +13,7 @@ export type typeSymbol = {
 
 export const TYPES: typeSymbol = {
     CreditService: Symbol.for("CreditService"),
+    IncidentService: Symbol.for("IncidentService"),
     MongoGateway: Symbol.for("MongoGateway"),
     LoggerGateway: Symbol.for("LoggerGateway"),
     CreditMongoModel: Symbol.for("CreditMongoModel"),

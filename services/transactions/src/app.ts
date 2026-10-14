@@ -26,5 +26,5 @@ app.get("/", (_:any, res:any) => {
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Transactions service is running at PORT ${PORT}.`);
-    helloCronJob();
+    //helloCronJob();
 });

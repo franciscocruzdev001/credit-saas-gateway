@@ -44,6 +44,9 @@
             "type": "number",
             "description": "Fecha en la que 'status' cambio por ultima vez"
         },
+        "lastPaymentDateApproved": {
+            "type": "number"
+        },
         "chargeRules": {
             "type": "object",
             "title": "ChargeRules",
@@ -67,6 +70,9 @@
                 },
                 "firstCharge": {
                     "type": "boolean"
+                },
+                "latePaymentCharge": {
+                    "type": "number"
                 }
             }
         },

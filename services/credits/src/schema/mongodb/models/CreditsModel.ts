@@ -27,6 +27,8 @@ const creditsSchema = new Schema({
     },
     // Fecha en la que "status" cambió por última vez.
     changeDateStatus: { type: Schema.Types.Date },
+    // Fecha del último pago aprobado (opcional: los créditos existentes no lo tienen)
+    lastPaymentDateApproved: { type: Schema.Types.Date, required: false },
     creationStatus: {
         type: String, enum: [
             CreationStatusEnum.NEW,
@@ -65,6 +67,7 @@ const creditsSchema = new Schema({
             renovationPeriod: { type: Number, required: true },
             comissionRate: { type: Number, required: true },
             firstCharge: {type: Boolean,default: false},
+            latePaymentCharge: { type: Number, required: false },
         }, { _id: false }), required: true
     },
     userId: { type: Schema.Types.ObjectId, ref: "Users", required: true },

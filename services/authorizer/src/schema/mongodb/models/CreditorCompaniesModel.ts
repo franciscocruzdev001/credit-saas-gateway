@@ -25,7 +25,8 @@ const creditorCompaniesSchema = new Schema({
             },
             renovationPeriod: { type: Number },
             comissionRate: { type: Number },
-            firstCharge: {type: Boolean ,default: false }
+            firstCharge: {type: Boolean ,default: false },
+            latePaymentCharge: { type: Number, required: false }
         }, { _id: false })
     }]
 }, { timestamps: true });
