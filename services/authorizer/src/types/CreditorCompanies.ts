@@ -13,6 +13,7 @@ export interface ChargeRules {
     chargePeriods?:    string;
     comissionRate?:    number;
     firstCharge?:      boolean;
+    latePaymentCharge?: number;
     renovationPeriod?: number;
 }
 

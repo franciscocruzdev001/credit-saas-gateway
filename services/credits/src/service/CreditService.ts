@@ -138,13 +138,16 @@ export class CreditService implements ICreditService {
 
                 const creditAmount: number = get(creditCustomer.credit, "creditAmount", 0);
                 const chargeDay = get(creditCustomer.credit, "chargeRules.chargeDay");
+                const latePaymentCharge: number | undefined = get(creditCustomer.credit, "chargeRules.latePaymentCharge");
                 const chargeRules = {
                     chargeFrequency: get(creditCustomer.credit, "chargeRules.chargeFrequency", chargeFrequencyEnum.WEEKLY) as chargeFrequencyEnum,
                     chargePeriods: get(creditCustomer.credit, "chargeRules.chargePeriods", 1),
                     ...(chargeDay ? { chargeDay } : {}),
                     renovationPeriod: get(creditCustomer.credit, "chargeRules.renovationPeriod", 1),
                     comissionRate: get(creditCustomer.credit, "chargeRules.comissionRate", 1),
-                    firstCharge: get(creditCustomer.credit, "chargeRules.firstCharge", false)
+                    firstCharge: get(creditCustomer.credit, "chargeRules.firstCharge", false),
+                    // Opcional: se copia de la regla elegida solo si la trae (mismo criterio que chargeDay)
+                    ...(latePaymentCharge !== undefined && latePaymentCharge !== null ? { latePaymentCharge } : {})
                 };
                 const creationStatus: CreationStatusEnum = get(creditCustomer.credit, "creationStatus", CreationStatusEnum.NEW) as CreationStatusEnum;
 

@@ -140,7 +140,9 @@ export class AuthorizerService implements IAuthorizerService {
                 ...(get(rule, "chargeDay", "") ? { chargeDay: get(rule, "chargeDay", "") } : {}),
                 renovationPeriod: get(rule, "renovationPeriod", 0),
                 comissionRate: get(rule, "comissionRate", 0),
-                firstCharge: get(rule, "firstCharge", false)
+                firstCharge: get(rule, "firstCharge", false),
+                // Opcional: si no viene queda undefined y Mongoose no lo guarda
+                latePaymentCharge: get(rule, "latePaymentCharge")
             })) as ICreditorCompanies["chargeRules"]
         }
 
@@ -332,6 +334,10 @@ export class AuthorizerService implements IAuthorizerService {
                                     renovationPeriod: rule.renovationPeriod ?? 0,
                                     comissionRate: rule.comissionRate ?? 0,
                                     firstCharge: rule.firstCharge ?? false,
+                                    // Opcional: solo se manda si la regla lo tiene
+                                    ...(rule.latePaymentCharge !== undefined && rule.latePaymentCharge !== null
+                                        ? { latePaymentCharge: rule.latePaymentCharge }
+                                        : {}),
                                 })),
                             }
                         } : {}),

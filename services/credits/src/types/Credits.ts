@@ -28,6 +28,7 @@ export interface ChargeRules {
     chargePeriods?:    number;
     comissionRate?:    number;
     firstCharge?:      boolean;
+    latePaymentCharge?: number;
     renovationPeriod?: number;
 }
 
