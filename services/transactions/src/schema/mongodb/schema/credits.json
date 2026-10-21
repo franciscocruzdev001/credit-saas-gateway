@@ -27,7 +27,7 @@
         "amountPaid": {
             "type": "number"
         },
-        "creditAmountWithMoratory": {
+        "amountMoratory": {
             "type": "number"
         },
         "fixedCharge": {

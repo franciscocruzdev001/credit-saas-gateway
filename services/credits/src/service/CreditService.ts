@@ -173,7 +173,8 @@ export class CreditService implements ICreditService {
                         amountDue: computedCreditData.amountDue!,
                         amountPaid: 0,
                         fixedCharge: computedCreditData.fixedCharge!,
-                        creditAmountWithMoratory: creditAmount, //Actualizar en base a las faltas
+                        // Monto acumulado de moratorios; arranca en 0
+                        amountMoratory: 0,
                         status: CreditStatusEnum.CHARGE_PROCESS,
                         creationStatus: creationStatus,
                         transactionStatus: TransactionStatusEnum.PENDING,
