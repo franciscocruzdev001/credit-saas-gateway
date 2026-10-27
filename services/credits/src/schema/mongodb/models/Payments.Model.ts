@@ -20,7 +20,8 @@ const paymentsSchema = new Schema({
             PaymentCategoryEnum.CHARGE_PERIOD,
             PaymentCategoryEnum.LIQUIDATION,
             PaymentCategoryEnum.RENEWAL,
-            PaymentCategoryEnum.FIRST_CHARGE
+            PaymentCategoryEnum.FIRST_CHARGE,
+            PaymentCategoryEnum.MORATORY
         ],
         default: PaymentCategoryEnum.CHARGE_PERIOD
     },

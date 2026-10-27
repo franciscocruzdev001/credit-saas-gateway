@@ -17,6 +17,7 @@ import { Payments } from "../types/Payments";
 import { AuthorizationContext } from "../types/AuthorizationContext";
 import { GetCreditTotalsRequest } from "../types/GetCreditTotalsRequest";
 import { GetCreditSummaryRequest } from "../types/GetCreditSummaryRequest";
+import { GetCreditPaymentsAndIncidentsRequest } from "../types/GetCreditPaymentsAndIncidentsRequest";
 import { authMiddleware, type AuthenticatedRequest } from "../infrastructure/AuthMiddleware";
 
 export const creditRouter: Router = Router();
@@ -294,6 +295,40 @@ creditRouter.post("/searchCustomersByEmployee", authMiddleware, async (req: Auth
   }
 });
 
+
+// POST endpoint: historial de un crédito — pagos confirmados (> $0) e incidencias
+creditRouter.post("/getCreditPaymentsAndIncidents", authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
+
+  if (req.body === undefined || req.body == null) {
+    res.status(400).json({ error: 'La solicitud no cuenta con los parametros solicitados' });
+    return;
+  }
+
+  try {
+
+    console.log("/getCreditPaymentsAndIncidents-req.body: ", req.body);
+    const request: GetCreditPaymentsAndIncidentsRequest = req.body;
+
+    // El userId, creditorCompanyId y roles vienen del JWT (req.user), nunca del body
+    const authorizationContext: AuthorizationContext = {
+      userId: req.user?.userId ?? '',
+      creditorCompanyId: req.user?.creditorCompanyId ?? '',
+      roles: req.user?.roles ?? [],
+    };
+    const result: Observable<Object> = creditService.getCreditPaymentsAndIncidents(request, authorizationContext);
+
+    const datos = await firstValueFrom(
+      result.pipe(
+        map((respuesta) => ({ mensaje: 'Datos obtenidos', data: respuesta }))
+      )
+    );
+
+    res.status(200).json(datos);
+  } catch (error) {
+    console.error("Error en /getCreditPaymentsAndIncidents:", error);
+    res.status(500).json({ error: 'Ocurrió un error al procesar la solicitud' });
+  }
+});
 
 // POST endpoint: pagos de un crédito específico
 creditRouter.post("/getPaymentyByCredit", async (req: Request<GetPaymentRequest>, res: Response) => {

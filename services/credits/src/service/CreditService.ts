@@ -50,6 +50,8 @@ import { PaymentCategoryEnum } from "../infrastructure/PaymentCategoryEnum";
 import { CreationStatusEnum } from "../infrastructure/CreationStatusEnum";
 import { GetCreditSummaryRequest } from "../types/GetCreditSummaryRequest";
 import { UserRoleEmployeeSummaryCatalog } from "../infrastructure/catalogs/UserRoleEmployeeSummaryCatalog";
+import { GetCreditPaymentsAndIncidentsRequest } from "../types/GetCreditPaymentsAndIncidentsRequest";
+import { UserRoleCreditPaymentsAndIncidentsCatalog } from "../infrastructure/catalogs/UserRoleCreditPaymentsAndIncidentsCatalog";
 
 @injectable()
 export class CreditService implements ICreditService {
@@ -173,8 +175,11 @@ export class CreditService implements ICreditService {
                         amountDue: computedCreditData.amountDue!,
                         amountPaid: 0,
                         fixedCharge: computedCreditData.fixedCharge!,
-                        // Monto acumulado de moratorios; arranca en 0
+                        creditAmountWithMoratory: creditAmount, //Actualizar en base a las faltas
+                        // Monto acumulado de moratorios (opcional); arranca en 0
                         amountMoratory: 0,
+                        // Lo abonado al cargo por faltas; arranca en 0
+                        amountPaidMoratory: 0,
                         status: CreditStatusEnum.CHARGE_PROCESS,
                         creationStatus: creationStatus,
                         transactionStatus: TransactionStatusEnum.PENDING,
@@ -448,8 +453,24 @@ export class CreditService implements ICreditService {
                 total: dataResponse.totalDocuments,
                 records: dataResponse.documents
             }))
+     
         );
     }
+
+    // Historial de un crédito: pagos confirmados (> $0) e incidencias (faltas).
+    public getCreditPaymentsAndIncidents(
+        request: GetCreditPaymentsAndIncidentsRequest,
+        authorizationContext: AuthorizationContext
+    ): Observable<Object> {
+        const userRole = get(authorizationContext, "roles.0") as UserRoleEnum;
+        const creditFilters: QueryFilter<ICredits> =
+            UserRoleCreditPaymentsAndIncidentsCatalog[userRole]!(request, authorizationContext);
+
+        return of(1).pipe(
+            mergeMap(() => this._creditMongoModel.getCreditPaymentsAndIncidents(creditFilters))
+        );
+    }
+
     //busca el documento de wallets con su  propio _id .
     public getWalletInfo(request: GetWalletRequest): Observable<Object> {
         const walletId: string = get(request, "walletId", "");

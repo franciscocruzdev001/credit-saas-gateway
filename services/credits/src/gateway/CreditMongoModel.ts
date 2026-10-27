@@ -3,15 +3,12 @@ import { CreditsModel, ICredits, ICreditsWithCustomerBasicInformation } from "..
 import { BaseMongoModel } from "./BaseMongoModel";
 import { map, mergeMap, Observable, of } from "rxjs";
 import { ICustomers } from "../schema/mongodb/models/Customers.Model";
-import { Aggregate, PipelineStage, QueryFilter, QueryOptions } from "mongoose";
-import { CollectionNameEnum } from "../infrastructure/CollectionNameEnum";
-import { defaultTo, get } from "lodash";
-import { TransactionStatusEnum } from "../infrastructure/TransactionStatusEnum";
+import { Aggregate, QueryFilter, QueryOptions } from "mongoose";
+import { get } from "lodash";
 import { ILoggerGateway } from "../repository/ILoggerGateway";
 import { TYPES } from "../constant/types";
-import { PaymentCategoryEnum } from "../infrastructure/PaymentCategoryEnum";
-import { CreditStatusEnum } from "../infrastructure/CreditStatusEnum";
-import { CreationStatusEnum } from "../infrastructure/CreationStatusEnum";
+import { CreditPipelineEnum } from "../infrastructure/CreditPipelineEnum";
+import { CreditPipelineCatalog } from "../infrastructure/catalogs/CreditPipelineCatalog";
 
 @injectable()
 export class CreditMongoModel extends BaseMongoModel<ICredits> {
@@ -19,12 +16,10 @@ export class CreditMongoModel extends BaseMongoModel<ICredits> {
     // Inyectamos explícitamente el modelo Mongoose de manera estática a la clase superior
     super(CreditsModel, logger);
   }
-  // Aquí puedes añadir métodos específicos que solo pertenezcan a User
-  /*public async findByEmail(email: string): Promise<IUserDocument | null> {
-    return this.model.findOne({ email }).exec();
-  }*/
-  // findCreditsJoinCustomer — mobile (searchCreditsByEmployee). No trae
-  // employeeInfo: ver findCreditsJoinCustomerAndEmployee para eso (web).
+  // Los pipelines se arman en CreditPipelineCatalog (un archivo por consulta en
+  // infrastructure/pipelines); aquí solo se ejecutan y se da forma a la respuesta.
+
+
   public findCreditsJoinCustomer(
     creditFilters: QueryFilter<ICredits>,
     customerFilters: QueryFilter<ICustomers>,
@@ -34,7 +29,9 @@ export class CreditMongoModel extends BaseMongoModel<ICredits> {
     totalDocuments: number
   }> {
     return of(true).pipe(
-      mergeMap(() => this.model.aggregate(this._buildPipelineToUser(creditFilters, customerFilters, pagination))),
+      mergeMap(() => this.model.aggregate(
+        CreditPipelineCatalog[CreditPipelineEnum.CREDITS_WITH_CUSTOMER]({ creditFilters, customerFilters, pagination })
+      )),
       map((result: Aggregate<{ data: any[], totalCount: { count: number }[] }>[]) => ({
         documents: get(result, "[0].data", []),
         totalDocuments: get(result, "[0].totalCount[0].count", 0)
@@ -42,23 +39,15 @@ export class CreditMongoModel extends BaseMongoModel<ICredits> {
     );
   }
 
-
   public getCreditTotals(
     creditFilters: QueryFilter<ICredits>,
     startDate: Date,
     endDate: Date
   ): Observable<Object> {
-
     return of(true).pipe(
-      mergeMap(() =>
-        this.model.aggregate(
-          this._buildCreditTotalsPipeline(
-            creditFilters,
-            startDate,
-            endDate
-          )
-        )
-      )
+      mergeMap(() => this.model.aggregate(
+        CreditPipelineCatalog[CreditPipelineEnum.CREDIT_TOTALS]({ creditFilters, startDate, endDate })
+      ))
     );
   }
 
@@ -67,234 +56,25 @@ export class CreditMongoModel extends BaseMongoModel<ICredits> {
     startDate: Date,
     endDate: Date
   ): Observable<Object> {
-
     return of(true).pipe(
-      mergeMap(() =>
-        this.model.aggregate(
-          this._buildCreditSummaryPipeline(
-            creditFilters,
-            startDate,
-            endDate
-          )
-        )
-      )
+      mergeMap(() => this.model.aggregate(
+        CreditPipelineCatalog[CreditPipelineEnum.CREDIT_SUMMARY]({ creditFilters, startDate, endDate })
+      ))
     );
   }
 
-  public _buildCreditSummaryPipeline(
-    creditFilters: QueryFilter<ICredits>,
-    startDate: Date,
-    endDate: Date
-  ): PipelineStage[] {
-
-    return [
-
-      // Stage 1:
-      // Filtrar créditos. El filtro por rol (cobrador / empresa, solo
-      // aprobados) ya viene armado en creditFilters, construido por
-      // UserRoleEmployeeSummaryCatalog.
-      {
-        $match: creditFilters,
-      },
-
-      // Stage 2:
-      // Buscar los pagos del crédito realizados dentro del periodo.
-      // Solo pagos aprobados y mayores a $0 (las faltas no cuentan).
-      {
-        $lookup: {
-
-          from: CollectionNameEnum.PAYMENTS,
-
-          let: {
-            creditId: "$_id"
-          },
-
-          pipeline: [
-
-            {
-              $match: {
-
-                $expr: {
-                  $and: [
-
-                    // Payment pertenece al Credit
-                    {
-                      $eq: [
-                        "$creditId",
-                        "$$creditId"
-                      ]
-                    },
-
-                    // Payment >= fecha inicio
-                    {
-                      $gte: [
-                        "$createdAt",
-                        startDate
-                      ]
-                    },
-
-                    // Payment < fecha término
-                    {
-                      $lt: [
-                        "$createdAt",
-                        endDate
-                      ]
-                    }
-                  ]
-                },
-
-                // Solo pagos aprobados
-                transactionStatus:
-                  TransactionStatusEnum.APPROVED,
-
-                // Las faltas (pagos en $0) no cuentan como cobro
-                total: { $gt: 0 }
-              },
-            },
-
-            {
-              $project: {
-                _id: 1
-              }
-            }
-          ],
-
-          as: "payments"
-          
-        }
-      },
-
-      // Stage 3:
-      // Contar por frecuencia de cobro (solo conteos):
-      // collected -> número de pagos registrados en el periodo (cada pago suma 1)
-      // new / renewed -> créditos dados de alta en el periodo
-      // según creationStatus; sin creationStatus se toma como "new".
-      {
-        $group: {
-
-          _id: "$chargeRules.chargeFrequency",
-
-          collected: {
-            $sum: { $size: "$payments" }
-          },
-
-          new: {
-            $sum: {
-              $cond: [
-                { //El crédito fue creado dentro del periodo y NO es renovación.
-                  $and: [
-                    { $gte: ["$admissionDate", startDate] },
-                    { $lt: ["$admissionDate", endDate] },
-                    { $ne: ["$creationStatus", CreationStatusEnum.RENEWED] }
-                  ]
-                },
-                1,
-                0
-              ]
-            }
-          },
-
-          renewed: {
-            $sum: {
-              $cond: [
-                {//El crédito fue creado dentro del periodo y SÍ es renovación
-                  $and: [
-                    { $gte: ["$admissionDate", startDate] },
-                    { $lt: ["$admissionDate", endDate] },
-                    { $eq: ["$creationStatus", CreationStatusEnum.RENEWED] }
-                  ]
-                },
-                1,
-                0
-              ]
-            }
-          }
-        }
-      },
-
-      // Stage 4:
-      // Dar forma a la respuesta
-      {
-        $project: {
-
-          _id: 0,
-
-          chargeFrequency: "$_id",
-
-          collected: 1,
-
-          new: 1,
-
-          renewed: 1
-        }
-      }
-    ];
-  }
-
-  // Construct Pipeline
-  public _buildPipelineToUser(
-    creditFilters: QueryFilter<ICredits>,
-    customerFilters: QueryFilter<ICustomers>,
-    pagination: QueryOptions
-  ): PipelineStage[] {
-    return [
-      // Stage 1: Filter documents first for performance
-      { $match: creditFilters },
-      // Stage 2: Join related collection (e.g., 'categories')
-      {
-        $lookup: {
-          from: CollectionNameEnum.CUSTOMERS,
-          let: { creditCustomerId: "$customerId" },
-          pipeline: [
-            // Filter 1: Primary Join Condition (User._id === Order.userId)
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    // Filter 1: Primary Join Condition (User._id === Order.userId)
-                    { $eq: ['$_id', '$$creditCustomerId'] },
-                  ]
-                },
-                ...customerFilters
-                /*$expr: {
-                  $and: [
-                    // Filter 1: Primary Join Condition (User._id === Order.userId)
-                    //{ $eq: ['$_id', '$$creditCustomerId'] },
-                  ]
-                }*/
-              }
-            },
-          ],
-          as: "customerInfo",
-        },
-      },
-      // Stage 3 — NUEVO: descarta créditos cuyo customer no matcheó el filtro
-      { $match: { customerInfo: { $ne: [] } } },
-      // Stage 3.5 — NUEVO: último Payment generado de cada crédito
-      {
-        $lookup: {
-          from: CollectionNameEnum.PAYMENTS,
-          let: { creditId: "$_id" },
-          pipeline: [
-            { $match: { $expr: { $eq: ["$creditId", "$$creditId"] } } },
-            { $sort: { createdAt: -1 } },
-            { $limit: 1 },
-            { $project: { _id: 0, createdAt: 1, transactionStatus: 1, total: 1 } }
-          ],
-          as: "lastPayment",
-        },
-      },
-      { $unwind: { path: "$lastPayment", preserveNullAndEmptyArrays: true } },
-      // Stage 4: Sort results consistently for pagination
-      { $sort: { createdAt: -1 } },
-
-      {
-        $facet: {
-          data: [{ $skip: defaultTo(pagination.skip, 1) }, { $limit: defaultTo(pagination.limit, 1) }],
-          totalCount: [{ $count: 'count' }],
-        },
-      }
-    ]
+  // getCreditPaymentsAndIncidents — historial de un crédito: pagos confirmados
+  // (> $0) e incidencias. Regresa {} si el crédito no existe o no es visible
+  // para quien consulta.
+  public getCreditPaymentsAndIncidents(
+    creditFilters: QueryFilter<ICredits>
+  ): Observable<Object> {
+    return of(true).pipe(
+      mergeMap(() => this.model.aggregate(
+        CreditPipelineCatalog[CreditPipelineEnum.CREDIT_PAYMENTS_AND_INCIDENTS]({ creditFilters })
+      )),
+      map((result: Object[]) => get(result, "[0]", {}))
+    );
   }
 
   // findCreditsJoinCustomerAndEmployee — de grado administrativo (web, searchCredits).
@@ -307,255 +87,13 @@ export class CreditMongoModel extends BaseMongoModel<ICredits> {
     totalDocuments: number
   }> {
     return of(true).pipe(
-      mergeMap(() => this.model.aggregate(this._buildPipelineToUserAndEmployee(creditFilters, customerFilters, pagination))),
+      mergeMap(() => this.model.aggregate(
+        CreditPipelineCatalog[CreditPipelineEnum.CREDITS_WITH_CUSTOMER_AND_EMPLOYEE]({ creditFilters, customerFilters, pagination })
+      )),
       map((result: Aggregate<{ data: any[], totalCount: { count: number }[] }>[]) => ({
         documents: get(result, "[0].data", []),
         totalDocuments: get(result, "[0].totalCount[0].count", 0)
       }))
     );
   }
-
-  public _buildPipelineToUserAndEmployee(
-    creditFilters: QueryFilter<ICredits>,
-    customerFilters: QueryFilter<ICustomers>,
-    pagination: QueryOptions
-  ): PipelineStage[] {
-    return [
-      // Stage 1: Filter documents first for performance
-      { $match: creditFilters },
-      // Stage 2: Join customers
-      {
-        $lookup: {
-          from: CollectionNameEnum.CUSTOMERS,
-          let: { creditCustomerId: "$customerId" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ['$_id', '$$creditCustomerId'] },
-                  ]
-                },
-                ...customerFilters
-              }
-            },
-          ],
-          as: "customerInfo",
-        },
-      },
-      // Stage 3: descarta créditos cuyo customer no matcheó el filtro
-      { $match: { customerInfo: { $ne: [] } } },
-      // Stage 3.4: datos del empleado (cobrador) dueño del crédito.
-      {
-        $lookup: {
-          from: CollectionNameEnum.USERS,
-          let: { creditUserId: "$userId" },
-          pipeline: [
-            { $match: { $expr: { $eq: ['$_id', '$$creditUserId'] } } },
-            { $project: { "contact.name": 1, "contact.lastName": 1, "contact.phoneNumber": 1 } }
-          ],
-          as: "employeeInfo",
-        },
-      },
-      // Stage 4: Sort results consistently for pagination
-      { $sort: { createdAt: -1 } },
-
-      {
-        $facet: {
-          data: [{ $skip: defaultTo(pagination.skip, 1) }, { $limit: defaultTo(pagination.limit, 1) }],
-          totalCount: [{ $count: 'count' }],
-        },
-      }
-    ]
-  }
-
-  public _buildCreditTotalsPipeline(
-    creditFilters: QueryFilter<ICredits>,
-    startDate: Date,
-    endDate: Date
-  ): PipelineStage[] {
-
-    return [
-
-      // Stage 1:
-      // Filtrar créditos. El $or de status (activos + pagados/renovados
-      // dentro del periodo) ya viene armado en creditFilters, construido por
-      // UserRoleEmployeeTotalsCatalog — este pipeline no necesita saber nada
-      // de esa regla, solo aplica el filtro que le llega.
-      {
-        $match: creditFilters,
-      },
-
-      // Stage 2:
-      // Buscar pagos relacionados al crédito
-      // y que estén dentro del periodo consultado.
-      {
-        $lookup: {
-
-          from: CollectionNameEnum.PAYMENTS,
-
-          let: {
-            creditId: "$_id"
-          },
-
-          pipeline: [
-
-            {
-              $match: {
-
-                $expr: {
-                  $and: [
-
-                    // Payment pertenece al Credit
-                    {
-                      $eq: [
-                        "$creditId",
-                        "$$creditId"
-                      ]
-                    },
-
-                    // Payment >= fecha inicio
-                    {
-                      $gte: [
-                        "$createdAt",
-                        startDate
-                      ]
-                    },
-
-                    // Payment <= fecha término
-                    {
-                      $lt: [
-                        "$createdAt",
-                        endDate
-                      ]
-                    }
-                  ]
-                },
-
-                // Solo pagos aprobados
-                transactionStatus:
-                  TransactionStatusEnum.APPROVED,
-                  //paymentCategory: PaymentCategoryEnum.CHARGE_PERIOD
-
-              },
-            },
-
-            {
-              $project: {
-                _id: 0,
-                total: 1,
-                paymentCategory: 1
-              }
-            }
-          ],
-
-          as: "payments"
-        }
-      },
-
-      // Stage 3:
-      // Clasificar los pagos del periodo (no se excluye ninguno):
-      // paymentCategory === CHARGE_PERIOD -> paidAmount (cuota regular)
-      // liquidation / renewal / firstCharge (o si no trae paymentCategory) -> otherAmount
-      {
-        $addFields: {
-          paidAmount: {
-            $sum: {
-              $map: {
-                input: "$payments",
-                as: "p",
-                in: {
-                  $cond: [
-                    { $eq: ["$$p.paymentCategory", PaymentCategoryEnum.CHARGE_PERIOD] },
-                    "$$p.total",
-                    0
-                  ]
-                }
-              }
-            }
-          },
-          otherAmount: {
-            $sum: {
-              $map: {
-                input: "$payments",
-                as: "p",
-                in: {
-                  $cond: [
-                    { $ne: ["$$p.paymentCategory", PaymentCategoryEnum.CHARGE_PERIOD] },
-                    "$$p.total",
-                    0
-                  ]
-                }
-              }
-            }
-          }
-        }
-      },
-      // Stage 4:
-      // Sumar todo en un solo total, sin agrupar por frecuencia.
-      // totalToCollect solo cuenta créditos todavía activos (charge_process):
-      // el $match de creditFilters ya no filtra por status, así que un crédito
-      // recién liquidado/renovado (paid) sigue en el pipeline para que sus pagos
-      // cuenten en totalCollected/totalOthers, pero no debe seguir sumando a
-      // "por cobrar".
-      // Ojo: totalCollected/totalOthers solo cubren pagos dentro de
-      // [startDate, endDate) del Stage 2 — ese rango se recorta al periodo de
-      // corte vigente (ej. cada lunes para semanal, ver
-      // resolveChargeFrequencyDateRange en el front). En cuanto pasa ese
-      // corte y arranca un periodo nuevo, un pago de liquidación/renovación
-      // de la semana pasada deja de contar aunque el crédito siga "paid".
-      {
-        $group: {
-
-          _id: null,
-
-          totalToCollect: {
-            $sum: {
-              $cond: [
-                { $eq: ["$status", CreditStatusEnum.CHARGE_PROCESS] },
-                "$fixedCharge",
-                0
-              ]
-            }
-          },
-
-          totalCollected: {
-            $sum: "$paidAmount"
-          },
-
-          totalOthers: {
-            $sum: "$otherAmount"
-          }
-        }
-      },
-
-      // Stage 5:
-      // Calcular pendiente
-      {
-        $project: {
-
-          _id: 0,
-
-          totalToCollect: 1,
-
-          totalCollected: 1,
-
-          totalOthers: 1,
-
-          totalPending: {
-            $max: [
-              {
-                $subtract: [
-                  "$totalToCollect",
-                  "$totalCollected"
-                ]
-              },
-              0
-            ]
-          }
-        }
-      }
-    ];
-  }
-
 }

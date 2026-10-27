@@ -13,8 +13,11 @@ const creditsSchema = new Schema({
     creditAmount: { type: Number, required: true },
     amountDue: { type: Number, required: true },
     amountPaid: { type: Number, required: true },
-    // Monto acumulado de moratorios por faltas; arranca en 0
-    amountMoratory: { type: Number, required: true, default: 0 },
+    creditAmountWithMoratory: { type: Number, required: true },
+    // Monto acumulado de moratorios por faltas (opcional: los créditos existentes no lo tienen)
+    amountMoratory: { type: Number, required: false },
+    // Lo abonado al cargo por faltas (opcional: los créditos existentes no lo tienen)
+    amountPaidMoratory: { type: Number, required: false },
     fixedCharge: { type: Number, required: true },
     status: {
         type: String, enum: [

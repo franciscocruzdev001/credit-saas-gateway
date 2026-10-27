@@ -8,7 +8,9 @@ export interface Credits {
     created?:                  number;
     creationStatus?:           CreationStatus;
     creditAmount?:             number;
+    creditAmountWithMoratory?: number;
     amountMoratory?: number;
+    amountPaidMoratory?: number;
     creditorCompanyId:         string;
     customerId:                string;  
     customerName?:              string;

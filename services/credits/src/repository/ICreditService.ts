@@ -12,6 +12,7 @@ import { Payments } from '../types/Payments';
 import { AuthorizationContext } from '../types/AuthorizationContext';
 import { GetCreditTotalsRequest } from '../types/GetCreditTotalsRequest';
 import { GetCreditSummaryRequest } from '../types/GetCreditSummaryRequest';
+import { GetCreditPaymentsAndIncidentsRequest } from '../types/GetCreditPaymentsAndIncidentsRequest';
 
 export interface ICreditService {
   /**
@@ -63,6 +64,15 @@ export interface ICreditService {
   ): Observable<Object>
 
   getPaymentByCredit(request: GetPaymentRequest): Observable<Object>;
+
+  /**
+   * Historial de un crédito: pagos confirmados mayores a $0 e incidencias
+   * (faltas), en dos listas independientes.
+   */
+  getCreditPaymentsAndIncidents(
+    request: GetCreditPaymentsAndIncidentsRequest,
+    authorizationContext: AuthorizationContext
+  ): Observable<Object>;
 
   getWalletInfo(request: GetWalletRequest): Observable<Object>;
 

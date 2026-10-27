@@ -1,0 +1,32 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://Incidents",
+    "title": "Incidents",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "creditorCompanyId": {
+            "type": "string"
+        },
+        "creditId": {
+            "type": "string"
+        },
+        "customerId": {
+            "type": "string"
+        },
+        "latePaymentCharge": {
+            "type": "number"
+        },
+        "description": {
+            "type": "string"
+        },
+        "currency": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "creditorCompanyId",
+        "creditId",
+        "customerId"
+    ]
+}

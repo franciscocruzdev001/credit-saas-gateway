@@ -14,4 +14,6 @@ export class PaymentsMongoModel extends BaseMongoModel<IPayments> {
   /*public async findByEmail(email: string): Promise<IUserDocument | null> {
     return this.model.findOne({ email }).exec();
   }*/
+
+    
 }

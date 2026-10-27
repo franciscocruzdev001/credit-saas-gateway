@@ -6,6 +6,7 @@ export enum CollectionNameEnum {
     CUSTOMERS = "customers",
     PAYMENTS = "payments",
     LATEPAYMENTFEELOGS = "latepaymentfeelogs",
+    INCIDENTS = "incidents",
     WALLETS = "wallets",
     USERS = "users",
     TRANSACTIONS = "transactions"

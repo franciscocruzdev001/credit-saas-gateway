@@ -10,6 +10,7 @@ import { ILoggerGateway } from "../repository/ILoggerGateway";
 import { CreditMongoModel } from "../gateway/CreditMongoModel";
 import { PaymentsMongoModel } from "../gateway/PaymentsMongoModel";
 import { LatePaymentFeeLogsMongoModel } from "../gateway/LatePaymentFeeLogsMongoModel";
+import { IncidentsMongoModel } from "../gateway/IncidentsBaseMongoModel";
 
 @injectable()
 export class IncidentService implements IIncidentService {
@@ -17,17 +18,20 @@ export class IncidentService implements IIncidentService {
     private readonly _creditMongoModel: CreditMongoModel;
     private readonly _paymentsMongoModel: PaymentsMongoModel;
     private readonly _latePaymentFeeLogsMongoModel: LatePaymentFeeLogsMongoModel;
+    private readonly _incidentsMongoModel: IncidentsMongoModel;
 
     constructor(
         @inject(TYPES.LoggerGateway) logger: ILoggerGateway,
         @inject(TYPES.CreditMongoModel) creditMongoModel: CreditMongoModel,
         @inject(TYPES.PaymentsMongoModel) paymentsMongoModel: PaymentsMongoModel,
-        @inject(TYPES.LatePaymentFeeLogsMongoModel) latePaymentFeeLogsMongoModel: LatePaymentFeeLogsMongoModel
+        @inject(TYPES.LatePaymentFeeLogsMongoModel) latePaymentFeeLogsMongoModel: LatePaymentFeeLogsMongoModel,
+        @inject(TYPES.IncidentsMongoModel) incidentsMongoModel: IncidentsMongoModel
     ) {
         this._logger = logger;
         this._creditMongoModel = creditMongoModel;
         this._paymentsMongoModel = paymentsMongoModel;
         this._latePaymentFeeLogsMongoModel = latePaymentFeeLogsMongoModel;
+        this._incidentsMongoModel = incidentsMongoModel;
     }
 
     public registerDailyIncidents(consultDate: Date): Observable<Object> {
