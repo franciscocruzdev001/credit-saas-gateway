@@ -22,7 +22,7 @@ export const buildCreditPaymentsAndIncidentsPipeline = (
     },
 
     // Stage 2:
-    // Pagos del crédito: solo aprobados y mayores a $0, del más antiguo al más reciente.
+    // Pagos del crédito: pendientes y aprobados mayores a $0, del más antiguo al más reciente.
     {
       $lookup: {
         from: CollectionNameEnum.PAYMENTS,
@@ -31,7 +31,7 @@ export const buildCreditPaymentsAndIncidentsPipeline = (
           {
             $match: {
               $expr: { $eq: ["$creditId", "$$creditId"] },
-              transactionStatus: TransactionStatusEnum.APPROVED,
+              transactionStatus: { $in: [TransactionStatusEnum.PENDING, TransactionStatusEnum.APPROVED] },
               total: { $gt: 0 }
             }
           },
