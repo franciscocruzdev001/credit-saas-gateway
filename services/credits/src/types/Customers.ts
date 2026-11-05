@@ -1,6 +1,6 @@
 export interface Customers {
-    contact:             Contact;
     aval?:               Aval;
+    contact:             Contact;
     created?:            number;
     creditorCompanyId:   string;
     status?:             string;
@@ -9,9 +9,11 @@ export interface Customers {
 }
 
 export interface Aval {
-    // Si el aval ya es un customer registrado
+    contact: Contact;
+    /**
+     * Si el aval ya es un customer registrado
+     */
     customerId?: string;
-    contact:     Contact;
 }
 
 export interface Contact {

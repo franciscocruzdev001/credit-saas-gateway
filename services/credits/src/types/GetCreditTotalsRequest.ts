@@ -1,7 +1,15 @@
-import { FiltersItems } from "./SearchCreditsByEmployeeRequest";
-
 export interface GetCreditTotalsRequest {
+    filtersItems:  FiltersItems;
     fromTimestamp: number;
     toTimestamp:   number;
-    filtersItems:  FiltersItems;
+}
+
+export interface FiltersItems {
+    chargeFrequency?: ChargeFrequency[];
+    userId?:          string;
+}
+
+export enum ChargeFrequency {
+    Daily = "daily",
+    Weekly = "weekly",
 }

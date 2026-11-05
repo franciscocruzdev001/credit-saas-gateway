@@ -1,7 +1,7 @@
 export interface GetCreditSummaryRequest {
+    filtersItems?: FiltersItems;
     fromTimestamp: number;
     toTimestamp:   number;
-    filtersItems?: FiltersItems;
 }
 
 export interface FiltersItems {

@@ -52,7 +52,8 @@
             "additionalProperties": false,
             "properties": {
                 "customerId": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Si el aval ya es un customer registrado"
                 },
                 "contact": {
                     "$ref": "#/properties/contact"

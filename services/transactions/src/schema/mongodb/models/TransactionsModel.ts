@@ -2,6 +2,8 @@ import { InferSchemaType, model, Schema, Types } from "mongoose";
 import { CollectionNameEnum } from "../../../infrastructure/CollectionNameEnum";
 import { TransactionStatusEnum } from "../../../infrastructure/TransactionStatusEnum";
 import { TransactionTypeEnum } from "../../../infrastructure/TransactionTypeEnum";
+import { CreationStatusEnum } from "../../../infrastructure/CreationStatusEnum";
+import { PaymentCategoryEnum } from "../../../infrastructure/PaymentCategoryEnum";
 // 1. Define your Mongoose Schema
 const transactionsSchema = new Schema({
     transactionType: {
@@ -12,6 +14,17 @@ const transactionsSchema = new Schema({
             TransactionTypeEnum.DEPOSIT,
             TransactionTypeEnum.WITHDRAWAL
         ], default: TransactionTypeEnum.DEPOSIT
+    },
+    transactionSubType: {
+        type: String, enum: [
+            CreationStatusEnum.NEW,
+            CreationStatusEnum.RENEWED,
+            PaymentCategoryEnum.CHARGE_PERIOD,
+            PaymentCategoryEnum.LIQUIDATION,
+            PaymentCategoryEnum.RENEWAL,
+            PaymentCategoryEnum.FIRST_CHARGE,
+            PaymentCategoryEnum.MORATORY,
+        ]
     },
     status: {
         type: String, enum: [

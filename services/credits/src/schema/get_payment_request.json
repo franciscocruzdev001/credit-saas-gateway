@@ -1,12 +1,18 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "id": "http://GetPaymentHistoryRequest",
-  "title": "GetPaymentHistoryRequest",
+  "title": "GetPaymentRequest",
   "type": "object",
   "additionalProperties": false,
   "properties": {
     "creditId": {
       "type": "string"
+    },
+    "status": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     }
   },
   "required": [

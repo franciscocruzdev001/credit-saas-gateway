@@ -8,13 +8,13 @@ export interface CreditorCompanies {
 }
 
 export interface ChargeRules {
-    chargeDay?:        ChargeDay;
-    chargeFrequency?:  string;
-    chargePeriods?:    string;
-    comissionRate?:    number;
-    firstCharge?:      boolean;
+    chargeDay?:         ChargeDay;
+    chargeFrequency?:   string;
+    chargePeriods?:     string;
+    comissionRate?:     number;
+    firstCharge?:       boolean;
     latePaymentCharge?: number;
-    renovationPeriod?: number;
+    renovationPeriod?:  number;
 }
 
 export enum ChargeDay {

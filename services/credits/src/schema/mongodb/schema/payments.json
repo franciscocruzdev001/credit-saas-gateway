@@ -20,12 +20,18 @@
         "transactionId": {
             "type": "string"
         },
-        "transactionStatus" :{
-            "type" : "string"
+        "transactionStatus": {
+            "type": "string"
         },
         "paymentCategory": {
             "type": "string",
-            "enum": ["chargePeriod", "liquidation", "renewal", "firstCharge"]
+            "enum": [
+                "chargePeriod",
+                "liquidation",
+                "renewal",
+                "firstCharge",
+                "moratory"
+            ]
         },
         "customerName": {
             "type": "string"

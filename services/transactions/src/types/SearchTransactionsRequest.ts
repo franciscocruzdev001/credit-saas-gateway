@@ -5,12 +5,12 @@ export interface SearchTransactionsRequest {
 
 export interface FiltersItems {
     accountInformacion?: AccountInformacion;
+    chargeFrequency?:    string[];
     createdRangeDate?:   CreatedRangeDate;
     creditorCompanyId:   string;
     generalSearch?:      string;
     status?:             string[];
     transactionType?:    string[];
-    chargeFrequency?:    string[];
 }
 
 export interface AccountInformacion {

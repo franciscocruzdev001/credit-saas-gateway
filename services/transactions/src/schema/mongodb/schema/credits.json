@@ -44,8 +44,19 @@
         },
         "creationStatus": {
             "type": "string",
-            "enum": ["new", "renewed"]
-        }, 
+            "enum": [
+                "new",
+                "renewed"
+            ]
+        },
+        "transactionStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "approved",
+                "cancelled"
+            ]
+        },
         "changeDateStatus": {
             "type": "number",
             "description": "Fecha en la que 'status' cambio por ultima vez"
@@ -66,7 +77,15 @@
                 },
                 "chargeDay": {
                     "type": "string",
-                    "enum": ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+                    "enum": [
+                        "monday",
+                        "tuesday",
+                        "wednesday",
+                        "thursday",
+                        "friday",
+                        "saturday",
+                        "sunday"
+                    ]
                 },
                 "renovationPeriod": {
                     "type": "number"

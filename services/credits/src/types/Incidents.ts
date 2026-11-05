@@ -1,8 +1,8 @@
 export interface Incidents {
-    creditorCompanyId: string;
-    creditId:          string;
-    customerId:        string;
+    creditId:           string;
+    creditorCompanyId:  string;
+    currency?:          string;
+    customerId:         string;
+    description?:       string;
     latePaymentCharge?: number;
-    description?:      string;
-    currency?:         string;
 }

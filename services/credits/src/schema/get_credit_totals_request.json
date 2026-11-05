@@ -21,7 +21,10 @@
           "type": "array",
           "items": {
             "type": "string",
-            "enum": ["daily", "weekly"]
+            "enum": [
+              "daily",
+              "weekly"
+            ]
           }
         },
         "userId": {
@@ -32,6 +35,7 @@
   },
   "required": [
     "fromTimestamp",
-    "toTimestamp"
+    "toTimestamp",
+    "filtersItems"
   ]
 }

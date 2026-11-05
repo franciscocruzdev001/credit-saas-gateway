@@ -129,7 +129,10 @@ export class CreditService implements ICreditService {
                             amountTransaction: get(creditCustomer.credit, "creditAmount", 0),
                             currency: CurrencyEnum.MXN,
                             descripcion: `CREDIT - ${customerName}`.trim(),
-                            creditorCompanyId: creditorCompanyId
+                            creditorCompanyId: creditorCompanyId,
+                            optional: {
+                                transactionSubType: get(creditCustomer.credit, "creationStatus", CreationStatusEnum.NEW) as CreationStatusEnum
+                            }
                         }
                     )
                 ])
@@ -234,7 +237,10 @@ export class CreditService implements ICreditService {
                         currency: CurrencyEnum.MXN,
                         descripcion: `PAGO - ${customerName}`.trim(),
                         creditorCompanyId: creditorCompanyId,
-                        creditIdSource: paymentRequest.creditId
+                        optional: {
+                            creditIdSource: paymentRequest.creditId,
+                            transactionSubType: get(paymentRequest, "paymentCategory", PaymentCategoryEnum.CHARGE_PERIOD) as PaymentCategoryEnum
+                        }
                     }
                 )
             ),
@@ -453,7 +459,7 @@ export class CreditService implements ICreditService {
                 total: dataResponse.totalDocuments,
                 records: dataResponse.documents
             }))
-     
+
         );
     }
 
@@ -504,7 +510,10 @@ export class CreditService implements ICreditService {
             currency: string,
             descripcion: string,
             creditorCompanyId: string,
-            creditIdSource?: string
+            optional: {
+                creditIdSource?: string,
+                transactionSubType?: CreationStatusEnum | PaymentCategoryEnum
+            }
         }
     ): Observable<{
         approveOperation: boolean,
@@ -559,6 +568,9 @@ export class CreditService implements ICreditService {
                             createdAt: new Date(),
                             updatedAt: new Date(),
                             transactionType: transactionType,
+                            ...transacionBasicInformation.optional.transactionSubType ? {
+                                transactionSubType: transacionBasicInformation.optional.transactionSubType
+                            } : {},
                             status: TransactionStatusEnum.PENDING,
                             total: amountTransaction,
                             description: transacionBasicInformation.descripcion,
@@ -572,8 +584,8 @@ export class CreditService implements ICreditService {
                                 walletId: new Types.ObjectId(destinationAccount.walletId),
                                 accountNumber: destinationAccount.accountNumber
                             },
-                            ...transacionBasicInformation.creditIdSource ? {
-                                creditIdSource: new Types.ObjectId(transacionBasicInformation.creditIdSource),
+                            ...transacionBasicInformation.optional.creditIdSource ? {
+                                creditIdSource: new Types.ObjectId(transacionBasicInformation.optional.creditIdSource),
                             } : {}
                         })
                     }),
@@ -807,5 +819,6 @@ export class CreditService implements ICreditService {
      * quicktype -s schema ./src/schema/mongodb/schema/wallets.json --just-types --lang ts -o ./src/types/Wallets.ts
      * quicktype -s schema ./src/schema/mongodb/schema/transactions.json --just-types --lang ts -o ./src/types/Transactions.ts
      * quicktype -s schema ./src/schema/mongodb/schema/search_employees_request.json --just-types --lang ts -o ./src/types/SearchEmployeesRequest.ts
+     * quicktype -s schema ./src/schema/transaction_basic_approve_info.json --just-types --lang ts -o ./src/types/TransactionBasicApproveInfo.ts
      */
 }

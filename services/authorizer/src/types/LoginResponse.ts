@@ -5,6 +5,7 @@ export interface LoginResponse {
 
 export interface User {
     _id:                  string;
+    accountNumber?:       string;
     creditorCompanyId:    string;
     creditorCompanyInfo?: CreditorCompanyInfo;
     email:                string;
@@ -15,32 +16,36 @@ export interface User {
     walletSnapshot:       WalletSnapshot;
 }
 
-// Foto del saldo de la wallet al momento del login — el front la usa para
-// inicializar su "cartera local" y luego la reconcilia cada vez que vuelve a
-// consultar /getWalletInfo (el servidor siempre tiene prioridad sobre lo local).
-export interface WalletSnapshot {
-    firmBalance:            number;
-    pendingIncomesBalance:  number;
-    pendingExpensesBalance: number;
-    // Epoch millis (Date.now()) del momento exacto en que se consultó este saldo.
-    queriedAt:               number;
-}
-
 export interface CreditorCompanyInfo {
     _id:          string;
+    chargeRules?: CreditorCompanyChargeRules[];
     companyName:  string;
     email:        string;
     phoneNumber:  string;
     socialReason: string;
-    chargeRules?: CreditorCompanyChargeRules[];
 }
 
 export interface CreditorCompanyChargeRules {
-    chargeFrequency?:  string;
-    chargePeriods?:    number;
-    chargeDay?:        string;
-    renovationPeriod?: number;
-    comissionRate?:    number;
-    firstCharge?:      boolean;
+    chargeDay?:         string;
+    chargeFrequency?:   string;
+    chargePeriods?:     number;
+    comissionRate?:     number;
+    firstCharge?:       boolean;
     latePaymentCharge?: number;
+    renovationPeriod?:  number;
+}
+
+/**
+ * Foto del saldo de la wallet al momento del login: el front la usa para inicializar su
+ * cartera local y luego la reconcilia con /getWalletInfo (el servidor siempre tiene
+ * prioridad)
+ */
+export interface WalletSnapshot {
+    firmBalance:            number;
+    pendingExpensesBalance: number;
+    pendingIncomesBalance:  number;
+    /**
+     * Epoch millis (Date.now()) del momento exacto en que se consulto este saldo
+     */
+    queriedAt: number;
 }

@@ -24,6 +24,12 @@
                 },
                 "email": {
                     "type": "string"
+                },
+                "chargeRules": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/CreditorCompanyChargeRules"
+                    }
                 }
             },
             "required": [
@@ -32,6 +38,61 @@
                 "socialReason",
                 "phoneNumber",
                 "email"
+            ]
+        },
+        "CreditorCompanyChargeRules": {
+            "type": "object",
+            "title": "CreditorCompanyChargeRules",
+            "additionalProperties": false,
+            "properties": {
+                "chargeFrequency": {
+                    "type": "string"
+                },
+                "chargePeriods": {
+                    "type": "number"
+                },
+                "chargeDay": {
+                    "type": "string"
+                },
+                "renovationPeriod": {
+                    "type": "number"
+                },
+                "comissionRate": {
+                    "type": "number"
+                },
+                "firstCharge": {
+                    "type": "boolean"
+                },
+                "latePaymentCharge": {
+                    "type": "number"
+                }
+            }
+        },
+        "WalletSnapshot": {
+            "type": "object",
+            "title": "WalletSnapshot",
+            "additionalProperties": false,
+            "description": "Foto del saldo de la wallet al momento del login: el front la usa para inicializar su cartera local y luego la reconcilia con /getWalletInfo (el servidor siempre tiene prioridad)",
+            "properties": {
+                "firmBalance": {
+                    "type": "number"
+                },
+                "pendingIncomesBalance": {
+                    "type": "number"
+                },
+                "pendingExpensesBalance": {
+                    "type": "number"
+                },
+                "queriedAt": {
+                    "type": "number",
+                    "description": "Epoch millis (Date.now()) del momento exacto en que se consulto este saldo"
+                }
+            },
+            "required": [
+                "firmBalance",
+                "pendingIncomesBalance",
+                "pendingExpensesBalance",
+                "queriedAt"
             ]
         }
     },
@@ -71,8 +132,14 @@
                 "walletId": {
                     "type": "string"
                 },
+                "accountNumber": {
+                    "type": "string"
+                },
                 "creditorCompanyInfo": {
                     "$ref": "#/definitions/creditorCompanyInfo"
+                },
+                "walletSnapshot": {
+                    "$ref": "#/definitions/WalletSnapshot"
                 }
             },
             "required": [
@@ -81,7 +148,8 @@
                 "email",
                 "roles",
                 "permissions",
-                "creditorCompanyId"
+                "creditorCompanyId",
+                "walletSnapshot"
             ]
         }
     },

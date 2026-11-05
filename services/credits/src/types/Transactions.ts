@@ -8,6 +8,7 @@ export interface Transactions {
     sourceAccount?:      SourceAccount;
     status?:             string;
     total?:              number;
+    transactionSubType?: string;
     transactionType?:    string;
 }
 

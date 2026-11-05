@@ -5,6 +5,9 @@ import { IPayments } from "../../schema/mongodb/models/Payments.Model";
 import { TransactionStatusEnum } from "../TransactionStatusEnum";
 import { UpdateQuery } from "mongoose";
 import { CreditStatusEnum } from "../CreditStatusEnum";
+import { CreationStatusEnum } from "../CreationStatusEnum";
+import { PaymentCategoryEnum } from "../PaymentCategoryEnum";
+import { defaultTo } from "lodash";
 
 export interface UpdateQueryFiltersByEntity {
     paymentsQuery?: UpdateQuery<IPayments>;
@@ -15,13 +18,13 @@ export type EntityUpdateResult = Partial<Record<keyof UpdateQueryFiltersByEntity
 
 
 
-export const ENTITY_OPERATION_BUID_UPDATE: Record<string, (amountTransaction: number) => UpdateQueryFiltersByEntity> = {
-    [TransactionTypeEnum.CREDIT]: (_: number) => ({
+export const ENTITY_OPERATION_BUID_UPDATE: Record<string, (amountTransaction: number, transactionSubType?: CreationStatusEnum | PaymentCategoryEnum) => UpdateQueryFiltersByEntity> = {
+    [TransactionTypeEnum.CREDIT]: (amountTransaction: number, transactionSubType?: CreationStatusEnum | PaymentCategoryEnum) => ({
         creditsQuery: {
             transactionStatus: TransactionStatusEnum.APPROVED
         }
     }),
-    [TransactionTypeEnum.PAYMENT]: (amountTransaction: number) => ({
+    [TransactionTypeEnum.PAYMENT]: (amountTransaction: number, transactionSubType?: CreationStatusEnum | PaymentCategoryEnum) => ({
         paymentsQuery: {
             transactionStatus: TransactionStatusEnum.APPROVED
         },
@@ -34,7 +37,18 @@ export const ENTITY_OPERATION_BUID_UPDATE: Record<string, (amountTransaction: nu
             {
                 $set: {
                     amountPaid: {
-                        $add: ['$amountPaid', amountTransaction]
+                        $cond: [
+                            { $ne: [defaultTo(transactionSubType, ""), PaymentCategoryEnum.MORATORY] },
+                            { $add: ['$amountPaid', amountTransaction] },
+                            '$amountPaid'
+                        ]
+                    },
+                    amountPaidMoratory: {
+                        $cond: [
+                            { $eq: [defaultTo(transactionSubType, ""), PaymentCategoryEnum.MORATORY] },
+                            { $add: ['$amountPaidMoratory', amountTransaction] },
+                            '$amountPaidMoratory'
+                        ]
                     },
                     // Fecha del último pago aprobado: el momento en que se aprueba este pago
                     lastPaymentDateApproved: '$$NOW'
@@ -44,7 +58,22 @@ export const ENTITY_OPERATION_BUID_UPDATE: Record<string, (amountTransaction: nu
                 $set: {
                     status: {
                         $cond: [
-                            { $gte: ['$amountPaid', '$amountDue'] },
+                            {
+                                $gte: [
+                                    {
+                                        $add: [
+                                            { $ifNull: ['$amountPaid', 0] },
+                                            { $ifNull: ['$amountPaidMoratory', 0] }
+                                        ]
+                                    },
+                                    {
+                                        $add: [
+                                            { $ifNull: ['$amountDue', 0] },
+                                            { $ifNull: ['$amountMoratory', 0] }
+                                        ]
+                                    }
+                                ]
+                            },
                             CreditStatusEnum.PAID,
                             '$status'
                         ]
@@ -71,13 +100,13 @@ export const ENTITY_OPERATION_BUID_UPDATE: Record<string, (amountTransaction: nu
     })
 };
 
-export const ENTITY_CANCEL_OPERATION_BUILD_UPDATE: Record<string, (amountTransaction: number) => UpdateQueryFiltersByEntity> = {
-    [TransactionTypeEnum.CREDIT]: (_: number) => ({
+export const ENTITY_CANCEL_OPERATION_BUILD_UPDATE: Record<string, (amountTransaction: number, transactionSubType?: CreationStatusEnum | PaymentCategoryEnum) => UpdateQueryFiltersByEntity> = {
+    [TransactionTypeEnum.CREDIT]: (amountTransaction: number, transactionSubType?: CreationStatusEnum | PaymentCategoryEnum) => ({
         creditsQuery: {
             transactionStatus: TransactionStatusEnum.CANCELLED
         }
     }),
-    [TransactionTypeEnum.PAYMENT]: (_: number) => ({
+    [TransactionTypeEnum.PAYMENT]: (amountTransaction: number, transactionSubType?: CreationStatusEnum | PaymentCategoryEnum) => ({
         paymentsQuery: {
             transactionStatus: TransactionStatusEnum.CANCELLED
         }

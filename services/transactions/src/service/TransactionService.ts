@@ -28,6 +28,8 @@ import { TransactionChangeStatusBatchLogsMongoModel } from "../gateway/Transacti
 import { TransactionChangeStatusBatchModel } from "../schema/mongodb/models/TransactionChangeStatusBatchLogsModel";
 import { ILoggerGateway } from "../repository/ILoggerGateway";
 import { ICredits } from "../schema/mongodb/models/CreditsModel";
+import { CreationStatusEnum } from "../infrastructure/CreationStatusEnum";
+import { PaymentCategoryEnum } from "../infrastructure/PaymentCategoryEnum";
 
 @injectable()
 export class TransactionService implements ITransactionService {
@@ -91,7 +93,7 @@ export class TransactionService implements ITransactionService {
                     transactionFilters,
                     pagination,
                     !isEmpty(chargeFrequency) ?
-                    this._buildSearchFiltersByChargeRule(searchTransactionData.filtersItems) : {}
+                        this._buildSearchFiltersByChargeRule(searchTransactionData.filtersItems) : {}
                 )
             )
         );
@@ -544,6 +546,9 @@ export class TransactionService implements ITransactionService {
                         }
                     },
                     trasactionBasicApproveInfo: {
+                        ...!isUndefined(get(transactionValue, "transactionSubType", undefined)) ? {
+                            transactionSubType: get(transactionValue, "transactionSubType", "")
+                        } : {},
                         transactionId: !isUndefined(objectTransactionId) ? objectTransactionId.toString() : "",
                         transactionType: get(transactionValue, "transactionType", TransactionTypeEnum.DEPOSIT),
                         amountTransaction: get(transactionValue, "total", 0),
@@ -701,7 +706,7 @@ export class TransactionService implements ITransactionService {
 
     private _processUpdateEntityByTransactionType(trasactionBasicApproveInfo: TransactionBasicApproveInfo, transactionStatus: TransactionStatusEnum): Observable<boolean> {
         //Si no existe mapeo, eso indica que no se requiere actualizar ninguna entidad
-        const entityBuildUpdate: ((amountTransaction: number) => UpdateQueryFiltersByEntity) | undefined =
+        const entityBuildUpdate: ((amountTransaction: number, transactionSubType?: CreationStatusEnum | PaymentCategoryEnum) => UpdateQueryFiltersByEntity) | undefined =
             isEqual(transactionStatus, TransactionStatusEnum.APPROVED) ?
                 ENTITY_OPERATION_BUID_UPDATE[trasactionBasicApproveInfo.transactionType] :
                 isEqual(transactionStatus, TransactionStatusEnum.CANCELLED) ?
@@ -710,10 +715,14 @@ export class TransactionService implements ITransactionService {
 
         if (!entityBuildUpdate) return of(true)
 
+
+        console.log("transactionSubtype:",trasactionBasicApproveInfo.transactionSubType);
         const entityOperationBuild: UpdateQueryFiltersByEntity = defaultTo(
             entityBuildUpdate,
-            (amountTransaction: number) => ({})
-        )(trasactionBasicApproveInfo.amountTransaction);
+            (amountTransaction: number, transactionSubType?: CreationStatusEnum | PaymentCategoryEnum) => ({})
+        )(trasactionBasicApproveInfo.amountTransaction, trasactionBasicApproveInfo.transactionSubType
+            ? trasactionBasicApproveInfo.transactionSubType as CreationStatusEnum | PaymentCategoryEnum
+            : undefined);
 
         return of(1).pipe(
             mergeMap(() =>

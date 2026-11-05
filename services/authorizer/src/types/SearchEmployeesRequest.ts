@@ -5,8 +5,8 @@ export interface SearchEmployeesRequest {
 
 export interface FiltersItems {
     creditorCompanyId?: string;
-    status?:            string[];
     generalSearch?:     string;
+    status?:            string[];
 }
 
 export interface Pagination {

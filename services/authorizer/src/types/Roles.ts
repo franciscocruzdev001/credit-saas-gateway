@@ -3,5 +3,5 @@ export interface Roles {
     name:        string;
     permissions: string[];
     updatedAt?:  Date;
-    [property: string]: any;
+    [property: string]: unknown;
 }

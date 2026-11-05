@@ -11,6 +11,9 @@
         "transactionType": {
             "type": "string"
         },
+        "transactionSubType": {
+            "type": "string"
+        },
         "total": {
             "type": "number"
         },

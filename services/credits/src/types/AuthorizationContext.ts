@@ -1,8 +1,7 @@
 export interface AuthorizationContext {
-    userId:            string;
+    accountNumber?:    string;
     creditorCompanyId: string;
     roles?:            string[];
+    userId:            string;
     walletId?:         string;
-    accountNumber?:    string;
 }
-
