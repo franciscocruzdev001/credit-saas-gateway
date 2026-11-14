@@ -6,6 +6,7 @@ import { ICustomers } from "./Customers.Model";
 import { chargeFrequencyEnum } from "../../../infrastructure/ChargeFrequencyEnum";
 import { OldDayEnum } from "../../../infrastructure/OldDayEnum";
 import { CreationStatusEnum } from "../../../infrastructure/CreationStatusEnum";
+import { ChargeStatusEnum } from "../../../infrastructure/ChargeStatusEnum";
 
 // 1. Define your Mongoose Schema
 const creditsSchema = new Schema({
@@ -28,6 +29,12 @@ const creditsSchema = new Schema({
             CreditStatusEnum.PAID,
             CreditStatusEnum.RESTRUCTURED
         ], default: CreditStatusEnum.CHARGE_PROCESS
+    },
+    chargeStatus: {
+        type: String, enum: [
+            ChargeStatusEnum.SLOW_PAY,
+            ChargeStatusEnum.RESTRUCTURED
+        ], required: false
     },
     // Fecha en la que "status" cambió por última vez.
     changeDateStatus: { type: Schema.Types.Date },

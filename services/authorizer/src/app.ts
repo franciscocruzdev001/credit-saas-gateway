@@ -1,10 +1,10 @@
-import dotenv from 'dotenv';
+import "dotenv/config"
 import "reflect-metadata";
 import express, { Application } from "express";
 import { authRouter } from "./routes/authorizerRoutes";
 import cors from "cors";
 
-dotenv.config();
+
 const app: Application = express();
 const PORT = Number(process.env.AUTHORIZER_PORT) || 4000;
 

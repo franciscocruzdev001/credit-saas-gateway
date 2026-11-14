@@ -9,8 +9,7 @@
             "type": "number"
         },
         "startDateChargeConfig": {
-            "type": "number",
-            "description": "Se precarga con la fecha del ultimo reporte de cobro realizado al cobrador"
+            "type": "number"
         },
         "admissionDate": {
             "type": "number"
@@ -42,24 +41,17 @@
         "status": {
             "type": "string"
         },
+        "chargeStatus": {
+            "type": "string"
+        },
         "creationStatus": {
-            "type": "string",
-            "enum": [
-                "new",
-                "renewed"
-            ]
+            "type": "string"
         },
         "transactionStatus": {
-            "type": "string",
-            "enum": [
-                "pending",
-                "approved",
-                "cancelled"
-            ]
+            "type": "string"
         },
         "changeDateStatus": {
-            "type": "number",
-            "description": "Fecha en la que 'status' cambio por ultima vez"
+            "type": "number"
         },
         "lastPaymentDateApproved": {
             "type": "number"
@@ -76,16 +68,7 @@
                     "type": "number"
                 },
                 "chargeDay": {
-                    "type": "string",
-                    "enum": [
-                        "monday",
-                        "tuesday",
-                        "wednesday",
-                        "thursday",
-                        "friday",
-                        "saturday",
-                        "sunday"
-                    ]
+                    "type": "string"
                 },
                 "renovationPeriod": {
                     "type": "number"

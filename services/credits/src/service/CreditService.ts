@@ -142,7 +142,7 @@ export class CreditService implements ICreditService {
                 console.log("Transaction result", transactionResult);
 
                 const creditAmount: number = get(creditCustomer.credit, "creditAmount", 0);
-                const chargeDay = get(creditCustomer.credit, "chargeRules.chargeDay");
+                const chargeDay = get(creditCustomer.credit, "chargeRules.chargeDay", OldDayEnum.MONDAY) as OldDayEnum;
                 const latePaymentCharge: number | undefined = get(creditCustomer.credit, "chargeRules.latePaymentCharge");
                 const chargeRules = {
                     chargeFrequency: get(creditCustomer.credit, "chargeRules.chargeFrequency", chargeFrequencyEnum.WEEKLY) as chargeFrequencyEnum,
@@ -258,7 +258,7 @@ export class CreditService implements ICreditService {
                             total: amountTransaction,
                             paymentMethod: "cash",
                             transactionStatus: TransactionStatusEnum.PENDING,
-                            paymentCategory: get(paymentRequest, "paymentCategory", PaymentCategoryEnum.CHARGE_PERIOD)
+                            paymentCategory: get(paymentRequest, "paymentCategory", PaymentCategoryEnum.CHARGE_PERIOD) as PaymentCategoryEnum
                         })
                     ),
                     //else transaction approve operation is true, create credit
